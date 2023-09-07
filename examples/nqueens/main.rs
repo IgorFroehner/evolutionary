@@ -1,10 +1,13 @@
 use std::time::Instant;
 
 use evolutionary_computing::{
+    crossover::PMXCrossover,
     evolution_builder::EvolutionBuilder,
     fitness::Fitness,
     io::{read_config, Config},
-    population::{IntPerm, GeneCod}, selection::RouletteSelection, crossover::PMXCrossover, mutation::PermMutation,
+    mutation::PermMutation,
+    population::{GeneCod, IntPerm},
+    selection::RouletteSelection,
 };
 
 #[derive(Clone)]
@@ -36,8 +39,11 @@ impl Fitness<IntPerm> for NQueensFitness {
     fn calculate_fitness(&self, individual: &IntPerm) -> f64 {
         let cont = count_colisions(individual);
 
-        if cont < self.c_max { self.c_max - cont }
-        else { 0.0 }
+        if cont < self.c_max {
+            self.c_max - cont
+        } else {
+            0.0
+        }
     }
 }
 
@@ -48,14 +54,13 @@ fn main() {
         population_size,
         dimension,
         gene_cod,
-        runs,
         ..
     } = read_config(file_name).expect("Failed to read config file");
 
     if let GeneCod::IntPerm = gene_cod {
         let max_colisions = dimension as f64 * (dimension as f64 - 1.0);
         let fitness = NQueensFitness {
-            c_max: max_colisions
+            c_max: max_colisions,
         };
 
         let selection: RouletteSelection = RouletteSelection::default();
@@ -67,7 +72,8 @@ fn main() {
             .set_mutation(PermMutation::default())
             .set_stop_condition(move |best_fitness, _| best_fitness == max_colisions)
             .set_title("NQueens".to_string())
-            .build().unwrap();
+            .build()
+            .unwrap();
 
         let start_time = Instant::now();
 

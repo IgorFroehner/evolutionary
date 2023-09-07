@@ -3,7 +3,7 @@ use evolutionary_computing::{
     evolution_builder::EvolutionBuilder,
     io::{read_config, Config},
     mutation::BinMutation,
-    population::{Bin, GeneCod},
+    population::GeneCod,
     selection::RouletteSelection,
     utils::{convert_bin, within_range},
 };
