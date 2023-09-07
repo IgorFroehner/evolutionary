@@ -1,0 +1,6 @@
+[config]
+runs = 1
+gene_cod = 'Bin'
+range = [-1000,11230]
+population_size = 15
+dimension = 10

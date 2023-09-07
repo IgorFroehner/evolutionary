@@ -1,0 +1,5 @@
+[config]
+runs = 10000
+gene_cod = 'IntPerm'
+population_size = 10
+dimension = 16
