@@ -1,3 +1,5 @@
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator, IndexedParallelIterator};
+
 use crate::{
     crossover::Crossover,
     fitness::Fitness,
@@ -7,18 +9,20 @@ use crate::{
     selection::Selection,
 };
 
+pub type StopConditionFn = Box<dyn Fn(f64, u32) -> bool + Send + Sync>;
+
 pub struct Evolution<T: Individual> {
     pub title: String,
+    pub current_population: Vec<T>,
     pub dimension: u32,
     pub population_size: u32,
     pub range: T::RangeType,
-    pub current_population: Vec<T>,
     pub gene_cod: GeneCod,
     pub fitness: Box<dyn Fitness<T>>,
     pub selection: Box<dyn Selection<T>>,
     pub crossover: Box<dyn Crossover<T>>,
     pub mutation: Box<dyn Mutation<T>>,
-    pub stop_condition: Box<dyn Fn(f64, u32) -> bool>,
+    pub stop_condition: StopConditionFn,
     pub metrics: Metrics,
 }
 
@@ -52,7 +56,7 @@ impl<T: Individual> Evolution<T> {
         self.process_fitness();
 
         let worst_index = mating_pool
-            .iter()
+            .par_iter()
             .enumerate()
             .min_by(|(_, a), (_, b)| a.get_fitness().partial_cmp(&b.get_fitness()).unwrap())
             .unwrap()
@@ -91,7 +95,7 @@ impl<T: Individual> Evolution<T> {
 
     pub fn current_best(&self) -> &T {
         self.current_population
-            .iter()
+            .par_iter()
             .max_by(|a, b| a.get_fitness().partial_cmp(&b.get_fitness()).unwrap())
             .unwrap()
     }
@@ -99,7 +103,7 @@ impl<T: Individual> Evolution<T> {
     fn process_fitness(&mut self) {
         let fitness_values: Vec<f64> = self
             .current_population
-            .iter()
+            .par_iter()
             .map(|individual| self.calculate_fitness(individual))
             .collect();
 
@@ -119,7 +123,7 @@ impl<T: Individual> Evolution<T> {
     pub fn current_fitness_average(&self) -> f64 {
         let sum: f64 = self
             .current_population
-            .iter()
+            .par_iter()
             .map(|individual| individual.get_fitness())
             .sum();
 

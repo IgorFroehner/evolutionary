@@ -1,4 +1,5 @@
 use rand::{thread_rng, Rng};
+use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::population::Bin;
 
@@ -19,18 +20,12 @@ impl Default for BinMutation {
 
 impl Mutation<Bin> for BinMutation {
     fn mutate(&self, population: &mut Vec<Bin>) {
-        let mut rng = thread_rng();
-
-        for i in 0..population.len() {
-            let mut member = population[i].clone();
-
-            for j in 0..member.0.len() {
+        population.par_iter_mut().for_each_init(|| thread_rng(), |rng, member| {
+            for i in 0..member.0.len() {
                 if rng.gen_bool(self.mutation_rate) {
-                    member.0[j] = !member.0[j];
+                    member.0[i] = !member.0[i];
                 }
             }
-
-            population[i] = member;
-        }
+        });
     }
 }

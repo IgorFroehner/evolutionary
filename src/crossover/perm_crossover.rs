@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use rand::{thread_rng, Rng};
+use rayon::{prelude::ParallelIterator, slice::ParallelSliceMut};
 
 use crate::population::IntPerm;
 
@@ -14,7 +15,7 @@ pub struct PMXCrossover {
 impl Default for PMXCrossover {
     fn default() -> Self {
         PMXCrossover {
-            crossover_rate: 1.0,
+            crossover_rate: 0.8,
         }
     }
 }
@@ -57,24 +58,25 @@ impl PMXCrossover {
 
 impl Crossover<IntPerm> for PMXCrossover {
     fn crossover(&self, population: &mut Vec<IntPerm>) {
-        let mut rng = thread_rng();
+        population.par_chunks_mut(2).for_each_init(
+            || thread_rng(),
+            |rng, chunk| {
+                if rng.gen_bool(self.crossover_rate) {
+                    let mut parent1 = chunk[0].clone();
+                    let mut parent2 = chunk[1].clone();
 
-        for i in 0..population.len() / 2 {
-            if rng.gen_bool(self.crossover_rate) {
-                let mut parent1 = population[i * 2].clone();
-                let mut parent2 = population[i * 2 + 1].clone();
+                    let len = parent1.0.len();
 
-                let len = parent1.0.len();
+                    let start = rng.gen_range(0..len);
+                    let end = rng.gen_range(start..len);
 
-                let start = rng.gen_range(0..len);
-                let end = rng.gen_range(start..len);
+                    PMXCrossover::pmx_matching(&mut parent1.0, &mut parent2.0, start, end);
 
-                PMXCrossover::pmx_matching(&mut parent1.0, &mut parent2.0, start, end);
-
-                population[i * 2] = parent1;
-                population[i * 2 + 1] = parent2;
-            }
-        }
+                    chunk[0] = parent1;
+                    chunk[1] = parent2;
+                }
+            },
+        );
     }
 }
 

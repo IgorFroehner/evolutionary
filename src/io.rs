@@ -12,7 +12,6 @@ pub struct Config {
     pub dimension: u32,
 }
 
-
 #[derive(Deserialize, Debug)]
 pub struct Data {
     config: Config,

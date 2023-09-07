@@ -24,9 +24,9 @@ pub struct Bin(pub Vec<bool>, pub f64);
 #[derive(Debug, Clone)]
 pub struct Real(pub Vec<f64>, f64);
 
-pub trait Individual: 'static + Clone {
-    type Gene: Debug;
-    type RangeType;
+pub trait Individual: 'static + Clone + Send + Sync {
+    type Gene: Debug + Send + Sync;
+    type RangeType: Send + Sync;
 
     fn generate_member(dimension: u32, b: &Self::RangeType) -> Self;
     fn get_vec(&self) -> &Vec<Self::Gene>;

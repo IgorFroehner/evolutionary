@@ -1,10 +1,11 @@
 use crate::{
     crossover::Crossover,
-    evolution::Evolution,
+    evolution::{Evolution, StopConditionFn},
     fitness::Fitness,
     mutation::Mutation,
+    plot_evolution::Metrics,
     population::{GeneCod, Individual},
-    selection::Selection, plot_evolution::Metrics,
+    selection::Selection,
 };
 
 pub struct EvolutionBuilder<T: Individual> {
@@ -17,7 +18,7 @@ pub struct EvolutionBuilder<T: Individual> {
     selection: Option<Box<dyn Selection<T>>>,
     crossover: Option<Box<dyn Crossover<T>>>,
     mutation: Option<Box<dyn Mutation<T>>>,
-    stop_condition: Option<Box<dyn Fn(f64, u32) -> bool>>
+    stop_condition: Option<StopConditionFn>,
 }
 
 impl<T: Individual> EvolutionBuilder<T> {
@@ -61,9 +62,11 @@ impl<T: Individual> EvolutionBuilder<T> {
         self
     }
 
-    pub fn set_stop_condition<F: Fn(f64, u32) -> bool + 'static>(mut self, f: F) -> Self {
+    pub fn set_stop_condition<F: Fn(f64, u32) -> bool + 'static + Send + Sync>(
+        mut self,
+        f: F,
+    ) -> Self {
         self.stop_condition = Some(Box::new(f));
-
         self
     }
 
@@ -75,7 +78,13 @@ impl<T: Individual> EvolutionBuilder<T> {
     pub fn build(self) -> Result<Evolution<T>, String> {
         let title = self.title.unwrap_or("".to_string());
 
-        match (self.fitness, self.selection, self.crossover, self.mutation, self.stop_condition) {
+        match (
+            self.fitness,
+            self.selection,
+            self.crossover,
+            self.mutation,
+            self.stop_condition,
+        ) {
             (Some(f), Some(s), Some(c), Some(m), Some(stop)) => Ok(Evolution {
                 title: title.clone(),
                 dimension: self.dimension,

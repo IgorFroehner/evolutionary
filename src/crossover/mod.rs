@@ -8,6 +8,6 @@ mod perm_crossover;
 pub use bin_crossover::*;
 pub use perm_crossover::*;
 
-pub trait Crossover<T: Individual>: 'static + DynClone {
+pub trait Crossover<T: Individual>: 'static + DynClone + Send + Sync {
     fn crossover(&self, population: &mut Vec<T>);
 }

@@ -8,7 +8,7 @@ use evolutionary_computing::{
 };
 use radio_fitness::RadioFitness;
 
-use crate::radio_fitness::{get_lx, get_st};
+use crate::radio_fitness::{get_lx, get_st, f};
 
 mod radio_fitness;
 
@@ -59,5 +59,6 @@ fn main() {
         println!("Best found fitness: {}", evolution.current_best_fitness());
         println!("ST: {}", get_st(&best_found));
         println!("LX: {}", get_lx(&best_found));
+        println!("Lucro: {}", f(get_st(&best_found), get_lx(&best_found)));
     }
 }

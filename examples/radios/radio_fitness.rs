@@ -19,8 +19,12 @@ pub fn get_lx(bin: &Bin) -> f64 {
     x.round()
 }
 
+pub fn f(st: f64, lx: f64) -> f64 {
+    30. * st + 40. * lx
+}
+
 fn f_norm(st: f64, lx: f64) -> f64 {
-    (30. * st + 40. * lx) / 1360.
+    f(st, lx) / 1360.
 }
 
 fn r_norm(st: f64, lx: f64) -> f64 {
