@@ -1,8 +1,10 @@
-use rand::{seq::SliceRandom, thread_rng, Rng};
+use rand::{seq::SliceRandom, thread_rng, random};
 
 use crate::population::{Bin, Individual, IntPerm};
 
 use super::Selection;
+
+use rayon::prelude::*;
 
 #[derive(Clone)]
 pub struct TournamentSelection {
@@ -18,11 +20,9 @@ impl Default for TournamentSelection {
 
 impl Selection<Bin> for TournamentSelection {
     fn get_mating_pool(&self, initial_population: &Vec<Bin>) -> Vec<Bin> {
-        let mut rng = thread_rng();
-
         initial_population
-            .iter()
-            .map(|_| {
+            .par_iter()
+            .map_init(|| thread_rng(), |mut rng, _| {
                 let mut tournament = initial_population
                     .choose_multiple(&mut rng, self.k)
                     .cloned()
@@ -30,7 +30,7 @@ impl Selection<Bin> for TournamentSelection {
 
                 tournament.sort_by(|a, b| b.get_fitness().partial_cmp(&a.get_fitness()).unwrap());
 
-                if thread_rng().gen::<f64>() <= self.kp {
+                if random::<f64>() <= self.kp {
                     tournament[0].clone()
                 } else {
                     tournament[1].clone()
@@ -42,11 +42,9 @@ impl Selection<Bin> for TournamentSelection {
 
 impl Selection<IntPerm> for TournamentSelection {
     fn get_mating_pool(&self, initial_population: &Vec<IntPerm>) -> Vec<IntPerm> {
-        let mut rng = thread_rng();
-
         initial_population
-            .iter()
-            .map(|_| {
+            .par_iter()
+            .map_init(|| thread_rng(), |mut rng, _| {
                 let mut tournament = initial_population
                     .choose_multiple(&mut rng, self.k)
                     .cloned()
@@ -54,7 +52,7 @@ impl Selection<IntPerm> for TournamentSelection {
 
                 tournament.sort_by(|a, b| b.get_fitness().partial_cmp(&a.get_fitness()).unwrap());
 
-                if thread_rng().gen::<f64>() <= self.kp {
+                if random::<f64>() <= self.kp {
                     tournament[0].clone()
                 } else {
                     tournament[1].clone()

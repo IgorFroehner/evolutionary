@@ -1,11 +1,11 @@
 use evolutionary_computing::{
+    config_read::{read_config, RawConfig},
     crossover::BinCrossover,
     evolution_builder::EvolutionBuilder,
-    io::{read_config, Config},
     mutation::BinMutation,
-    population::GeneCod,
+    population::{GeneCod, Bin},
     selection::RouletteSelection,
-    utils::{convert_bin, within_range},
+    utils::{convert_bin, within_range}, coding::Coding,
 };
 use fitness_max::MathFitnessMax;
 
@@ -21,10 +21,21 @@ pub fn f(x: f64) -> f64 {
     (20. * x).cos() - (x.abs() / 2.) + (x.powf(3.) / 4.)
 }
 
+#[derive(Clone)]
+struct MathFuncCoding;
+
+impl Coding<Bin> for MathFuncCoding {
+    type Output = f64;
+
+    fn decode(&self, individual: &Bin) -> Self::Output {
+        within_range(RANGE, L, convert_bin(&individual.0))
+    }
+}
+
 fn main() {
     let file_name = "examples/math_func/Config.toml";
 
-    let Config {
+    let RawConfig {
         population_size,
         dimension,
         gene_cod,
@@ -35,16 +46,16 @@ fn main() {
     if let GeneCod::Bin = gene_cod {
         let max_fitness = MathFitnessMax;
 
-        let mut evolution =
-            EvolutionBuilder::new(population_size, dimension, gene_cod, ())
-                .set_fitness(max_fitness)
-                .set_selection(RouletteSelection::default())
-                .set_crossover(BinCrossover::default())
-                .set_mutation(BinMutation::default())
-                .set_title("Math Function".to_string())
-                .set_stop_condition(move |_, iterations| iterations >= runs as u32)
-                .build()
-                .unwrap();
+        let mut evolution = EvolutionBuilder::new(population_size, dimension, gene_cod, ())
+            .with_fitness(max_fitness)
+            .with_selection(RouletteSelection::default())
+            .with_crossover(BinCrossover::default())
+            .with_mutation(BinMutation::default())
+            .with_title("Math Function".to_string())
+            .with_stop_condition(move |_, iterations| iterations >= runs as u32)
+            .with_coding(MathFuncCoding)
+            .build()
+            .unwrap();
 
         evolution.run();
 

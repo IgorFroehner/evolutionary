@@ -12,7 +12,7 @@ pub use int::*;
 pub use perm::*;
 pub use real::*;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub enum GeneCod {
     Int,
     IntPerm,
@@ -22,7 +22,7 @@ pub enum GeneCod {
 
 pub trait Individual: 'static + Clone + Send + Sync {
     type Gene: Debug + Send + Sync;
-    type RangeType: Send + Sync;
+    type RangeType: Send + Sync + Clone;
 
     fn generate_member(dimension: u32, b: &Self::RangeType) -> Self;
     fn get_vec(&self) -> &Vec<Self::Gene>;

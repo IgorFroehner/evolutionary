@@ -33,7 +33,7 @@ impl Crossover<Bin> for BinCrossover {
     fn crossover(&self, population: &mut Vec<Bin>) {
         let mut rng = thread_rng();
 
-        for i in 0..population.len() / 2 {
+        for i in 0..(population.len() / 2) {
             if rng.gen_bool(self.crossover_rate) {
                 let mut parent1 = population[i * 2].clone();
                 let mut parent2 = population[i * 2 + 1].clone();

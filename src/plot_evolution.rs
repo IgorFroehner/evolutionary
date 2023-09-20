@@ -1,23 +1,39 @@
-use plotters::{
-    prelude::{BitMapBackend, ChartBuilder, IntoDrawingArea, PathElement},
-    series::LineSeries,
-    style::{Color, BLACK, BLUE, RED, WHITE},
-};
+use std::{collections::HashMap, time::Instant};
+
+use crate::utils::plot_chart;
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Steps {
+    Selection,
+    Crossover,
+    Mutation,
+    Fitness,
+}
 
 pub struct Metrics {
-    pub test_name: String,
     pub best_fitnesses: Vec<f64>,
     pub avg_fitnesses: Vec<f64>,
     pub iterations: u32,
+    start_time: Instant,
+    end_time: Instant,
+    pub step_times: HashMap<Steps, (bool, Instant, u128)>,
 }
 
 impl Metrics {
-    pub fn new(test_name: String) -> Self {
+    pub fn new() -> Self {
+        let mut step_times = HashMap::new();
+        step_times.insert(Steps::Selection, (false, Instant::now(), 0));
+        step_times.insert(Steps::Crossover, (false, Instant::now(), 0));
+        step_times.insert(Steps::Mutation, (false, Instant::now(), 0));
+        step_times.insert(Steps::Fitness, (false, Instant::now(), 0));
+
         Self {
-            test_name,
             best_fitnesses: Vec::new(),
             avg_fitnesses: Vec::new(),
             iterations: 0,
+            start_time: Instant::now(),
+            end_time: Instant::now(),
+            step_times: step_times,
         }
     }
 
@@ -27,56 +43,33 @@ impl Metrics {
         self.iterations += 1;
     }
 
-    pub fn plot_chart(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let file_name = format!("{}.png", self.test_name);
+    pub fn start_clock(&mut self) {
+        self.start_time = Instant::now();
+    }
 
-        let root = BitMapBackend::new(&file_name, (640, 480)).into_drawing_area();
-        root.fill(&WHITE)?;
+    pub fn end_clock(&mut self) {
+        self.end_time = Instant::now();
+    }
 
-        let max_y = self
-            .best_fitnesses
-            .iter()
-            .chain(self.avg_fitnesses.iter())
-            .max_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap();
+    pub fn step_start(&mut self, step: Steps) {
+        self.step_times.get_mut(&step).map(|a| {
+            a.0 = true;
+            a.1 = Instant::now()
+        });
+    }
 
-        let mut chart = ChartBuilder::on(&root)
-            .caption(format!("{}", self.test_name), ("sans-serif", 40))
-            .margin(10)
-            .x_label_area_size(30)
-            .y_label_area_size(40)
-            .build_cartesian_2d(0f64..self.best_fitnesses.len() as f64, 0f64..(*max_y + 0.1 * *max_y))?;
+    pub fn step_end(&mut self, step: Steps) {
+        self.step_times.get_mut(&step).map(|a| {
+            a.0 = false;
+            a.2 += a.1.elapsed().as_millis()
+        });
+    }
 
-        chart.configure_mesh().draw()?;
+    pub fn get_elapsed_time(&self) -> u128 {
+        self.end_time.duration_since(self.start_time).as_millis()
+    }
 
-        chart
-            .draw_series(LineSeries::new(
-                self.best_fitnesses
-                    .iter()
-                    .enumerate()
-                    .map(|(x, y)| (x as f64, *y)),
-                &RED,
-            ))?
-            .label("Best Fitness")
-            .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
-
-        chart
-            .draw_series(LineSeries::new(
-                self.avg_fitnesses
-                    .iter()
-                    .enumerate()
-                    .map(|(x, y)| (x as f64, *y)),
-                &BLUE,
-            ))?
-            .label("Average Fitness")
-            .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &BLUE));
-
-        chart
-            .configure_series_labels()
-            .background_style(&WHITE.mix(0.8))
-            .border_style(&BLACK)
-            .draw()?;
-
-        Ok(())
+    pub fn plot_chart(&self, path: &String, test_name: &String) -> Result<(), Box<dyn std::error::Error>> {
+        plot_chart(&self.best_fitnesses, &self.avg_fitnesses, path, test_name)
     }
 }

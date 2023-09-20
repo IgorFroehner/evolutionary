@@ -1,14 +1,17 @@
-use std::time::Instant;
-
+use plotters::prelude::Quartiles;
 use evolutionary_computing::{
     crossover::PMXCrossover,
     evolution_builder::EvolutionBuilder,
     fitness::Fitness,
-    io::{read_config, Config},
+    config_read::read_config,
     mutation::PermMutation,
     population::{GeneCod, IntPerm},
-    selection::RouletteSelection,
+    selection::RouletteSelection, coding::Coding,
 };
+use evolutionary_computing::experiment_runner::ExperimentRunner;
+use evolutionary_computing::plot_evolution::Steps::Selection;
+use evolutionary_computing::selection::TournamentSelection;
+use evolutionary_computing::utils::plot_boxplot;
 
 #[derive(Clone)]
 struct NQueensFitness {
@@ -47,43 +50,71 @@ impl Fitness<IntPerm> for NQueensFitness {
     }
 }
 
+#[derive(Clone)]
+struct NQueensCoding;
+
+impl Coding<IntPerm> for NQueensCoding {
+    type Output = f64;
+
+    fn decode(&self, individual: &IntPerm) -> Self::Output {
+        count_colisions(individual)
+    }
+}
+
 fn main() {
     let file_name = "examples/nqueens/Config.toml";
 
-    let Config {
-        population_size,
-        dimension,
-        gene_cod,
-        ..
-    } = read_config(file_name).expect("Failed to read config file");
+    let config = read_config(file_name).expect("Failed to read config file");
 
-    if let GeneCod::IntPerm = gene_cod {
-        let max_colisions = dimension as f64 * (dimension as f64 - 1.0);
-        let fitness = NQueensFitness {
-            c_max: max_colisions,
+    if let GeneCod::IntPerm = config.gene_cod {
+        let crossover = PMXCrossover {
+            crossover_rate: 1.0,
         };
 
-        let selection: RouletteSelection = RouletteSelection::default();
+        let mutation = PermMutation {
+            mutation_rate: 0.02,
+        };
 
-        let mut evolution = EvolutionBuilder::new(population_size, dimension, gene_cod, ())
-            .set_fitness(fitness)
-            .set_selection(selection)
-            .set_crossover(PMXCrossover::default())
-            .set_mutation(PermMutation::default())
-            .set_stop_condition(move |best_fitness, _| best_fitness == max_colisions)
-            .set_title("NQueens".to_string())
-            .build()
-            .unwrap();
+        let mut iterations_number: Vec<Vec<u32>> = Vec::new();
+        let mut labels = Vec::new();
+        let mut dimension = 128;
+        while dimension <= 128 {
+            let mut new_config = config.clone();
 
-        let start_time = Instant::now();
+            new_config.dimension = dimension;
+            let max_colisions = new_config.dimension as f64 * (config.dimension as f64 - 1.0);
 
-        evolution.run();
+            let fitness = NQueensFitness {
+                c_max: max_colisions,
+            };
 
-        let best_solution = evolution.current_best();
-        println!("Best found: {:?}", best_solution);
-        println!("Colisions number: {}", count_colisions(&best_solution));
-        println!("Time elapsed: {}", start_time.elapsed().as_secs_f64());
+            let evolution_builder = EvolutionBuilder::from_config(new_config.into())
+                .with_fitness(fitness)
+                .with_selection(TournamentSelection::default())
+                .with_crossover(crossover.clone())
+                .with_mutation(mutation.clone())
+                .with_coding(NQueensCoding)
+                .with_stop_condition(move |best_fitness, _| best_fitness == max_colisions)
+                .with_title("NQueens".to_string());
 
-        evolution.plot_chart().unwrap();
+            let label = format!("{}Queens", dimension);
+            labels.push(label.clone());
+            let mut experiment = ExperimentRunner::new(label, 10, evolution_builder);
+
+            experiment.run();
+
+            iterations_number.push(experiment.experiment_results.iter().map(|r| r.iterations).collect());
+            dimension *= 2;
+        }
+
+        println!("max iterations: {}", iterations_number.iter().map(|v| v.iter().max().unwrap()).max().unwrap());
+
+        let sum: f32 = iterations_number[0].iter().map(|&v| v as f32).sum();
+        let len = iterations_number[0].len() as f32;
+
+        println!("average iterations: {}", sum / len);
+
+        let quartiles = iterations_number.iter().map(|v| Quartiles::new(v)).collect();
+        plot_boxplot(&quartiles, &labels).unwrap();
     }
 }

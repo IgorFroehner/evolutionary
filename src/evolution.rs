@@ -1,41 +1,53 @@
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator, IndexedParallelIterator};
+use std::sync::Arc;
+use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
 use crate::{
+    coding::Coding,
     crossover::Crossover,
     fitness::Fitness,
     mutation::Mutation,
-    plot_evolution::Metrics,
+    plot_evolution::{Metrics, Steps},
     population::{GeneCod, Individual},
     selection::Selection,
 };
 
-pub type StopConditionFn = Box<dyn Fn(f64, u32) -> bool + Send + Sync>;
+pub type StopConditionFn = Arc<dyn Fn(f64, u32) -> bool + Send + Sync>;
 
-pub struct Evolution<T: Individual> {
-    pub title: String,
-    pub current_population: Vec<T>,
+#[derive(Clone)]
+pub struct EvolutionConfig<T: Individual> {
     pub dimension: u32,
     pub population_size: u32,
     pub range: T::RangeType,
     pub gene_cod: GeneCod,
+}
+
+pub struct Evolution<T: Individual, C: Coding<T>> {
+    pub title: String,
+    pub current_population: Vec<T>,
+    pub config: EvolutionConfig<T>,
     pub fitness: Box<dyn Fitness<T>>,
     pub selection: Box<dyn Selection<T>>,
     pub crossover: Box<dyn Crossover<T>>,
     pub mutation: Box<dyn Mutation<T>>,
+    pub coding: Box<C>,
+    pub elitism: bool,
     pub stop_condition: StopConditionFn,
     pub metrics: Metrics,
 }
 
-impl<T: Individual> Evolution<T> {
+impl<T: Individual, C: Coding<T>> Evolution<T, C> {
     pub fn start(&mut self) {
-        self.metrics = Metrics::new(self.title.clone());
+        self.metrics = Metrics::new();
+
+        self.metrics.start_clock();
 
         let _ = &self.current_population.clear();
 
-        for _ in 0..self.population_size {
-            let _ = &self
-                .current_population
-                .push(T::generate_member(self.dimension, &self.range));
+        for _ in 0..self.config.population_size {
+            let _ = &self.current_population.push(T::generate_member(
+                self.config.dimension,
+                &self.config.range,
+            ));
         }
 
         self.process_fitness();
@@ -45,7 +57,10 @@ impl<T: Individual> Evolution<T> {
     }
 
     pub fn next(&mut self) {
-        let current_best_solution = self.current_best().clone();
+        let mut current_best_solution = None;
+        if self.elitism {
+            current_best_solution = Some(self.current_best().clone());
+        }
 
         let mut mating_pool = self.selection.get_mating_pool(&self.current_population);
 
@@ -53,20 +68,21 @@ impl<T: Individual> Evolution<T> {
 
         self.mutation.mutate(&mut mating_pool);
 
-        self.process_fitness();
-
-        let worst_index = mating_pool
-            .par_iter()
-            .enumerate()
-            .min_by(|(_, a), (_, b)| a.get_fitness().partial_cmp(&b.get_fitness()).unwrap())
-            .unwrap()
-            .0;
-
-        mating_pool[worst_index] = current_best_solution;
-
         self.current_population = mating_pool;
 
         self.process_fitness();
+
+        if self.elitism && current_best_solution.is_some() {
+            let worst_index = self
+                .current_population
+                .par_iter()
+                .enumerate()
+                .min_by(|(_, a), (_, b)| Self::cmp_by_fitness(a, b))
+                .unwrap()
+                .0;
+
+            self.current_population[worst_index] = current_best_solution.unwrap();
+        }
 
         self.metrics
             .record(self.current_best_fitness(), self.current_fitness_average());
@@ -78,9 +94,11 @@ impl<T: Individual> Evolution<T> {
         while !(self.stop_condition)(self.current_best_fitness(), self.metrics.iterations) {
             self.next();
         }
+
+        self.metrics.end_clock();
     }
 
-    pub fn individual_fitness(&self, index: usize) -> f64 {
+    pub fn calculate_individual_fitness(&self, index: usize) -> f64 {
         let individual = &self.current_population[index];
 
         self.calculate_fitness(&individual)
@@ -93,14 +111,25 @@ impl<T: Individual> Evolution<T> {
         println!("Current Average: {}", self.current_fitness_average());
     }
 
+    pub fn time_digest(&self) {
+        println!("---------------------------------------------");
+        println!("Total time: {:?}", self.metrics.get_elapsed_time());
+        println!("Selection time: {:?}", self.metrics.step_times[&Steps::Selection].2);
+        println!("Crossover time: {:?}", self.metrics.step_times[&Steps::Crossover].2);
+        println!("Mutation time: {:?}", self.metrics.step_times[&Steps::Mutation].2);
+        println!("Fitness time: {:?}", self.metrics.step_times[&Steps::Fitness].2);
+    }
+
     pub fn current_best(&self) -> &T {
         self.current_population
             .par_iter()
-            .max_by(|a, b| a.get_fitness().partial_cmp(&b.get_fitness()).unwrap())
+            .max_by(|a, b| Self::cmp_by_fitness(a, b))
             .unwrap()
     }
 
     fn process_fitness(&mut self) {
+        self.metrics.step_start(Steps::Fitness);
+
         let fitness_values: Vec<f64> = self
             .current_population
             .par_iter()
@@ -110,6 +139,8 @@ impl<T: Individual> Evolution<T> {
         for (individual, fitness) in self.current_population.iter_mut().zip(fitness_values) {
             individual.set_fitness(fitness);
         }
+
+        self.metrics.step_end(Steps::Fitness);
     }
 
     fn calculate_fitness(&self, individual: &T) -> f64 {
@@ -127,10 +158,14 @@ impl<T: Individual> Evolution<T> {
             .map(|individual| individual.get_fitness())
             .sum();
 
-        sum / self.population_size as f64
+        sum / self.config.population_size as f64
     }
 
-    pub fn plot_chart(&self) -> Result<(), Box<dyn std::error::Error>> {
-        self.metrics.plot_chart()
+    pub fn plot_chart(&self, path: &String, test_name: &String) -> Result<(), Box<dyn std::error::Error>> {
+        self.metrics.plot_chart(&path, test_name)
+    }
+
+    fn cmp_by_fitness(a: &T, b: &T) -> std::cmp::Ordering {
+        a.get_fitness().partial_cmp(&b.get_fitness()).unwrap()
     }
 }
