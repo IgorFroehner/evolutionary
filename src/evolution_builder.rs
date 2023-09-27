@@ -57,7 +57,7 @@ impl<T: Individual, C: Coding<T>> EvolutionBuilder<T, C> {
             mutation: None,
             stop_condition: None,
             coding: None,
-            evolution_config: Some(config),
+            evolution_config: Some(config.clone()),
             elitism: None,
         }
     }

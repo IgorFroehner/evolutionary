@@ -42,7 +42,7 @@ impl<T: Individual, C: Coding<T>> ExperimentRunner<T, C> {
         let path = format!("results/{}", self.name);
         let _ = create_dir_all(path.clone());
 
-        let results: Vec<ExperimentResult> = (0..self.runs).into_iter().map(|_| {
+        let results: Vec<ExperimentResult> = (0..self.runs).into_par_iter().map(|_| {
             let mut evolution = self.evolution_builder.build().unwrap();
 
             let start_time = Instant::now();

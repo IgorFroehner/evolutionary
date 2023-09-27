@@ -75,46 +75,24 @@ fn main() {
             mutation_rate: 0.02,
         };
 
-        let mut iterations_number: Vec<Vec<u32>> = Vec::new();
-        let mut labels = Vec::new();
-        let mut dimension = 128;
-        while dimension <= 128 {
-            let mut new_config = config.clone();
+        let max_colisions = config.dimension as f64 * (config.dimension as f64 - 1.0);
 
-            new_config.dimension = dimension;
-            let max_colisions = new_config.dimension as f64 * (config.dimension as f64 - 1.0);
+        let fitness = NQueensFitness {
+            c_max: max_colisions,
+        };
 
-            let fitness = NQueensFitness {
-                c_max: max_colisions,
-            };
+        let dimension = config.dimension;
+        let evolution_builder = EvolutionBuilder::from_config(config.into())
+            .with_fitness(fitness)
+            .with_selection(TournamentSelection::default())
+            .with_crossover(crossover.clone())
+            .with_mutation(mutation.clone())
+            .with_coding(NQueensCoding)
+            .with_stop_condition(move |best_fitness, _| best_fitness == max_colisions)
+            .with_title("NQueens".to_string());
 
-            let evolution_builder = EvolutionBuilder::from_config(new_config.into())
-                .with_fitness(fitness)
-                .with_selection(TournamentSelection::default())
-                .with_crossover(crossover.clone())
-                .with_mutation(mutation.clone())
-                .with_coding(NQueensCoding)
-                .with_stop_condition(move |best_fitness, _| best_fitness == max_colisions)
-                .with_title("NQueens".to_string());
+        let mut experiment = ExperimentRunner::new(format!("{}Queens.png", dimension), 10, evolution_builder);
 
-            let label = format!("{}Queens", dimension);
-            labels.push(label.clone());
-            let mut experiment = ExperimentRunner::new(label, 10, evolution_builder);
-
-            experiment.run();
-
-            iterations_number.push(experiment.experiment_results.iter().map(|r| r.iterations).collect());
-            dimension *= 2;
-        }
-
-        println!("max iterations: {}", iterations_number.iter().map(|v| v.iter().max().unwrap()).max().unwrap());
-
-        let sum: f32 = iterations_number[0].iter().map(|&v| v as f32).sum();
-        let len = iterations_number[0].len() as f32;
-
-        println!("average iterations: {}", sum / len);
-
-        let quartiles = iterations_number.iter().map(|v| Quartiles::new(v)).collect();
-        plot_boxplot(&quartiles, &labels).unwrap();
+        experiment.run();
     }
 }

@@ -7,7 +7,13 @@ use super::Mutation;
 
 #[derive(Clone)]
 pub struct PermMutation {
-    pub mutation_rate: f64,
+    mutation_rate: f64,
+}
+
+impl PermMutation {
+    pub fn new(mutation_rate: f64) -> Self {
+        PermMutation { mutation_rate }
+    }
 }
 
 impl Default for PermMutation {
