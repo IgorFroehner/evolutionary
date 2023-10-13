@@ -1,5 +1,5 @@
 
-use evolutionary_computing::prelude::*;
+use evolutionary::prelude::*;
 
 mod nqueens_fitness;
 

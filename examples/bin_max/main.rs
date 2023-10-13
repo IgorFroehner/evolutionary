@@ -1,5 +1,5 @@
 
-use evolutionary_computing::prelude::*;
+use evolutionary::prelude::*;
 
 fn f(individual: &Bin) -> f64 {
     let mut sum = 0.;

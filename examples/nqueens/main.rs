@@ -1,5 +1,5 @@
 
-use evolutionary_computing::prelude::*;
+use evolutionary::prelude::*;
 
 #[derive(Clone)]
 struct NQueensFitness {

@@ -1,4 +1,4 @@
-use evolutionary_computing::prelude::*;
+use evolutionary::prelude::*;
 
 use radio_fitness::RadioFitness;
 
