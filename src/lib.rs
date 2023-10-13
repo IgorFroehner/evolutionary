@@ -23,7 +23,6 @@
 //! ```rust
 //! use evolutionary::prelude::*;
 //!
-//!
 //! // First you'll need to code your Fitness function:
 //! fn f(individual: &Bin) -> f64 {
 //!     let mut sum = 0.;
@@ -40,13 +39,14 @@
 //! #[derive(Clone)]
 //! pub struct MaxFitness;
 //!
+//! // To do this you need to implement the Fitness trait.
 //! impl Fitness<Bin> for MaxFitness {
 //!     fn calculate_fitness(&self, individual: &Bin) -> f64 {
 //!         f(individual)
 //!     }
 //! }
 //!
-//! // Then you'll need to create a coding for you individual,
+//! // You'll need to create a Coding for you individual,
 //! // so you can get the response at the end:
 //! #[derive(Clone)]
 //! struct MaxCoding;
@@ -58,7 +58,6 @@
 //!         f(individual)
 //!     }
 //! }
-//!
 //!
 //! // Then you will be able to build a evolution object using the `EvolutionBuiler`
 //! // and setting all the required parameters:
@@ -87,7 +86,6 @@ pub mod config_read;
 pub mod crossover;
 pub mod experiment_runner;
 pub mod fitness;
-pub mod gene_cod;
 pub mod mutation;
 pub mod plot_evolution;
 pub mod population;

@@ -21,23 +21,84 @@ pub struct EvolutionConfig<T: Individual> {
     pub gene_cod: GeneCod,
 }
 
-/// This is the struct used to do the evolution. It has the methods needed to start and iterate
+/// This is the struct that does the evolution magic. It has the methods needed to start and iterate
 /// through the evolution.
+///
+/// # Example:
+///
+/// ```rust
+/// # use evolutionary::prelude::*;
+/// # #[derive(Clone)]
+/// # struct YourFitness;
+/// # impl Fitness<Bin> for YourFitness {
+/// #    fn calculate_fitness(&self, individual: &Bin) -> f64 { 0.0 }
+/// # }
+/// # #[derive(Clone)]
+/// # struct YourCoding;
+/// # impl Coding<Bin> for YourCoding {
+/// #     type Output = f64;
+/// #     fn decode(&self, individual: &Bin) -> Self::Output { 0.0 }
+/// # }
+/// # let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
+/// #     .with_fitness(YourFitness)
+/// #     .with_coding(YourCoding)
+/// #     .with_selection(TournamentSelection::default())
+/// #     .with_crossover(BinCrossover::default())
+/// #     .with_mutation(BinMutation::default())
+/// #     .with_title("Max".to_string())
+/// #     .with_stop_condition(move |_, iterations, _| iterations >= 1000)
+/// #     .build().unwrap();
+/// #
+/// // You can start the evolution with the `start` method:
+/// evolution.start();
+///
+/// // and iterate through the evolution with the `next` method:
+/// evolution.next();
+///
+/// // or you can run it until the stop condition is met with the `run` method:
+/// evolution.run();
+/// ```
 pub struct Evolution<T: Individual, C: Coding<T>> {
-    pub title: String,
-    pub current_population: Vec<T>,
-    pub config: EvolutionConfig<T>,
-    pub fitness: Box<dyn Fitness<T>>,
-    pub selection: Box<dyn Selection<T>>,
-    pub crossover: Box<dyn Crossover<T>>,
-    pub mutation: Box<dyn Mutation<T>>,
-    pub coding: Box<C>,
-    pub elitism: bool,
-    pub stop_condition: StopConditionFn,
+    title: String,
+    current_population: Vec<T>,
+    config: EvolutionConfig<T>,
+    fitness: Box<dyn Fitness<T>>,
+    selection: Box<dyn Selection<T>>,
+    crossover: Box<dyn Crossover<T>>,
+    mutation: Box<dyn Mutation<T>>,
+    coding: Box<C>,
+    elitism: bool,
+    stop_condition: StopConditionFn,
     pub metrics: Metrics,
 }
 
 impl<T: Individual, C: Coding<T>> Evolution<T, C> {
+    pub fn new(
+        title: String,
+        config: EvolutionConfig<T>,
+        fitness: Box<dyn Fitness<T>>,
+        selection: Box<dyn Selection<T>>,
+        crossover: Box<dyn Crossover<T>>,
+        mutation: Box<dyn Mutation<T>>,
+        coding: Box<C>,
+        elitism: bool,
+        stop_condition: StopConditionFn,
+    ) -> Self {
+        Self {
+            title,
+            current_population: Vec::new(),
+            config,
+            fitness,
+            selection,
+            crossover,
+            mutation,
+            coding,
+            elitism,
+            stop_condition,
+            metrics: Metrics::new(),
+        }
+    }
+
     pub fn start(&mut self) {
         self.metrics = Metrics::new();
 
@@ -90,6 +151,8 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
             .record(self.current_best_fitness(), self.current_fitness_average());
     }
 
+    /// This method runs the evolution, generation over generation,
+    /// until the stop condition is met.
     pub fn run(&mut self) {
         self.start();
 

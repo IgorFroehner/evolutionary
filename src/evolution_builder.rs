@@ -16,28 +16,22 @@ use std::sync::Arc;
 /// # Example
 ///
 /// ```
-/// use evolutionary::prelude::*;
-///
+/// # use evolutionary::prelude::*;
 /// # #[derive(Clone)]
 /// # struct YourFitness;
-/// #
 /// # impl Fitness<Bin> for YourFitness {
 /// #    fn calculate_fitness(&self, individual: &Bin) -> f64 {
 /// #        0.0
 /// #    }
 /// # }
-/// #
 /// # #[derive(Clone)]
 /// # struct YourCoding;
-/// #
 /// # impl Coding<Bin> for YourCoding {
 /// #     type Output = f64;
-/// #
 /// #     fn decode(&self, individual: &Bin) -> Self::Output {
 /// #         0.0
 /// #     }
 /// # }
-///
 /// fn main() {
 ///     let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
 ///         .with_fitness(YourFitness)
@@ -176,19 +170,17 @@ impl<T: Individual, C: Coding<T>> EvolutionBuilder<T, C> {
             self.mutation.as_ref().map(|m| m.as_ref()),
             &self.coding,
         ) {
-            Ok(Evolution {
-                config: evolution_config,
-                title: title.clone(),
-                current_population: Vec::new(),
-                fitness: dyn_clone::clone_box(&*f),
-                selection: dyn_clone::clone_box(&*s),
-                crossover: dyn_clone::clone_box(&*x),
-                mutation: dyn_clone::clone_box(&*m),
-                coding: dyn_clone::clone_box(&*c),
-                elitism: self.elitism.unwrap_or(true),
-                stop_condition: Arc::clone(self.stop_condition.as_ref().unwrap()),
-                metrics: Metrics::new(),
-            })
+            Ok(Evolution::new(
+                title.clone(),
+                evolution_config,
+                dyn_clone::clone_box(&*f),
+                dyn_clone::clone_box(&*s),
+                dyn_clone::clone_box(&*x),
+                dyn_clone::clone_box(&*m),
+                dyn_clone::clone_box(&*c),
+                self.elitism.unwrap_or(true),
+                Arc::clone(self.stop_condition.as_ref().unwrap()),
+            ))
         } else {
             Err("Missing required parameters".to_string())
         }
