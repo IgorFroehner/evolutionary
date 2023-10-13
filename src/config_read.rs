@@ -1,7 +1,10 @@
-use std::fs;
 use serde_derive::Deserialize;
+use std::fs;
 
-use crate::{population::{GeneCod, Bin, IntPerm}, evolution::EvolutionConfig};
+use crate::{
+    evolution::EvolutionConfig,
+    population::{Bin, GeneCod, IntPerm},
+};
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct RawConfig {
@@ -41,13 +44,11 @@ pub struct Data {
 
 pub fn read_config(file_name: &str) -> Option<RawConfig> {
     let data: Option<Data> = match fs::read_to_string(file_name) {
-        Ok(contents) => {
-            match toml::from_str(&contents) {
-                Ok(config) => config,
-                Err(error) => {
-                    println!("Failed to parse config file: {}", error);
-                    None
-                },
+        Ok(contents) => match toml::from_str(&contents) {
+            Ok(config) => config,
+            Err(error) => {
+                println!("Failed to parse config file: {}", error);
+                None
             }
         },
         Err(error) => {

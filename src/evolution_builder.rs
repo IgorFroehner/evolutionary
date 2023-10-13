@@ -1,13 +1,14 @@
-use std::sync::Arc;
 use crate::{
+    coding::Coding,
     crossover::Crossover,
-    evolution::{Evolution, StopConditionFn, EvolutionConfig},
+    evolution::{Evolution, EvolutionConfig, StopConditionFn},
     fitness::Fitness,
     mutation::Mutation,
     plot_evolution::Metrics,
     population::{GeneCod, Individual},
-    selection::Selection, coding::Coding,
+    selection::Selection,
 };
+use std::sync::Arc;
 
 /// This is the helper struct to create a new Evolution object. The `fitness`, `selection`,
 /// `crossover`, `mutation` and `stop_condition` and coding are required.
@@ -16,6 +17,26 @@ use crate::{
 ///
 /// ```
 /// use evolutionary::prelude::*;
+///
+/// # #[derive(Clone)]
+/// # struct YourFitness;
+/// #
+/// # impl Fitness<Bin> for YourFitness {
+/// #    fn calculate_fitness(&self, individual: &Bin) -> f64 {
+/// #        0.0
+/// #    }
+/// # }
+/// #
+/// # #[derive(Clone)]
+/// # struct YourCoding;
+/// #
+/// # impl Coding<Bin> for YourCoding {
+/// #     type Output = f64;
+/// #
+/// #     fn decode(&self, individual: &Bin) -> Self::Output {
+/// #         0.0
+/// #     }
+/// # }
 ///
 /// fn main() {
 ///     let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
@@ -112,7 +133,7 @@ impl<T: Individual, C: Coding<T>> EvolutionBuilder<T, C> {
     ///
     /// # Example
     ///
-    /// ```
+    /// ```text
     /// evolution_builder.with_stop_condition(|_, iterations, _| iterations >= 1000)
     /// ```
     ///

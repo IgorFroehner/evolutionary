@@ -1,4 +1,3 @@
-
 use evolutionary::prelude::*;
 
 #[derive(Clone)]
@@ -74,10 +73,13 @@ fn main() {
             .with_crossover(crossover.clone())
             .with_mutation(mutation.clone())
             .with_coding(NQueensCoding)
-            .with_stop_condition(|_best_fitness, _, gens_without_improvement| gens_without_improvement >= 1000)
+            .with_stop_condition(|_best_fitness, _, gens_without_improvement| {
+                gens_without_improvement >= 1000
+            })
             .with_title("NQueens".to_string());
 
-        let mut experiment = ExperimentRunner::new(format!("{}Queens.png", dimension), 10, evolution_builder);
+        let mut experiment =
+            ExperimentRunner::new(format!("{}Queens.png", dimension), 10, evolution_builder);
 
         experiment.run();
     }

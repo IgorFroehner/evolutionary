@@ -1,4 +1,3 @@
-
 use plotters::prelude::*;
 use plotters::style::{RED, WHITE};
 
@@ -18,7 +17,12 @@ pub fn within_range(range: (f64, f64), l: f64, d: f64) -> f64 {
     (range.0 + (a / b) * d).floor()
 }
 
-pub fn plot_chart(best_fitness: &Vec<f64>, average_fitness: &Vec<f64>, path: &String, test_name: &String) -> Result<(), Box<dyn std::error::Error>> {
+pub fn plot_chart(
+    best_fitness: &Vec<f64>,
+    average_fitness: &Vec<f64>,
+    path: &String,
+    test_name: &String,
+) -> Result<(), Box<dyn std::error::Error>> {
     let max = *average_fitness
         .iter()
         .chain(best_fitness)
@@ -81,12 +85,23 @@ pub fn plot_chart(best_fitness: &Vec<f64>, average_fitness: &Vec<f64>, path: &St
     Ok(())
 }
 
-pub fn plot_boxplot(quartiles: &Vec<Quartiles>, labels: &Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn plot_boxplot(
+    quartiles: &Vec<Quartiles>,
+    labels: &Vec<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let root = BitMapBackend::new("boxplot.png", (640, 480)).into_drawing_area();
     root.fill(&WHITE)?;
 
-    let min = quartiles.iter().map(|q| q.values()[0]).min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap();
-    let max = quartiles.iter().map(|q| q.values()[4]).max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap();
+    let min = quartiles
+        .iter()
+        .map(|q| q.values()[0])
+        .min_by(|a, b| a.partial_cmp(b).unwrap())
+        .unwrap();
+    let max = quartiles
+        .iter()
+        .map(|q| q.values()[4])
+        .max_by(|a, b| a.partial_cmp(b).unwrap())
+        .unwrap();
 
     let mut chart = ChartBuilder::on(&root)
         .caption("128 Queens Score", ("sans-serif", 40))
@@ -97,10 +112,11 @@ pub fn plot_boxplot(quartiles: &Vec<Quartiles>, labels: &Vec<String>) -> Result<
 
     chart.configure_mesh().draw()?;
 
-    for (quartile, label) in quartiles.iter().zip(labels.iter())  {
-        chart.draw_series(vec![
-            Boxplot::new_vertical(SegmentValue::CenterOf(label), quartile),
-        ])?;
+    for (quartile, label) in quartiles.iter().zip(labels.iter()) {
+        chart.draw_series(vec![Boxplot::new_vertical(
+            SegmentValue::CenterOf(label),
+            quartile,
+        )])?;
     }
 
     Ok(())

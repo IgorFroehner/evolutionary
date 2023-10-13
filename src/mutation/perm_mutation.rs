@@ -18,7 +18,9 @@ impl PermMutation {
 
 impl Default for PermMutation {
     fn default() -> Self {
-        PermMutation { mutation_rate: 0.05 }
+        PermMutation {
+            mutation_rate: 0.05,
+        }
     }
 }
 

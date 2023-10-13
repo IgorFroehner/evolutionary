@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use std::sync::Arc;
 
 use crate::{
     coding::Coding,
@@ -96,7 +96,8 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
         while !(self.stop_condition)(
             self.current_best_fitness(),
             self.metrics.iterations,
-            self.metrics.gens_without_improvement) {
+            self.metrics.gens_without_improvement,
+        ) {
             self.next();
         }
 
@@ -119,10 +120,22 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
     pub fn time_digest(&self) {
         println!("---------------------------------------------");
         println!("Total time: {:?}", self.metrics.get_elapsed_time());
-        println!("Selection time: {:?}", self.metrics.step_times[&Steps::Selection].2);
-        println!("Crossover time: {:?}", self.metrics.step_times[&Steps::Crossover].2);
-        println!("Mutation time: {:?}", self.metrics.step_times[&Steps::Mutation].2);
-        println!("Fitness time: {:?}", self.metrics.step_times[&Steps::Fitness].2);
+        println!(
+            "Selection time: {:?}",
+            self.metrics.step_times[&Steps::Selection].2
+        );
+        println!(
+            "Crossover time: {:?}",
+            self.metrics.step_times[&Steps::Crossover].2
+        );
+        println!(
+            "Mutation time: {:?}",
+            self.metrics.step_times[&Steps::Mutation].2
+        );
+        println!(
+            "Fitness time: {:?}",
+            self.metrics.step_times[&Steps::Fitness].2
+        );
     }
 
     pub fn current_best(&self) -> &T {
@@ -166,7 +179,11 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
         sum / self.config.population_size as f64
     }
 
-    pub fn plot_chart(&self, path: &String, test_name: &String) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn plot_chart(
+        &self,
+        path: &String,
+        test_name: &String,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         self.metrics.plot_chart(&path, test_name)
     }
 

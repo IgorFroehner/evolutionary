@@ -1,11 +1,10 @@
-
 use evolutionary::prelude::*;
 
 fn f(individual: &Bin) -> f64 {
     let mut sum = 0.;
 
-    for i in 0..individual.0.len() {
-        if individual.0[i] {
+    for i in 0..individual.chromosome.len() {
+        if individual.chromosome[i] {
             sum += 1.;
         }
     }
@@ -42,7 +41,8 @@ fn main() {
         .with_title("Max".to_string())
         .with_stop_condition(move |_, iterations, _| iterations >= 1000)
         .with_coding(MaxCoding)
-        .build().unwrap();
+        .build()
+        .unwrap();
 
     evolution.run();
 

@@ -1,4 +1,4 @@
-use rand::{seq::SliceRandom, thread_rng, random};
+use rand::{random, seq::SliceRandom, thread_rng};
 
 use crate::population::{Bin, Individual, IntPerm};
 
@@ -22,20 +22,24 @@ impl Selection<Bin> for TournamentSelection {
     fn get_mating_pool(&self, initial_population: &Vec<Bin>) -> Vec<Bin> {
         initial_population
             .par_iter()
-            .map_init(|| thread_rng(), |mut rng, _| {
-                let mut tournament = initial_population
-                    .choose_multiple(&mut rng, self.k)
-                    .cloned()
-                    .collect::<Vec<Bin>>();
+            .map_init(
+                || thread_rng(),
+                |mut rng, _| {
+                    let mut tournament = initial_population
+                        .choose_multiple(&mut rng, self.k)
+                        .cloned()
+                        .collect::<Vec<Bin>>();
 
-                tournament.sort_by(|a, b| b.get_fitness().partial_cmp(&a.get_fitness()).unwrap());
+                    tournament
+                        .sort_by(|a, b| b.get_fitness().partial_cmp(&a.get_fitness()).unwrap());
 
-                if random::<f64>() <= self.kp {
-                    tournament[0].clone()
-                } else {
-                    tournament[1].clone()
-                }
-            })
+                    if random::<f64>() <= self.kp {
+                        tournament[0].clone()
+                    } else {
+                        tournament[1].clone()
+                    }
+                },
+            )
             .collect()
     }
 }
@@ -44,20 +48,24 @@ impl Selection<IntPerm> for TournamentSelection {
     fn get_mating_pool(&self, initial_population: &Vec<IntPerm>) -> Vec<IntPerm> {
         initial_population
             .par_iter()
-            .map_init(|| thread_rng(), |mut rng, _| {
-                let mut tournament = initial_population
-                    .choose_multiple(&mut rng, self.k)
-                    .cloned()
-                    .collect::<Vec<IntPerm>>();
+            .map_init(
+                || thread_rng(),
+                |mut rng, _| {
+                    let mut tournament = initial_population
+                        .choose_multiple(&mut rng, self.k)
+                        .cloned()
+                        .collect::<Vec<IntPerm>>();
 
-                tournament.sort_by(|a, b| b.get_fitness().partial_cmp(&a.get_fitness()).unwrap());
+                    tournament
+                        .sort_by(|a, b| b.get_fitness().partial_cmp(&a.get_fitness()).unwrap());
 
-                if random::<f64>() <= self.kp {
-                    tournament[0].clone()
-                } else {
-                    tournament[1].clone()
-                }
-            })
+                    if random::<f64>() <= self.kp {
+                        tournament[0].clone()
+                    } else {
+                        tournament[1].clone()
+                    }
+                },
+            )
             .collect()
     }
 }

@@ -20,6 +20,43 @@ pub enum GeneCod {
     Real,
 }
 
+/// Trait that must be implemented by a struct to be considered a individual.
+///
+/// # Example
+///
+/// ```
+/// use evolutionary::prelude::*;
+///
+/// #[derive(Clone)]
+/// struct MyIndividual {
+///     chromosome: Vec<u64>,
+///     fitness: f64,
+/// }
+///
+/// impl Individual for MyIndividual {
+///    type Gene = u64;
+///    type RangeType = ();
+///
+///     fn generate_member(dimension: u32, _: &Self::RangeType) -> Self {
+///         Self {
+///             chromosome: vec![0; dimension as usize],
+///             fitness: 0.0,
+///        }
+///    }
+///
+///    fn get_vec(&self) -> &Vec<Self::Gene> {
+///       &self.chromosome
+///   }
+///
+///   fn set_fitness(&mut self, fitness: f64) {
+///      self.fitness = fitness;
+///   }
+///
+///  fn get_fitness(&self) -> f64 {
+///     self.fitness
+///     }
+/// }
+/// ```
 pub trait Individual: 'static + Clone + Send + Sync {
     type Gene: Debug + Send + Sync;
     type RangeType: Send + Sync + Clone;

@@ -5,7 +5,7 @@ use crate::population::Bin;
 use super::Crossover;
 
 #[derive(Clone)]
-pub struct  BinCrossover {
+pub struct BinCrossover {
     pub crossover_rate: f64,
     pub n_points: usize,
 }
@@ -38,7 +38,7 @@ impl Crossover<Bin> for BinCrossover {
                 let mut parent1 = population[i * 2].clone();
                 let mut parent2 = population[i * 2 + 1].clone();
 
-                let len = parent1.0.len();
+                let len = parent1.chromosome.len();
 
                 let mut points: Vec<usize> = (0..len).choose_multiple(&mut rng, self.n_points);
 
@@ -47,7 +47,12 @@ impl Crossover<Bin> for BinCrossover {
                 let mut start = 0;
 
                 for point in points {
-                    BinCrossover::swap_sections(&mut parent1.0, &mut parent2.0, start, point);
+                    BinCrossover::swap_sections(
+                        &mut parent1.chromosome,
+                        &mut parent2.chromosome,
+                        start,
+                        point,
+                    );
 
                     start = point;
                 }

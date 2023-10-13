@@ -20,12 +20,15 @@ impl Default for BinMutation {
 
 impl Mutation<Bin> for BinMutation {
     fn mutate(&self, population: &mut Vec<Bin>) {
-        population.par_iter_mut().for_each_init(|| thread_rng(), |rng, member| {
-            for i in 0..member.0.len() {
-                if rng.gen_bool(self.mutation_rate) {
-                    member.0[i] = !member.0[i];
+        population.par_iter_mut().for_each_init(
+            || thread_rng(),
+            |rng, member| {
+                for i in 0..member.chromosome.len() {
+                    if rng.gen_bool(self.mutation_rate) {
+                        member.chromosome[i] = !member.chromosome[i];
+                    }
                 }
-            }
-        });
+            },
+        );
     }
 }

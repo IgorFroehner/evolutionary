@@ -1,5 +1,4 @@
-use evolutionary_computing::fitness::Fitness;
-use evolutionary_computing::population::IntPerm;
+use evolutionary::prelude::*;
 
 #[derive(Clone)]
 pub struct NQueensFitness {

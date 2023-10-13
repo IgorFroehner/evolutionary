@@ -20,16 +20,16 @@
 //!
 //! ## Example:
 //!
-//! First you'll need to code your Fitness function:
-//!
 //! ```rust
 //! use evolutionary::prelude::*;
 //!
+//!
+//! // First you'll need to code your Fitness function:
 //! fn f(individual: &Bin) -> f64 {
 //!     let mut sum = 0.;
 //!
-//!     for i in 0..individual.0.len() {
-//!         if individual.0[i] {
+//!     for i in 0..individual.chromosome.len() {
+//!         if individual.chromosome[i] {
 //!             sum += 1.;
 //!         }
 //!     }
@@ -45,11 +45,9 @@
 //!         f(individual)
 //!     }
 //! }
-//! ```
 //!
-//! Then you'll need to create a coding for you individual so you can get the response at the end:
-//!
-//! ```rust
+//! // Then you'll need to create a coding for you individual,
+//! // so you can get the response at the end:
 //! #[derive(Clone)]
 //! struct MaxCoding;
 //!
@@ -60,11 +58,10 @@
 //!         f(individual)
 //!     }
 //! }
-//! ```
 //!
-//! Then you will be able to build a evolution object using the `EvolutionBuiler` and setting all the required parameters:
 //!
-//! ```rust
+//! // Then you will be able to build a evolution object using the `EvolutionBuiler`
+//! // and setting all the required parameters:
 //! fn main() {
 //!     let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
 //!         .with_fitness(MaxFitness)
@@ -72,48 +69,51 @@
 //!         .with_crossover(BinCrossover::default())
 //!         .with_mutation(BinMutation::default())
 //!         .with_title("Max".to_string())
-//!         .with_stop_condition(move |_, iterations, _| iterations >= 1000)
+//!         .with_stop_condition(move |best_fitness, _, _| best_fitness == 10.0)
 //!         .with_coding(MaxCoding)
 //!         .build().unwrap();
 //!
 //!     evolution.run();
 //!
-//!     println!("Best individual: {:?}", evolution.current_best());
-//!     println!("Best fitness: {}", evolution.current_best_fitness());
+//!     assert_eq!(evolution.current_best().chromosome, vec![true; 10]);
+//!     assert_eq!(evolution.current_best_fitness(), 10.0);
 //! }
 //! ```
 //!
 //! Find this and other examples in the [examples folder](./examples).
 
-pub mod population;
-pub mod gene_cod;
+pub mod coding;
 pub mod config_read;
-pub mod fitness;
-pub mod utils;
-pub mod selection;
 pub mod crossover;
+pub mod experiment_runner;
+pub mod fitness;
+pub mod gene_cod;
 pub mod mutation;
 pub mod plot_evolution;
-pub mod coding;
-pub mod experiment_runner;
+pub mod population;
+pub mod selection;
+pub mod utils;
 
 mod evolution;
 mod evolution_builder;
 
-pub use evolution_builder::EvolutionBuilder;
 pub use evolution::Evolution;
+pub use evolution_builder::EvolutionBuilder;
+
+pub use population::Individual;
 
 // create a prelude for the library
 pub mod prelude {
-    pub use crate::population::{GeneCod, Bin, IntPerm};
-    pub use crate::config_read::{RawConfig, read_config};
-    pub use crate::EvolutionBuilder;
-    pub use crate::Evolution;
-    pub use crate::fitness::Fitness;
-    pub use crate::utils::{convert_bin, within_range};
-    pub use crate::selection::{Selection, RouletteSelection, TournamentSelection};
-    pub use crate::crossover::{Crossover, BinCrossover, PMXCrossover};
-    pub use crate::mutation::{Mutation, BinMutation, PermMutation};
     pub use crate::coding::Coding;
+    pub use crate::config_read::{read_config, RawConfig};
+    pub use crate::crossover::{Crossover, BinCrossover, PMXCrossover, CXCrossover};
     pub use crate::experiment_runner::ExperimentRunner;
+    pub use crate::fitness::Fitness;
+    pub use crate::mutation::{Mutation, BinMutation, PermMutation};
+    pub use crate::population::{Bin, GeneCod, IntPerm};
+    pub use crate::selection::{RouletteSelection, Selection, TournamentSelection};
+    pub use crate::utils::{convert_bin, within_range};
+    pub use crate::Individual;
+    pub use crate::Evolution;
+    pub use crate::EvolutionBuilder;
 }

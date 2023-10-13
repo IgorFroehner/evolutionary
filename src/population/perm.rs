@@ -22,11 +22,11 @@ impl Individual for IntPerm {
         &self.0
     }
 
-    fn get_fitness(&self) -> f64 {
-        self.1
-    }
-
     fn set_fitness(&mut self, fitness: f64) {
         self.1 = fitness;
+    }
+
+    fn get_fitness(&self) -> f64 {
+        self.1
     }
 }

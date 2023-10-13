@@ -1,19 +1,16 @@
-use evolutionary_computing::{
-    population::Bin,
-    utils::{convert_bin, within_range}, fitness::Fitness,
-};
+use evolutionary::prelude::*;
 
-use crate::{RANGE_LX, RANGE_ST, L, C};
+use crate::{C, L, RANGE_LX, RANGE_ST};
 
 pub fn get_st(bin: &Bin) -> f64 {
-    let d = convert_bin(&bin.0[0..5].to_vec());
+    let d = convert_bin(&bin.chromosome[0..5].to_vec());
     let x = within_range(RANGE_ST, L, d);
 
     x.round()
 }
 
 pub fn get_lx(bin: &Bin) -> f64 {
-    let d = convert_bin(&bin.0[5..10].to_vec());
+    let d = convert_bin(&bin.chromosome[5..10].to_vec());
     let x = within_range(RANGE_LX, L, d);
 
     x.round()
@@ -47,9 +44,12 @@ impl Fitness<Bin> for RadioFitness {
 
 #[cfg(test)]
 mod tests {
-    use evolutionary_computing::{population::Bin, fitness::Fitness};
+    use evolutionary_computing::{fitness::Fitness, population::Bin};
 
-    use crate::{radio_fitness::{get_st, get_lx}, RANGE_ST, RANGE_LX};
+    use crate::{
+        radio_fitness::{get_lx, get_st},
+        RANGE_LX, RANGE_ST,
+    };
 
     use super::RadioFitness;
 
@@ -64,8 +64,16 @@ mod tests {
 
     #[test]
     fn lx_is_generated_between_range_lx() {
-        let min_individual = Bin(vec![false, false, false, false, false, false, false, false, false, false], 0);
-        let max_individual = Bin(vec![true, true, true, true, true, true, true, true, true, true], 0);
+        let min_individual = Bin(
+            vec![
+                false, false, false, false, false, false, false, false, false, false,
+            ],
+            0,
+        );
+        let max_individual = Bin(
+            vec![true, true, true, true, true, true, true, true, true, true],
+            0,
+        );
 
         assert_eq!(get_lx(&min_individual), RANGE_LX.0);
         assert_eq!(get_lx(&max_individual), RANGE_LX.1);
@@ -75,8 +83,16 @@ mod tests {
     fn fitness() {
         let fitness = RadioFitness;
 
-        let individual_0 = Bin(vec![true, false, true, true, false, false, true, true, true, true], 0);
-        let individual_1 = Bin(vec![true, false, true, true, true, true, true, true, true, false], 0);
+        let individual_0 = Bin(
+            vec![
+                true, false, true, true, false, false, true, true, true, true,
+            ],
+            0,
+        );
+        let individual_1 = Bin(
+            vec![true, false, true, true, true, true, true, true, true, false],
+            0,
+        );
 
         let st = get_st(&individual_1);
         let lx = get_lx(&individual_1);

@@ -40,7 +40,9 @@ impl Metrics {
     }
 
     pub fn record(&mut self, best_fitness: f64, avg_fitness: f64) {
-        if self.best_fitnesses.len() > 0 && self.best_fitnesses[self.best_fitnesses.len() - 1] == best_fitness {
+        if self.best_fitnesses.len() > 0
+            && self.best_fitnesses[self.best_fitnesses.len() - 1] == best_fitness
+        {
             self.gens_without_improvement += 1;
         } else {
             self.gens_without_improvement = 0;
@@ -78,7 +80,11 @@ impl Metrics {
         self.end_time.duration_since(self.start_time).as_millis()
     }
 
-    pub fn plot_chart(&self, path: &String, test_name: &String) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn plot_chart(
+        &self,
+        path: &String,
+        test_name: &String,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         plot_chart(&self.best_fitnesses, &self.avg_fitnesses, path, test_name)
     }
 }

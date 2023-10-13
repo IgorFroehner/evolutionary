@@ -21,7 +21,7 @@ impl Coding<Bin> for MathFuncCoding {
     type Output = f64;
 
     fn decode(&self, individual: &Bin) -> Self::Output {
-        within_range(RANGE, L, convert_bin(&individual.0))
+        within_range(RANGE, L, convert_bin(&individual.chromosome))
     }
 }
 
@@ -55,7 +55,7 @@ fn main() {
         let best_found = evolution.current_best();
 
         println!("Best found: {:?}", best_found);
-        let x = within_range(RANGE, L, convert_bin(&best_found.0));
+        let x = within_range(RANGE, L, convert_bin(&best_found.chromosome));
         println!("x: {}", x);
         println!("f(x): {}", f(x));
 

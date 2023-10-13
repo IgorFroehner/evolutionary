@@ -1,23 +1,26 @@
-use evolutionary_computing::{population::Bin, fitness::Fitness, utils::{convert_bin, within_range}};
+use evolutionary::prelude::*;
 
-use crate::{f, RANGE, L, C_MAX};
+use crate::{f, C_MAX, L, RANGE};
 
 #[derive(Clone)]
 struct MathFitnessMin;
 
 impl MathFitnessMin {
     fn get_x(&self, bin: &Bin) -> f64 {
-        let d = convert_bin(&bin.0);
+        let d = convert_bin(&bin.chromosome);
 
         within_range(RANGE, L, d)
     }
 }
 
 impl Fitness<Bin> for MathFitnessMin {
-    fn calculate_fitness(&self, individual:  &Bin) -> f64 {
+    fn calculate_fitness(&self, individual: &Bin) -> f64 {
         let x = self.get_x(individual);
 
-        if f(x) < C_MAX { C_MAX - f(x) }
-        else { 0. }
+        if f(x) < C_MAX {
+            C_MAX - f(x)
+        } else {
+            0.
+        }
     }
 }

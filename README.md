@@ -26,7 +26,7 @@ As well you can code your own selection, crossover or mutation and use it on the
 First you'll need to code your Fitness function:
 
 ```rust
-use evolutionary_computing::prelude::*;
+use evolutionary::prelude::*; 
 
 fn f(individual: &Bin) -> f64 {
     let mut sum = 0.;
