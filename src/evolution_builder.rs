@@ -111,10 +111,10 @@ impl<T: Individual, C: Coding<T>> EvolutionBuilder<T, C> {
         let evolution_config = self.evolution_config.clone().ok_or("No config provided")?;
 
         if let (Some(f), Some(s), Some(x), Some(m), Some(c)) = (
-            self.fitness.as_ref().map(|f| f.as_ref().clone()),
-            self.selection.as_ref().map(|s| s.as_ref().clone()),
-            self.crossover.as_ref().map(|c| c.as_ref().clone()),
-            self.mutation.as_ref().map(|m| m.as_ref().clone()),
+            self.fitness.as_ref().map(|f| f.as_ref()),
+            self.selection.as_ref().map(|s| s.as_ref()),
+            self.crossover.as_ref().map(|c| c.as_ref()),
+            self.mutation.as_ref().map(|m| m.as_ref()),
             &self.coding,
         ) {
             Ok(Evolution {

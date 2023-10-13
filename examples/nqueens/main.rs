@@ -1,15 +1,5 @@
 
-use evolutionary_computing::{
-    crossover::PMXCrossover,
-    evolution_builder::EvolutionBuilder,
-    fitness::Fitness,
-    config_read::read_config,
-    mutation::PermMutation,
-    population::{GeneCod, IntPerm},
-    coding::Coding,
-};
-use evolutionary_computing::experiment_runner::ExperimentRunner;
-use evolutionary_computing::selection::TournamentSelection;
+use evolutionary_computing::prelude::*;
 
 #[derive(Clone)]
 struct NQueensFitness {

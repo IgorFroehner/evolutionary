@@ -1,11 +1,5 @@
 
-use evolutionary_computing::{population::Bin, fitness::Fitness};
-use evolutionary_computing::coding::Coding;
-use evolutionary_computing::crossover::BinCrossover;
-use evolutionary_computing::evolution_builder::EvolutionBuilder;
-use evolutionary_computing::mutation::BinMutation;
-use evolutionary_computing::population::GeneCod;
-use evolutionary_computing::selection::TournamentSelection;
+use evolutionary_computing::prelude::*;
 
 fn f(individual: &Bin) -> f64 {
     let mut sum = 0.;

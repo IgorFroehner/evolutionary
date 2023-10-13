@@ -1,12 +1,5 @@
-use evolutionary_computing::{
-    config_read::{read_config, RawConfig},
-    crossover::BinCrossover,
-    evolution_builder::EvolutionBuilder,
-    mutation::BinMutation,
-    population::{GeneCod, Bin},
-    selection::RouletteSelection,
-    utils::{convert_bin, within_range}, coding::Coding,
-};
+use evolutionary_computing::prelude::*;
+
 use fitness_max::MathFitnessMax;
 
 mod fitness_max;

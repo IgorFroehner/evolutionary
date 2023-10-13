@@ -6,15 +6,15 @@ Currently, it supports coding in `Binary`, `Real`, `Permuted Integers`, `Integer
 It also has built in implementation of the following genetic operators:
 
 - Selection:
-  - Roulette Wheel
-  - Tournament
+  - [Roulette Wheel](./src/selection/roulette_selection.rs)
+  - [Tournament](./src/selection/tournament.rs)
 - Crossover:
-  - Multiple Point Crossover (MPX) (Binary) 
-  - Cycle Crossover (CX) (Permuted)
-  - Partially Mapped Crossover (PMX) (Permuted)
+  - [Multiple Point Crossover (MPX) (Binary)](./src/crossover/bin_crossover.rs) 
+  - [Partially Mapped Crossover (PMX) (Permuted)](./src/crossover/pmx_crossover.rs)
+  - [Cycle Crossover (CX) (Permuted)](./src/crossover/cx_crossover.rs)
 - Mutation:
-  - Bit Flip (Binary)
-  - Swap (Permuted)
+  - [Bit Flip (Binary)](./src/mutation/bin_mutation.rs)
+  - [Swap (Permuted)](./src/mutation/perm_mutation.rs)
 
 As well you can code your own selection, crossover or mutation and use it on the `EvolutionBuilder`.
 
@@ -23,6 +23,8 @@ As well you can code your own selection, crossover or mutation and use it on the
 First you'll need to code your Fitness function:
 
 ```rust
+use evolutionary_computing::prelude::*;
+
 fn f(individual: &Bin) -> f64 {
     let mut sum = 0.;
 
@@ -80,3 +82,5 @@ fn main() {
     println!("Best fitness: {}", evolution.current_best_fitness());
 }
 ```
+
+Find this and other examples in the [examples folder](./examples).
