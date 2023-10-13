@@ -52,7 +52,7 @@ fn main() {
             .with_crossover(BinCrossover::default())
             .with_mutation(BinMutation::default())
             .with_title("Math Function".to_string())
-            .with_stop_condition(move |_, iterations| iterations >= runs as u32)
+            .with_stop_condition(move |_, iterations, _| iterations >= runs as u32)
             .with_coding(MathFuncCoding)
             .build()
             .unwrap();
@@ -66,6 +66,6 @@ fn main() {
         println!("x: {}", x);
         println!("f(x): {}", f(x));
 
-        evolution.plot_chart().unwrap();
+        // evolution.plot_chart().unwrap();
     }
 }

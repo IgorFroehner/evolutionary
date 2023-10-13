@@ -14,6 +14,7 @@ pub struct Metrics {
     pub best_fitnesses: Vec<f64>,
     pub avg_fitnesses: Vec<f64>,
     pub iterations: u32,
+    pub gens_without_improvement: u32,
     start_time: Instant,
     end_time: Instant,
     pub step_times: HashMap<Steps, (bool, Instant, u128)>,
@@ -31,15 +32,23 @@ impl Metrics {
             best_fitnesses: Vec::new(),
             avg_fitnesses: Vec::new(),
             iterations: 0,
+            gens_without_improvement: 0,
             start_time: Instant::now(),
             end_time: Instant::now(),
-            step_times: step_times,
+            step_times,
         }
     }
 
     pub fn record(&mut self, best_fitness: f64, avg_fitness: f64) {
+        if self.best_fitnesses.len() > 0 && self.best_fitnesses[self.best_fitnesses.len() - 1] == best_fitness {
+            self.gens_without_improvement += 1;
+        } else {
+            self.gens_without_improvement = 0;
+        }
+
         self.best_fitnesses.push(best_fitness);
         self.avg_fitnesses.push(avg_fitness);
+
         self.iterations += 1;
     }
 

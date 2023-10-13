@@ -1,5 +1,5 @@
 [config]
-runs = 2000
+runs = 10000
 gene_cod = 'IntPerm'
 population_size = 30
 dimension = 128

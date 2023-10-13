@@ -82,7 +82,7 @@ impl<T: Individual, C: Coding<T>> EvolutionBuilder<T, C> {
         self
     }
 
-    pub fn with_stop_condition<F: Fn(f64, u32) -> bool + 'static + Send + Sync>(
+    pub fn with_stop_condition<F: Fn(f64, u32, u32) -> bool + 'static + Send + Sync>(
         mut self,
         f: F,
     ) -> Self {

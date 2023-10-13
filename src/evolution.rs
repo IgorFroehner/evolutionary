@@ -11,7 +11,7 @@ use crate::{
     selection::Selection,
 };
 
-pub type StopConditionFn = Arc<dyn Fn(f64, u32) -> bool + Send + Sync>;
+pub type StopConditionFn = Arc<dyn Fn(f64, u32, u32) -> bool + Send + Sync>;
 
 #[derive(Clone)]
 pub struct EvolutionConfig<T: Individual> {
@@ -91,7 +91,10 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
     pub fn run(&mut self) {
         self.start();
 
-        while !(self.stop_condition)(self.current_best_fitness(), self.metrics.iterations) {
+        while !(self.stop_condition)(
+            self.current_best_fitness(),
+            self.metrics.iterations,
+            self.metrics.gens_without_improvement) {
             self.next();
         }
 

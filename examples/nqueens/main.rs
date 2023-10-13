@@ -1,4 +1,4 @@
-use plotters::prelude::Quartiles;
+
 use evolutionary_computing::{
     crossover::PMXCrossover,
     evolution_builder::EvolutionBuilder,
@@ -6,12 +6,10 @@ use evolutionary_computing::{
     config_read::read_config,
     mutation::PermMutation,
     population::{GeneCod, IntPerm},
-    selection::RouletteSelection, coding::Coding,
+    coding::Coding,
 };
 use evolutionary_computing::experiment_runner::ExperimentRunner;
-use evolutionary_computing::plot_evolution::Steps::Selection;
 use evolutionary_computing::selection::TournamentSelection;
-use evolutionary_computing::utils::plot_boxplot;
 
 #[derive(Clone)]
 struct NQueensFitness {
@@ -71,9 +69,7 @@ fn main() {
             crossover_rate: 1.0,
         };
 
-        let mutation = PermMutation {
-            mutation_rate: 0.02,
-        };
+        let mutation = PermMutation::new(0.02);
 
         let max_colisions = config.dimension as f64 * (config.dimension as f64 - 1.0);
 
@@ -88,7 +84,7 @@ fn main() {
             .with_crossover(crossover.clone())
             .with_mutation(mutation.clone())
             .with_coding(NQueensCoding)
-            .with_stop_condition(move |best_fitness, _| best_fitness == max_colisions)
+            .with_stop_condition(|_best_fitness, _, gens_without_improvement| gens_without_improvement >= 1000)
             .with_title("NQueens".to_string());
 
         let mut experiment = ExperimentRunner::new(format!("{}Queens.png", dimension), 10, evolution_builder);

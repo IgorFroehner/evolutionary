@@ -2,6 +2,14 @@
 name = "evolutionary-computing"
 version = "0.1.0"
 edition = "2021"
+include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
+homepage = "https://github.com/IgorFroehner/evolutionary-computing"
+readme = "README.md"
+description = "Evolutionary Computing Algorithms in Rust"
+repository = "https://github.com/IgorFroehner/evolutionary-computing"
+keywords = ["framework", "genetic", "optimization", "evolutionary", "search"]
+categories = ["algorithms", "science"]
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -13,11 +21,3 @@ serde_derive = "1.0.183"
 rayon = "1.7"
 dyn-clone = "1.0.13"
 plotters = "0.3.5"
-
-# Enable a small amount of optimization in debug mode
-[profile.dev]
-opt-level = 1
-
-# Enable high optimizations for dependencies (incl. Bevy), but not for our code:
-[profile.dev.package."*"]
-opt-level = 3

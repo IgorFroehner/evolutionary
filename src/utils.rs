@@ -89,7 +89,7 @@ pub fn plot_boxplot(quartiles: &Vec<Quartiles>, labels: &Vec<String>) -> Result<
     let max = quartiles.iter().map(|q| q.values()[4]).max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap();
 
     let mut chart = ChartBuilder::on(&root)
-        .caption("NQueens Generations Per Size", ("sans-serif", 40))
+        .caption("128 Queens Score", ("sans-serif", 40))
         .margin(10)
         .x_label_area_size(30)
         .y_label_area_size(40)

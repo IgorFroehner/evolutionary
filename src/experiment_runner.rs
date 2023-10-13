@@ -15,14 +15,15 @@ pub struct ExperimentRunner<T: Individual, C: Coding<T>> {
     name: String,
     evolution_builder: EvolutionBuilder<T, C>,
     experiment_metrics: ExperimentMetrics,
-    pub experiment_results: Vec<ExperimentResult>
+    pub experiment_results: Vec<ExperimentResult<T>>
 }
 
-pub struct ExperimentResult {
+pub struct ExperimentResult<T> {
     total_time: u128,
     average_fitnesses: Vec<f64>,
     best_fitnesses: Vec<f64>,
     pub iterations: u32,
+    pub best_found: T,
 }
 
 impl<T: Individual, C: Coding<T>> ExperimentRunner<T, C> {
@@ -42,7 +43,7 @@ impl<T: Individual, C: Coding<T>> ExperimentRunner<T, C> {
         let path = format!("results/{}", self.name);
         let _ = create_dir_all(path.clone());
 
-        let results: Vec<ExperimentResult> = (0..self.runs).into_iter().map(|_| {
+        let results: Vec<ExperimentResult<T>> = (0..self.runs).into_par_iter().map(|_| {
             let mut evolution = self.evolution_builder.build().unwrap();
 
             let start_time = Instant::now();
@@ -54,14 +55,16 @@ impl<T: Individual, C: Coding<T>> ExperimentRunner<T, C> {
             // let test_path = &format!("{}/{} run_{}.png", &path, self.name, run);
             // evolution.plot_chart(&test_path, &self.name).unwrap();
 
-            let average_fitnesses = evolution.metrics.avg_fitnesses;
-            let best_fitnesses = evolution.metrics.best_fitnesses;
+            let average_fitnesses = evolution.metrics.avg_fitnesses.clone();
+            let best_fitnesses = evolution.metrics.best_fitnesses.clone();
+            let best_found = evolution.current_best().clone();
 
             ExperimentResult {
                 average_fitnesses,
                 best_fitnesses,
                 total_time,
                 iterations: evolution.metrics.iterations,
+                best_found,
             }
         }).collect();
 
