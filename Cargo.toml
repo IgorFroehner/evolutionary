@@ -15,7 +15,7 @@ license = "MIT"
 
 [dependencies]
 rand = "0.8.5"
-toml = "0.7.6"
+toml = "0.8.2"
 serde = "1.0.136"
 serde_derive = "1.0.183"
 rayon = "1.7"

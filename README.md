@@ -1,5 +1,8 @@
 # Evolutionary
 
+[![Crates.io](https://img.shields.io/crates/v/evolutionary.svg)](https://crates.io/crates/evolutionary)
+[![Documentation](https://docs.rs/evolutionary/badge.svg)](https://docs.rs/evolutionary)
+
 A fully extensible Rust framework for using paralyzed genetic algorithms to solve problems. 
 
 Currently, it supports coding in `Binary`, `Real`, `Permuted Integers`, `Integers` and any other coding you may want to implement. 

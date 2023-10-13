@@ -9,9 +9,29 @@ use crate::{
     selection::Selection, coding::Coding,
 };
 
+/// This is the helper struct to create a new Evolution object. The `fitness`, `selection`,
+/// `crossover`, `mutation` and `stop_condition` and coding are required.
+///
+/// # Example
+///
+/// ```
+/// use evolutionary::prelude::*;
+///
+/// fn main() {
+///     let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
+///         .with_fitness(YourFitness)
+///         .with_coding(YourCoding)
+///         .with_selection(TournamentSelection::default())
+///         .with_crossover(BinCrossover::default())
+///         .with_mutation(BinMutation::default())
+///         .with_title("Max".to_string())
+///         .with_stop_condition(move |_, iterations, _| iterations >= 1000)
+///         .build().unwrap();
+/// }
+/// ```
 pub struct EvolutionBuilder<T: Individual, C: Coding<T>> {
     title: Option<String>,
-    pub evolution_config: Option<EvolutionConfig<T>>,
+    evolution_config: Option<EvolutionConfig<T>>,
     fitness: Option<Box<dyn Fitness<T>>>,
     selection: Option<Box<dyn Selection<T>>>,
     crossover: Option<Box<dyn Crossover<T>>>,
@@ -48,6 +68,7 @@ impl<T: Individual, C: Coding<T>> EvolutionBuilder<T, C> {
         }
     }
 
+    /// Helper method to create a new EvolutionBuilder from a EvolutionConfig.
     pub fn from_config(config: EvolutionConfig<T>) -> Self {
         Self {
             title: None,
@@ -62,26 +83,39 @@ impl<T: Individual, C: Coding<T>> EvolutionBuilder<T, C> {
         }
     }
 
+    /// Sets the fitness function. Receives a struct that implements the Fitness trait.
     pub fn with_fitness<F: Fitness<T>>(mut self, f: F) -> Self {
         self.fitness = Some(Box::new(f));
         self
     }
 
+    /// Sets the selection operator. Receives a struct that implements the Selection trait.
     pub fn with_selection<S: Selection<T>>(mut self, s: S) -> Self {
         self.selection = Some(Box::new(s));
         self
     }
 
+    /// Sets the crossover operator. Receives a struct that implements the Crossover trait.
     pub fn with_crossover<X: Crossover<T>>(mut self, c: X) -> Self {
         self.crossover = Some(Box::new(c));
         self
     }
 
+    /// Sets the mutation operator. Receives a struct that implements the Mutation trait.
     pub fn with_mutation<M: Mutation<T>>(mut self, m: M) -> Self {
         self.mutation = Some(Box::new(m));
         self
     }
 
+    /// Sets the stop condition. Receives a closure that receives the best fitness, the current
+    /// iteration and the number of generations without improvement and returns a boolean.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// evolution_builder.with_stop_condition(|_, iterations, _| iterations >= 1000)
+    /// ```
+    ///
     pub fn with_stop_condition<F: Fn(f64, u32, u32) -> bool + 'static + Send + Sync>(
         mut self,
         f: F,
@@ -90,16 +124,20 @@ impl<T: Individual, C: Coding<T>> EvolutionBuilder<T, C> {
         self
     }
 
+    /// Sets the Coding of the evolution and will be used in the future as the way to calculate
+    /// the fitness. Receives a struct that implements the `Coding` trait.
     pub fn with_coding(mut self, c: C) -> Self {
         self.coding = Some(Box::new(c));
         self
     }
 
+    /// Whether or not to use elitism. Defaults to `true`.
     pub fn with_elitism(mut self, elitism: bool) -> Self {
         self.elitism = Some(elitism);
         self
     }
 
+    /// Sets the title of the evolution to use when plotting. Defaults to `""`.
     pub fn with_title(mut self, title: String) -> Self {
         self.title = Some(title);
         self

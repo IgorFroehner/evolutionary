@@ -21,6 +21,8 @@ pub struct EvolutionConfig<T: Individual> {
     pub gene_cod: GeneCod,
 }
 
+/// This is the struct used to do the evolution. It has the methods needed to start and iterate
+/// through the evolution.
 pub struct Evolution<T: Individual, C: Coding<T>> {
     pub title: String,
     pub current_population: Vec<T>,
