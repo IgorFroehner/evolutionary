@@ -29,13 +29,13 @@ impl Mutation<IntPerm> for PermMutation {
         population.par_iter_mut().for_each_init(
             || thread_rng(),
             |rng, individual| {
-                for j in 0..individual.0.len() {
+                for j in 0..individual.chromosome.len() {
                     if rng.gen_bool(self.mutation_rate) {
-                        let swap_with = rng.gen_range(0..individual.0.len());
+                        let swap_with = rng.gen_range(0..individual.chromosome.len());
 
-                        let temp = individual.0[j];
-                        individual.0[j] = individual.0[swap_with];
-                        individual.0[swap_with] = temp;
+                        let temp = individual.chromosome[j];
+                        individual.chromosome[j] = individual.chromosome[swap_with];
+                        individual.chromosome[swap_with] = temp;
                     }
                 }
             },

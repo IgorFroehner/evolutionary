@@ -7,7 +7,7 @@
 //!
 //! - Selection:
 //!   - [Roulette Wheel](./src/selection/roulette_selection.rs)
-//!   - [Tournament](./src/selection/tournament.rs)
+//!   - [Tournament](./src/selection/tournament_selection)
 //! - Crossover:
 //!   - [Multiple Point Crossover (MPX) (Binary)](./src/crossover/bin_crossover.rs)
 //!   - [Partially Mapped Crossover (PMX) (Permuted)](./src/crossover/pmx_crossover.rs)
@@ -81,37 +81,40 @@
 //!
 //! Find this and other examples in the [examples folder](./examples).
 
-pub mod coding;
 pub mod config_read;
-pub mod crossover;
 pub mod experiment_runner;
-pub mod fitness;
-pub mod mutation;
 pub mod plot_evolution;
-pub mod population;
-pub mod selection;
-pub mod utils;
 
+mod coding;
+mod crossover;
 mod evolution;
 mod evolution_builder;
+mod fitness;
+mod mutation;
+mod population;
+mod selection;
+pub mod utils;
 
+pub use coding::Coding;
+pub use crossover::Crossover;
 pub use evolution::Evolution;
 pub use evolution_builder::EvolutionBuilder;
-
+pub use fitness::Fitness;
+pub use mutation::Mutation;
 pub use population::Individual;
+pub use selection::Selection;
 
-// create a prelude for the library
 pub mod prelude {
     pub use crate::coding::Coding;
     pub use crate::config_read::{read_config, RawConfig};
-    pub use crate::crossover::{Crossover, BinCrossover, PMXCrossover, CXCrossover};
+    pub use crate::crossover::{BinCrossover, CXCrossover, Crossover, PMXCrossover};
     pub use crate::experiment_runner::ExperimentRunner;
     pub use crate::fitness::Fitness;
-    pub use crate::mutation::{Mutation, BinMutation, PermMutation};
+    pub use crate::mutation::{BinMutation, Mutation, PermMutation};
     pub use crate::population::{Bin, GeneCod, IntPerm};
     pub use crate::selection::{RouletteSelection, Selection, TournamentSelection};
     pub use crate::utils::{convert_bin, within_range};
-    pub use crate::Individual;
     pub use crate::Evolution;
     pub use crate::EvolutionBuilder;
+    pub use crate::Individual;
 }

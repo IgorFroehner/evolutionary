@@ -58,7 +58,7 @@ impl Crossover<IntPerm> for CXCrossover {
                     let mut parent1 = chunk[0].clone();
                     let mut parent2 = chunk[1].clone();
 
-                    CXCrossover::cx_crossover(&mut parent1.0, &mut parent2.0);
+                    CXCrossover::cx_crossover(&mut parent1.chromosome, &mut parent2.chromosome);
 
                     chunk[0] = parent1;
                     chunk[1] = parent2;

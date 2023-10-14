@@ -5,9 +5,9 @@ struct NQueensFitness {
     c_max: f64,
 }
 
-fn count_colisions(individual: &IntPerm) -> f64 {
+fn count_collisions(individual: &IntPerm) -> f64 {
     let mut cont = 0.0;
-    let genes = &individual.0;
+    let genes = &individual.chromosome;
     for i in 0..genes.len() {
         for j in 0..genes.len() {
             if i == j {
@@ -27,7 +27,7 @@ fn count_colisions(individual: &IntPerm) -> f64 {
 
 impl Fitness<IntPerm> for NQueensFitness {
     fn calculate_fitness(&self, individual: &IntPerm) -> f64 {
-        let cont = count_colisions(individual);
+        let cont = count_collisions(individual);
 
         if cont < self.c_max {
             self.c_max - cont
@@ -44,7 +44,7 @@ impl Coding<IntPerm> for NQueensCoding {
     type Output = f64;
 
     fn decode(&self, individual: &IntPerm) -> Self::Output {
-        count_colisions(individual)
+        count_collisions(individual)
     }
 }
 
@@ -66,21 +66,24 @@ fn main() {
             c_max: max_colisions,
         };
 
-        let dimension = config.dimension;
         let evolution_builder = EvolutionBuilder::from_config(config.into())
             .with_fitness(fitness)
             .with_selection(TournamentSelection::default())
             .with_crossover(crossover.clone())
             .with_mutation(mutation.clone())
             .with_coding(NQueensCoding)
-            .with_stop_condition(|_best_fitness, _, gens_without_improvement| {
-                gens_without_improvement >= 1000
+            .with_stop_condition(move |best_fitness, _, _| {
+                best_fitness == max_colisions
             })
             .with_title("NQueens".to_string());
 
-        let mut experiment =
-            ExperimentRunner::new(format!("{}Queens.png", dimension), 10, evolution_builder);
+        let mut evolution = evolution_builder.build().unwrap();
 
-        experiment.run();
+        evolution.run();
+
+        evolution.plot_chart(&"NQueens.png".to_string(), &"NQueens Problem".to_string()).unwrap();
+
+        println!("Best individual: {:?}", evolution.current_best());
+        println!("Best fitness: {}", evolution.current_best_fitness());
     }
 }

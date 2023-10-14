@@ -10,7 +10,7 @@ It also has built in implementation of the following genetic operators:
 
 - Selection:
   - [Roulette Wheel](./src/selection/roulette_selection.rs)
-  - [Tournament](./src/selection/tournament.rs)
+  - [Tournament](./src/selection/tournament_selection)
 - Crossover:
   - [Multiple Point Crossover (MPX) (Binary)](./src/crossover/bin_crossover.rs) 
   - [Partially Mapped Crossover (PMX) (Permuted)](./src/crossover/pmx_crossover.rs)
@@ -86,4 +86,10 @@ fn main() {
 }
 ```
 
-Find this and other examples in the [examples folder](./examples).
+Find this and other examples in the [examples folder](./examples):
+* [Max](./examples/bin_max)
+* [NQueens](./examples/nqueens)
+* [Valued NQueens](./examples/nqueens_valued)
+* [Math Function](./examples/math_func)
+* [Maximize Radios Factory Profit](./examples/radios)
+* [Maze](./examples/maze)

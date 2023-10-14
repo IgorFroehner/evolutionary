@@ -65,12 +65,12 @@ impl Crossover<IntPerm> for PMXCrossover {
                     let mut parent1 = chunk[0].clone();
                     let mut parent2 = chunk[1].clone();
 
-                    let len = parent1.0.len();
+                    let len = parent1.chromosome.len();
 
                     let start = rng.gen_range(0..len);
                     let end = rng.gen_range(start..len);
 
-                    PMXCrossover::pmx_matching(&mut parent1.0, &mut parent2.0, start, end);
+                    PMXCrossover::pmx_matching(&mut parent1.chromosome, &mut parent2.chromosome, start, end);
 
                     chunk[0] = parent1;
                     chunk[1] = parent2;

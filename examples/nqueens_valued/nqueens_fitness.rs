@@ -37,7 +37,7 @@ impl NQueensFitness {
     }
 
     pub fn count_collisions(&self, individual: &IntPerm) -> f64 {
-        let genes = &individual.0;
+        let genes = &individual.chromosome;
 
         let mut colisions = 0.0;
         for i in 0..self.dimension {
@@ -58,7 +58,7 @@ impl NQueensFitness {
     }
 
     pub fn score(&self, individual: &IntPerm) -> f64 {
-        let genes = &individual.0;
+        let genes = &individual.chromosome;
 
         let mut total_score = 0.0;
         for i in 0..self.dimension {

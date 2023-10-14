@@ -2,4 +2,4 @@
 runs = 2000
 gene_cod = 'IntPerm'
 population_size = 30
-dimension = 128
+dimension = 8
