@@ -65,7 +65,7 @@
 //!     let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
 //!         .with_fitness(MaxFitness)
 //!         .with_selection(TournamentSelection::default())
-//!         .with_crossover(BinCrossover::default())
+//!         .with_crossover(NPointsCrossover::default())
 //!         .with_mutation(BinMutation::default())
 //!         .with_title("Max".to_string())
 //!         .with_stop_condition(move |best_fitness, _, _| best_fitness == 10.0)
@@ -107,7 +107,7 @@ pub use selection::Selection;
 pub mod prelude {
     pub use crate::coding::Coding;
     pub use crate::config_read::{read_config, RawConfig};
-    pub use crate::crossover::{BinCrossover, CXCrossover, Crossover, PMXCrossover};
+    pub use crate::crossover::{NPointsCrossover, CXCrossover, Crossover, PMXCrossover, UniformCrossover};
     pub use crate::experiment_runner::ExperimentRunner;
     pub use crate::fitness::Fitness;
     pub use crate::mutation::{BinMutation, Mutation, PermMutation};

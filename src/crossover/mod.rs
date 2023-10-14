@@ -2,13 +2,11 @@ use crate::population::Individual;
 
 use dyn_clone::DynClone;
 
-mod bin_crossover;
-mod cx_crossover;
-mod pmx_crossover;
+mod binary;
+mod permuted;
 
-pub use bin_crossover::*;
-pub use cx_crossover::*;
-pub use pmx_crossover::*;
+pub use binary::*;
+pub use permuted::*;
 
 /// Trait that defines the crossover method. You can implement your own crossover method by
 /// implementing this trait.

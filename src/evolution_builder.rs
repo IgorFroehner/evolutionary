@@ -4,7 +4,6 @@ use crate::{
     evolution::{Evolution, EvolutionConfig, StopConditionFn},
     fitness::Fitness,
     mutation::Mutation,
-    plot_evolution::Metrics,
     population::{GeneCod, Individual},
     selection::Selection,
 };
@@ -37,7 +36,7 @@ use std::sync::Arc;
 ///         .with_fitness(YourFitness)
 ///         .with_coding(YourCoding)
 ///         .with_selection(TournamentSelection::default())
-///         .with_crossover(BinCrossover::default())
+///         .with_crossover(NPointsCrossover::default())
 ///         .with_mutation(BinMutation::default())
 ///         .with_title("Max".to_string())
 ///         .with_stop_condition(move |_, iterations, _| iterations >= 1000)

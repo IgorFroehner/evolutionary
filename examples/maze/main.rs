@@ -1,4 +1,7 @@
 use evolutionary::prelude::*;
+use maze::MAZE;
+
+mod maze;
 
 #[derive(Clone)]
 pub struct MazeFitness {
@@ -26,5 +29,12 @@ impl Coding<Bin> for MazeCoding {
 }
 
 fn main() {
+    let maze = MAZE;
 
+    let n = maze.len();
+    let m = maze[0].len();
+
+    let max_score = (n * m) as f64;
+
+    
 }

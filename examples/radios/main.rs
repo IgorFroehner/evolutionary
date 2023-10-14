@@ -34,7 +34,7 @@ fn main() {
     if let GeneCod::Bin = config.gene_cod {
         let fitness = RadioFitness;
 
-        let crossover = BinCrossover {
+        let crossover = NPointsCrossover {
             crossover_rate: 0.8,
             n_points: 1,
         };

@@ -42,7 +42,7 @@ fn main() {
         let mut evolution = EvolutionBuilder::new(population_size, dimension, gene_cod, ())
             .with_fitness(max_fitness)
             .with_selection(RouletteSelection::default())
-            .with_crossover(BinCrossover::default())
+            .with_crossover(NPointsCrossover::default())
             .with_mutation(BinMutation::default())
             .with_title("Math Function".to_string())
             .with_stop_condition(move |_, iterations, _| iterations >= runs as u32)

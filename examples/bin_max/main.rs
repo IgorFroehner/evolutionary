@@ -36,7 +36,7 @@ fn main() {
     let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
         .with_fitness(MaxFitness)
         .with_selection(TournamentSelection::default())
-        .with_crossover(BinCrossover::default())
+        .with_crossover(UniformCrossover::default())
         .with_mutation(BinMutation::default())
         .with_title("Max".to_string())
         .with_stop_condition(move |_, iterations, _| iterations >= 1000)

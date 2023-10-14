@@ -91,4 +91,15 @@ mod tests {
         assert_eq!(parent1, vec![9, 2, 3, 1, 5, 4, 7, 8, 6, 10]);
         assert_eq!(parent2, vec![1, 8, 2, 4, 7, 6, 5, 10, 9, 3]);
     }
+
+    #[test]
+    fn test_cx_crossover_full_cycle() {
+        let mut parent1 = vec![1, 2, 3, 4, 5];
+        let mut parent2 = vec![3, 5, 2, 1, 4];
+
+        super::CXCrossover::cx_crossover(&mut parent1, &mut parent2);
+
+        assert_eq!(parent1, vec![1, 2, 3, 4, 5]);
+        assert_eq!(parent2, vec![3, 5, 2, 1, 4]);
+    }
 }
