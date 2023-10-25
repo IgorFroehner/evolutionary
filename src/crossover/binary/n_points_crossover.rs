@@ -5,9 +5,16 @@ use crate::population::Bin;
 
 use super::Crossover;
 
+/// # N Points Crossover
+/// 
+/// Generates `n` random points to "crossover" the sections between the parents. This can be 
+/// a `Single-Point Crossover` using `n_points = 1` a `Two-Points Crossover` using `n_points = 2`
+/// or any number you'd like.
 #[derive(Clone)]
 pub struct NPointsCrossover {
+    /// The probability of crossover occurring.
     pub crossover_rate: f64,
+    /// The number of points to crossover.
     pub n_points: usize,
 }
 

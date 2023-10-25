@@ -58,11 +58,12 @@ pub enum GeneCod {
 /// }
 /// ```
 pub trait Individual: 'static + Clone + Send + Sync {
-    type Gene: Debug + Send + Sync;
+    type Gene: Debug + Send + Sync + Copy;
     type RangeType: Send + Sync + Clone;
 
     fn generate_member(dimension: u32, b: &Self::RangeType) -> Self;
-    fn get_vec(&self) -> &Vec<Self::Gene>;
+    fn get_chromossome(&self) -> &Vec<Self::Gene>;
+    fn set_gene(&mut self, index: usize, value: Self::Gene);
     fn set_fitness(&mut self, fitness: f64);
     fn get_fitness(&self) -> f64;
 }

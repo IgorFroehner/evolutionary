@@ -107,12 +107,12 @@ pub use selection::Selection;
 pub mod prelude {
     pub use crate::coding::Coding;
     pub use crate::config_read::{read_config, RawConfig};
-    pub use crate::crossover::{NPointsCrossover, CXCrossover, Crossover, PMXCrossover, UniformCrossover};
+    pub use crate::crossover::*;
     pub use crate::experiment_runner::ExperimentRunner;
     pub use crate::fitness::Fitness;
-    pub use crate::mutation::{BinMutation, Mutation, PermMutation};
-    pub use crate::population::{Bin, GeneCod, IntPerm};
-    pub use crate::selection::{RouletteSelection, Selection, TournamentSelection};
+    pub use crate::mutation::*;
+    pub use crate::population::{GeneCod, Bin, IntPerm, Real, Int};
+    pub use crate::selection::*;
     pub use crate::utils::{convert_bin, within_range};
     pub use crate::Evolution;
     pub use crate::EvolutionBuilder;

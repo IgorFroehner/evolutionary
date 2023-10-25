@@ -20,8 +20,12 @@ impl Individual for Int {
         )
     }
 
-    fn get_vec(&self) -> &Vec<Self::Gene> {
+    fn get_chromossome(&self) -> &Vec<Self::Gene> {
         &self.0
+    }
+
+    fn set_gene(&mut self, index: usize, value: Self::Gene) {
+        self.0[index] = value;
     }
 
     fn set_fitness(&mut self, fitness: f64) {

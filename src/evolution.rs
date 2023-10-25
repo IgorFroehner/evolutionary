@@ -178,6 +178,15 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
         println!("Iteration: {}", self.metrics.iterations);
         println!("Best Fitness: {}", self.current_best_fitness());
         println!("Current Average: {}", self.current_fitness_average());
+        println!("---------------------------------------------");
+        println!("Population: ");
+        for individual in &self.current_population {
+            println!(
+                "Fitness: {} - Chromosome: {:?}",
+                individual.get_fitness(),
+                individual.get_chromossome()
+            );
+        }
     }
 
     pub fn time_digest(&self) {
@@ -244,10 +253,10 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
 
     pub fn plot_chart(
         &self,
-        path: &String,
-        test_name: &String,
+        path: impl Into<String>,
+        test_name: impl Into<String>,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        self.metrics.plot_chart(&path, test_name)
+        self.metrics.plot_chart(&path.into(), &test_name.into())
     }
 
     fn cmp_by_fitness(a: &T, b: &T) -> std::cmp::Ordering {

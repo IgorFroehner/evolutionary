@@ -24,8 +24,12 @@ impl Individual for IntPerm {
         }
     }
 
-    fn get_vec(&self) -> &Vec<Self::Gene> {
+    fn get_chromossome(&self) -> &Vec<Self::Gene> {
         &self.chromosome
+    }
+
+    fn set_gene(&mut self, index: usize, value: Self::Gene) {
+        self.chromosome[index] = value;
     }
 
     fn set_fitness(&mut self, fitness: f64) {

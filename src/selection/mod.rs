@@ -4,9 +4,11 @@ use crate::population::Individual;
 
 mod roulette_selection;
 mod tournament_selection;
+mod do_nothing_selection;
 
 pub use roulette_selection::*;
 pub use tournament_selection::*;
+pub use do_nothing_selection::*;
 
 /// Trait that defines the selection method. You can implement your own selection method by
 /// implementing this trait.

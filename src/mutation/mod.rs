@@ -4,9 +4,16 @@ use crate::population::Individual;
 
 mod bin_mutation;
 mod perm_mutation;
+mod do_nothing_mutation;
+mod swap_mutation;
+
+mod real;
 
 pub use bin_mutation::*;
 pub use perm_mutation::*;
+pub use do_nothing_mutation::*;
+pub use swap_mutation::*;
+pub use real::*;
 
 /// Trait that defines the mutation method. You can implement your own mutation method by
 /// implementing this trait.

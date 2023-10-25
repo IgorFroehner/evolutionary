@@ -5,8 +5,14 @@ use dyn_clone::DynClone;
 mod binary;
 mod permuted;
 
+mod do_nothing_crossover;
+mod uniform_crossover;
+
 pub use binary::*;
 pub use permuted::*;
+
+pub use do_nothing_crossover::*;
+pub use uniform_crossover::*;
 
 /// Trait that defines the crossover method. You can implement your own crossover method by
 /// implementing this trait.

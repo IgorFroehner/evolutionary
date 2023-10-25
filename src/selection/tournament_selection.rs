@@ -1,6 +1,6 @@
 use rand::{random, seq::SliceRandom, thread_rng};
 
-use crate::population::{Bin, Individual, IntPerm};
+use crate::population::Individual;
 
 use super::Selection;
 
