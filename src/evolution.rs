@@ -59,14 +59,14 @@ pub struct EvolutionConfig<T: Individual> {
 /// evolution.run();
 /// ```
 pub struct Evolution<T: Individual, C: Coding<T>> {
-    title: String,
+    _title: String,
     current_population: Vec<T>,
     config: EvolutionConfig<T>,
     fitness: Box<dyn Fitness<T>>,
     selection: Box<dyn Selection<T>>,
     crossover: Box<dyn Crossover<T>>,
     mutation: Box<dyn Mutation<T>>,
-    coding: Box<C>,
+    _coding: Box<C>,
     elitism: bool,
     stop_condition: StopConditionFn,
     pub metrics: Metrics,
@@ -85,14 +85,14 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
         stop_condition: StopConditionFn,
     ) -> Self {
         Self {
-            title,
+            _title: title,
             current_population: Vec::new(),
             config,
             fitness,
             selection,
             crossover,
             mutation,
-            coding,
+            _coding: coding,
             elitism,
             stop_condition,
             metrics: Metrics::new(),

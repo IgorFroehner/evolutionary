@@ -10,7 +10,7 @@ struct NQueensCoding;
 impl Coding<IntPerm> for NQueensCoding {
     type Output = f64;
 
-    fn decode(&self, individual: &IntPerm) -> Self::Output {
+    fn decode(&self, _individual: &IntPerm) -> Self::Output {
         // count_colisions(individual)
         0.0
     }
@@ -20,8 +20,6 @@ fn main() {
     let file_name = "examples/nqueens_valued/Config.toml";
 
     let config = read_config(file_name).expect("Failed to read config file");
-
-    let runs_array = vec![100, 500, 1000, 10000, 100000];
 
     if let GeneCod::IntPerm = config.gene_cod {
         let crossover = PMXCrossover {
@@ -34,7 +32,6 @@ fn main() {
         let fitness = NQueensFitness::new(dimension as usize);
 
         let dimension = config.dimension;
-        let runs = config.runs;
 
         let evolution_builder = EvolutionBuilder::from_config(config.clone().into())
             .with_fitness(fitness.clone())
@@ -74,14 +71,5 @@ fn main() {
         println!("Average max iterations: {}", avg_max_iterations);
         println!("Average score: {}", avg_score);
         println!("Count with collisions: {}", count_with_collisions);
-
-        // let quartiles = Quartiles::new(&best_scores);
-        // plot_boxplot(&vec![quartiles], &vec![format!("{}Queens", dimension)]).unwrap();
-
-        // for result in experiment.experiment_results {
-        //     println!("Best individual: {:?}", result.best_found);
-        //     println!("Best individual collisions: {}", fitness.count_collisions(&result.best_found));
-        //     println!("Best individual score: {}", fitness.score(&result.best_found));
-        // }
     }
 }

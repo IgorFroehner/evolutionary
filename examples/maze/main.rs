@@ -1,7 +1,6 @@
 use colored::Colorize;
 use evolutionary::prelude::*;
 use maze::MAZE;
-use rayon::vec;
 
 mod maze;
 
