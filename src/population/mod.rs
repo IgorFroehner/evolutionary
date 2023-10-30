@@ -34,26 +34,30 @@ pub enum GeneCod {
 /// }
 ///
 /// impl Individual for MyIndividual {
-///    type Gene = u64;
-///    type RangeType = ();
+///     type Gene = u64;
+///     type RangeType = ();
 ///
 ///     fn generate_member(dimension: u32, _: &Self::RangeType) -> Self {
 ///         Self {
 ///             chromosome: vec![0; dimension as usize],
 ///             fitness: 0.0,
-///        }
-///    }
+///         }
+///     }
 ///
-///    fn get_vec(&self) -> &Vec<Self::Gene> {
-///       &self.chromosome
-///   }
+///     fn get_chromosome(&self) -> &Vec<Self::Gene> {
+///         &self.chromosome
+///     }
 ///
-///   fn set_fitness(&mut self, fitness: f64) {
-///      self.fitness = fitness;
-///   }
+///     fn set_gene(&mut self, index: usize, value: Self::Gene) {
+///         self.chromosome[index] = value;
+///     }
 ///
-///  fn get_fitness(&self) -> f64 {
-///     self.fitness
+///     fn set_fitness(&mut self, fitness: f64) {
+///         self.fitness = fitness;
+///     }
+///
+///     fn get_fitness(&self) -> f64 {
+///         self.fitness
 ///     }
 /// }
 /// ```
@@ -62,7 +66,7 @@ pub trait Individual: 'static + Clone + Send + Sync {
     type RangeType: Send + Sync + Clone;
 
     fn generate_member(dimension: u32, b: &Self::RangeType) -> Self;
-    fn get_chromossome(&self) -> &Vec<Self::Gene>;
+    fn get_chromosome(&self) -> &Vec<Self::Gene>;
     fn set_gene(&mut self, index: usize, value: Self::Gene);
     fn set_fitness(&mut self, fitness: f64);
     fn get_fitness(&self) -> f64;

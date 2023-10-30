@@ -58,7 +58,7 @@ fn main() {
             crossover_rate: 1.0,
         };
 
-        let mutation = PermMutation::new(0.02);
+        let mutation = SwapMutation::new(0.02);
 
         let max_colisions = config.dimension as f64 * (config.dimension as f64 - 1.0);
 

@@ -184,7 +184,7 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
             println!(
                 "Fitness: {} - Chromosome: {:?}",
                 individual.get_fitness(),
-                individual.get_chromossome()
+                individual.get_chromosome()
             );
         }
     }

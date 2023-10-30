@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use rand::{thread_rng, Rng};
 use rayon::{prelude::ParallelIterator, slice::ParallelSliceMut};
 
-use crate::population::IntPerm;
+use crate::{population::IntPerm, Individual};
 
 use super::Crossover;
 

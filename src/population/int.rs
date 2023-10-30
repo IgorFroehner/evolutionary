@@ -20,7 +20,7 @@ impl Individual for Int {
         )
     }
 
-    fn get_chromossome(&self) -> &Vec<Self::Gene> {
+    fn get_chromosome(&self) -> &Vec<Self::Gene> {
         &self.0
     }
 

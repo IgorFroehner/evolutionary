@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use rand::{thread_rng, Rng};
 use rayon::{prelude::ParallelIterator, slice::ParallelSliceMut};
 
-use crate::population::IntPerm;
+use crate::{population::IntPerm, Individual};
 
 use super::Crossover;
 
@@ -65,12 +65,17 @@ impl Crossover<IntPerm> for PMXCrossover {
                     let mut parent1 = chunk[0].clone();
                     let mut parent2 = chunk[1].clone();
 
-                    let len = parent1.chromosome.len();
+                    let len = parent1.get_chromosome().len();
 
                     let start = rng.gen_range(0..len);
                     let end = rng.gen_range(start..len);
 
-                    PMXCrossover::pmx_matching(&mut parent1.chromosome, &mut parent2.chromosome, start, end);
+                    PMXCrossover::pmx_matching(
+                        &mut parent1.chromosome,
+                        &mut parent2.chromosome,
+                        start,
+                        end,
+                    );
 
                     chunk[0] = parent1;
                     chunk[1] = parent2;

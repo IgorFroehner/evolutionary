@@ -21,7 +21,7 @@ impl Individual for Bin {
         }
     }
 
-    fn get_chromossome(&self) -> &Vec<Self::Gene> {
+    fn get_chromosome(&self) -> &Vec<Self::Gene> {
         &self.chromosome
     }
 

@@ -116,4 +116,22 @@ impl<T: Individual, C: Coding<T>> ExperimentRunner<T, C> {
             Duration::from_nanos(self.experiment_metrics.total_time as u64 / self.runs as u64)
         );
     }
+
+    pub fn experiment_digest(&self) {
+        let avg_max_iterations = self
+            .experiment_results
+            .iter()
+            .map(|result| result.iterations as f64)
+            .sum::<f64>()
+            / self.experiment_results.len() as f64;
+        let avg_score = self
+            .experiment_results
+            .iter()
+            .map(|result| result.best_found.get_fitness())
+            .sum::<f64>()
+            / self.experiment_results.len() as f64;
+
+        println!("Average max iterations: {}", avg_max_iterations);
+        println!("Average score: {}", avg_score);
+    }
 }

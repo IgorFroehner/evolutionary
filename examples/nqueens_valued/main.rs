@@ -26,7 +26,7 @@ fn main() {
             crossover_rate: 0.8,
         };
 
-        let mutation = PermMutation::new(0.02);
+        let mutation = SwapMutation::new(0.02);
         let dimension = config.dimension;
 
         let fitness = NQueensFitness::new(dimension as usize);

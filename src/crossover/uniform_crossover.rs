@@ -36,12 +36,12 @@ impl<T: Individual> Crossover<T> for UniformCrossover {
                     let mut parent1 = chunk[0].clone();
                     let mut parent2 = chunk[1].clone();
 
-                    let len = parent1.get_chromossome().len();
+                    let len = parent1.get_chromosome().len();
 
                     for i in 0..len {
                         if distribution.sample(&mut rng) {
-                            let temp = parent1.get_chromossome()[i];
-                            parent1.set_gene(i, parent2.get_chromossome()[i]);
+                            let temp = parent1.get_chromosome()[i];
+                            parent1.set_gene(i, parent2.get_chromosome()[i]);
                             parent2.set_gene(i, temp);
                         }
                     }
