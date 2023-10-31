@@ -217,6 +217,14 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
             .unwrap()
     }
 
+    pub fn current_population(&self) -> Vec<T> {
+        let mut current_population = self.current_population.clone();
+
+        current_population.sort_by(|a, b| Self::cmp_by_fitness(a, b));
+
+        current_population
+    }
+
     fn process_fitness(&mut self) {
         self.metrics.step_start(Steps::Fitness);
 
