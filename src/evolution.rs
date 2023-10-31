@@ -156,11 +156,7 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
     pub fn run(&mut self) {
         self.start();
 
-        while !(self.stop_condition)(
-            self.current_best_fitness(),
-            self.metrics.iterations,
-            self.metrics.gens_without_improvement,
-        ) {
+        while !self.reached_stop_condition() {
             self.next();
         }
 
@@ -223,6 +219,14 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
         current_population.sort_by(|a, b| Self::cmp_by_fitness(a, b));
 
         current_population
+    }
+
+    pub fn reached_stop_condition(&self) -> bool {
+        (self.stop_condition)(
+            self.current_best_fitness(),
+            self.metrics.iterations,
+            self.metrics.gens_without_improvement,
+        )
     }
 
     fn process_fitness(&mut self) {
