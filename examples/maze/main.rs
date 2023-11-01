@@ -1,6 +1,6 @@
-use colored::Colorize;
+
 use evolutionary::prelude::*;
-use maze::MAZE;
+use maze::read_matrix_from_file;
 use maze_fitness::MazeFitness;
 
 mod maze;
@@ -18,11 +18,7 @@ impl Coding<Real> for MazeCoding {
 }
 
 fn main() {
-    let mut maze = MAZE
-        .clone()
-        .into_iter()
-        .map(|row| row.into_iter().map(|cell| cell as i32).collect::<Vec<_>>())
-        .collect::<Vec<_>>();
+    let mut maze = read_matrix_from_file("examples/maze/maze1.in");
 
     let mut start = (0, 0);
     let mut end = (0, 0);
@@ -47,7 +43,7 @@ fn main() {
         toss_probability: 0.3,
     };
 
-    let mut evolution_builder = EvolutionBuilder::new(50, 100, GeneCod::Real, (0.0, 1.0))
+    let evolution_builder = EvolutionBuilder::new(50, 500, GeneCod::Real, (0.0, 1.0))
         .with_fitness(MazeFitness {
             max_dist: max_score,
             start,
@@ -58,35 +54,41 @@ fn main() {
         .with_crossover(crossover)
         .with_mutation(SubstituteMutation::default())
         .with_title("Maze".to_string())
-        .with_stop_condition(move |best_fitness, _, _|  best_fitness == max_score - 1.0)
+        // .with_stop_condition(move |best_fitness, _, _| best_fitness == max_score)
+        .with_stop_condition(|_, iterations, _| iterations >= 10_000)
         .with_coding(MazeCoding);
 
-    let mut experiment = ExperimentRunner::new("Maze 1".to_string(), 100, evolution_builder);
+    let mut experiment = ExperimentRunner::new("Maze 2 - Caminho Minimo".to_string(), 30, evolution_builder);
 
     experiment.run();
 
     experiment.experiment_digest();
 
-    // evolution.plot_chart("maze.png", "Maze").unwrap();
+    let best_founds = experiment
+        .experiment_results
+        .iter()
+        .map(|result| result.best_found.clone())
+        .collect::<Vec<Real>>();
 
-    // let best = evolution.current_best();
+    let mut paths_size = vec![];
+    for best_found in &best_founds {
+        let path = MazeFitness::calculate_path(&best_found.chromosome, &maze, start);
 
-    // let path = calculate_path(best.get_chromosome(), &maze, start);
+        if *path.last().unwrap() != end {
+            continue;
+        }
+        paths_size.push(path.len());
+    }
 
-    // for i in path {
-    //     maze[i.0][i.1] = 4;
-    // }
+    let mean = paths_size.iter().sum::<usize>() as f64 / paths_size.len() as f64;
+    let variance = paths_size
+        .iter()
+        .map(|x| (*x as f64 - mean).powi(2))
+        .sum::<f64>()
+        / paths_size.len() as f64;
+    let std_dev = variance.sqrt();
 
-    // for i in 0..maze.len() {
-    //     for j in 0..maze[0].len() {
-    //         if maze[i][j] == 1 {
-    //             print!("{} ", format!("{}", maze[i][j]).black());
-    //         } else if maze[i][j] == 0 {
-    //             print!("{} ", maze[i][j]);
-    //         } else {
-    //             print!("{} ", format!("{}", maze[i][j]).red());
-    //         }
-    //     }
-    //     println!();
-    // }
+    println!("Not found paths: {}", best_founds.len() - paths_size.len());
+    println!("Mean: {}", mean);
+    println!("Variance: {}", std_dev);
 }

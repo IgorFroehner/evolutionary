@@ -109,12 +109,6 @@ impl<T: Individual, C: Coding<T>> ExperimentRunner<T, C> {
             &self.name,
         )
         .unwrap();
-
-        println!(
-            "Average time for {}: {:?}",
-            self.name,
-            Duration::from_nanos(self.experiment_metrics.total_time as u64 / self.runs as u64)
-        );
     }
 
     pub fn experiment_digest(&self) {
@@ -130,8 +124,19 @@ impl<T: Individual, C: Coding<T>> ExperimentRunner<T, C> {
             .map(|result| result.best_found.get_fitness())
             .sum::<f64>()
             / self.experiment_results.len() as f64;
+        let max_max_iterations = self
+            .experiment_results
+            .iter()
+            .map(|result| result.iterations)
+            .max()
+            .unwrap();
 
+        println!(
+            "Average time for {}: {:?}",
+            self.name,
+            Duration::from_nanos(self.experiment_metrics.total_time as u64 / self.runs as u64)
+        );
         println!("Average max iterations: {}", avg_max_iterations);
-        println!("Average score: {}", avg_score);
+        println!("Max max iterations: {}", max_max_iterations);
     }
 }

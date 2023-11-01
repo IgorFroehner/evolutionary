@@ -9,7 +9,7 @@ pub struct MazeFitness {
 }
 
 impl MazeFitness {
-    fn calculate_path(vec: &Vec<f64>, maze: &Vec<Vec<i32>>, start: (usize, usize)) -> Vec<(usize, usize)> {
+    pub fn calculate_path(vec: &Vec<f64>, maze: &Vec<Vec<i32>>, start: (usize, usize)) -> Vec<(usize, usize)> {
         let mut x = start.0;
         let mut y = start.1;
     
@@ -22,16 +22,16 @@ impl MazeFitness {
     
             vis[x][y] = true;
             let mut possibilities = vec![];
-            if x as i32 + 1 < maze.len() as i32 && maze[x + 1][y] == 1 && !vis[x + 1][y] {
+            if x as i32 + 1 < maze.len() as i32 && maze[x + 1][y] != 0 && !vis[x + 1][y] {
                 possibilities.push((x + 1, y));
             }
-            if x as i32 - 1 > 0 && maze[x - 1][y] == 1 && !vis[x - 1][y] {
+            if x as i32 - 1 > 0 && maze[x - 1][y] != 0 && !vis[x - 1][y] {
                 possibilities.push((x - 1, y));
             }
-            if y as i32 - 1 > 0 && maze[x][y - 1] == 1 && !vis[x][y - 1] {
+            if y as i32 - 1 > 0 && maze[x][y - 1] != 0 && !vis[x][y - 1] {
                 possibilities.push((x, y - 1));
             }
-            if y as i32 + 1 < maze[0].len() as i32 && maze[x][y + 1] == 1 && !vis[x][y + 1] {
+            if y as i32 + 1 < maze[0].len() as i32 && maze[x][y + 1] != 0 && !vis[x][y + 1] {
                 possibilities.push((x, y + 1));
             }
     
@@ -61,6 +61,6 @@ impl Fitness<Real> for MazeFitness {
 
         let dist = ((*x as i32 - self.end.0 as i32).abs() + (*y as i32 - self.end.1 as i32).abs()) as f64;
 
-        self.max_dist - dist
+        self.max_dist - dist - (path.len() as f64 / individual.chromosome.len() as f64)
     }
 }
