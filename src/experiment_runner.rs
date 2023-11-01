@@ -118,7 +118,7 @@ impl<T: Individual, C: Coding<T>> ExperimentRunner<T, C> {
             .map(|result| result.iterations as f64)
             .sum::<f64>()
             / self.experiment_results.len() as f64;
-        let avg_score = self
+        let _avg_score = self
             .experiment_results
             .iter()
             .map(|result| result.best_found.get_fitness())

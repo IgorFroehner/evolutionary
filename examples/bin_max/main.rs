@@ -37,7 +37,7 @@ fn main() {
         .with_fitness(MaxFitness)
         .with_selection(TournamentSelection::default())
         .with_crossover(UniformCrossover::default())
-        .with_mutation(BinMutation::default())
+        .with_mutation(BitSwapMutation::default())
         .with_title("Max".to_string())
         .with_stop_condition(move |_, iterations, _| iterations >= 1000)
         .with_coding(MaxCoding)

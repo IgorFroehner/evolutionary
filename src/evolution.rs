@@ -44,7 +44,7 @@ pub struct EvolutionConfig<T: Individual> {
 /// #     .with_coding(YourCoding)
 /// #     .with_selection(TournamentSelection::default())
 /// #     .with_crossover(NPointsCrossover::default())
-/// #     .with_mutation(BinMutation::default())
+/// #     .with_mutation(BitSwapMutation::default())
 /// #     .with_title("Max".to_string())
 /// #     .with_stop_condition(move |_, iterations, _| iterations >= 1000)
 /// #     .build().unwrap();
@@ -99,6 +99,8 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
         }
     }
 
+    /// Starts the evolution, generating the initial population and calculating the
+    /// fitness of each individual.
     pub fn start(&mut self) {
         self.metrics = Metrics::new();
 
@@ -119,6 +121,8 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
             .record(self.current_best_fitness(), self.current_fitness_average());
     }
 
+    /// This method runs one generation of the evolution.
+    /// It selects the mating pool, crossover, mutate and calculates the fitness of the new population.
     pub fn next(&mut self) {
         let mut current_best_solution = None;
         if self.elitism {
@@ -151,8 +155,7 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
             .record(self.current_best_fitness(), self.current_fitness_average());
     }
 
-    /// This method runs the evolution, generation over generation,
-    /// until the stop condition is met.
+    /// This method runs the evolution, generation over generation, until the stop condition is met.
     pub fn run(&mut self) {
         self.start();
 
@@ -163,6 +166,7 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
         self.metrics.end_clock();
     }
 
+    /// Returns the fitness calculated of a given individual based on its index.
     pub fn calculate_individual_fitness(&self, index: usize) -> f64 {
         let individual = &self.current_population[index];
 
@@ -206,6 +210,7 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
         );
     }
 
+    /// Returns the best individual of the current population.
     pub fn current_best(&self) -> &T {
         self.current_population
             .par_iter()
@@ -213,6 +218,7 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
             .unwrap()
     }
 
+    /// Returns a copy of the current population sorted by fitness.
     pub fn current_population(&self) -> Vec<T> {
         let mut current_population = self.current_population.clone();
 
@@ -221,6 +227,7 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
         current_population
     }
 
+    /// Returns if the stop condition was already met for this evolution object.
     pub fn reached_stop_condition(&self) -> bool {
         (self.stop_condition)(
             self.current_best_fitness(),
@@ -245,10 +252,6 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
         self.metrics.step_end(Steps::Fitness);
     }
 
-    fn calculate_fitness(&self, individual: &T) -> f64 {
-        self.fitness.calculate_fitness(&individual)
-    }
-
     pub fn current_best_fitness(&self) -> f64 {
         self.current_best().get_fitness()
     }
@@ -269,6 +272,10 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
         test_name: impl Into<String>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.metrics.plot_chart(&path.into(), &test_name.into())
+    }
+
+    fn calculate_fitness(&self, individual: &T) -> f64 {
+        self.fitness.calculate_fitness(&individual)
     }
 
     fn cmp_by_fitness(a: &T, b: &T) -> std::cmp::Ordering {

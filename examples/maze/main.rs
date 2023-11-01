@@ -18,7 +18,7 @@ impl Coding<Real> for MazeCoding {
 }
 
 fn main() {
-    let mut maze = read_matrix_from_file("examples/maze/maze1.in");
+    let maze = read_matrix_from_file("examples/maze/maze1.in");
 
     let mut start = (0, 0);
     let mut end = (0, 0);

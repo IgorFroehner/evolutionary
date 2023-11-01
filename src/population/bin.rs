@@ -8,6 +8,15 @@ pub struct Bin {
     fitness: f64,
 }
 
+impl Bin {
+    pub fn new(chromosome: Vec<bool>) -> Self {
+        Self {
+            chromosome,
+            fitness: 0.0,
+        }
+    }
+}
+
 impl Individual for Bin {
     type Gene = bool;
     type RangeType = ();

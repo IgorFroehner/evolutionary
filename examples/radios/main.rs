@@ -39,7 +39,7 @@ fn main() {
             n_points: 1,
         };
 
-        let mutation = BinMutation {
+        let mutation = BitSwapMutation {
             mutation_rate: 0.05,
         };
 

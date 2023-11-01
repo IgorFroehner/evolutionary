@@ -1,7 +1,7 @@
 use rand::{thread_rng, Rng};
 use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
 
-use crate::{Individual, Mutation, population::Real};
+use crate::{Individual, Mutation};
 
 #[derive(Clone)]
 pub struct SwapMutation {
