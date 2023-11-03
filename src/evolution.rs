@@ -1,12 +1,13 @@
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::sync::Arc;
+use std::time::Duration;
 
 use crate::{
     coding::Coding,
     crossover::Crossover,
     fitness::Fitness,
     mutation::Mutation,
-    plot_evolution::{Metrics, Steps},
+    metrics::{Metrics, Steps},
     population::{GeneCod, Individual},
     selection::Selection,
 };
@@ -129,11 +130,17 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
             current_best_solution = Some(self.current_best().clone());
         }
 
+        self.metrics.step_start(Steps::Selection);
         let mut mating_pool = self.selection.get_mating_pool(&self.current_population);
+        self.metrics.step_end(Steps::Selection);
 
+        self.metrics.step_start(Steps::Crossover);
         self.crossover.crossover(&mut mating_pool);
+        self.metrics.step_end(Steps::Crossover);
 
+        self.metrics.step_start(Steps::Mutation);
         self.mutation.mutate(&mut mating_pool);
+        self.metrics.step_end(Steps::Mutation);
 
         self.current_population = mating_pool;
 
@@ -191,22 +198,23 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
 
     pub fn time_digest(&self) {
         println!("---------------------------------------------");
-        println!("Total time: {:?}", self.metrics.get_elapsed_time());
+        println!("Total time: {:?}", Duration::from_nanos(self.metrics.total_time() as u64));
         println!(
             "Selection time: {:?}",
-            self.metrics.step_times[&Steps::Selection].2
+            self.metrics.step_time(Steps::Selection).unwrap()
         );
         println!(
             "Crossover time: {:?}",
-            self.metrics.step_times[&Steps::Crossover].2
+            self.metrics.step_time(Steps::Crossover).unwrap()
+
         );
         println!(
             "Mutation time: {:?}",
-            self.metrics.step_times[&Steps::Mutation].2
+            self.metrics.step_time(Steps::Mutation).unwrap()
         );
         println!(
             "Fitness time: {:?}",
-            self.metrics.step_times[&Steps::Fitness].2
+            self.metrics.step_time(Steps::Fitness).unwrap()
         );
     }
 

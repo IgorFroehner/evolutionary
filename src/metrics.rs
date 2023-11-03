@@ -1,8 +1,9 @@
 use std::{collections::HashMap, time::Instant};
+use std::time::Duration;
 
 use crate::utils::plot_chart;
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum Steps {
     Selection,
     Crossover,
@@ -64,20 +65,30 @@ impl Metrics {
 
     pub fn step_start(&mut self, step: Steps) {
         self.step_times.get_mut(&step).map(|a| {
+            if a.0 {
+                panic!("Step already started");
+            }
             a.0 = true;
-            a.1 = Instant::now()
+            a.1 = Instant::now();
         });
     }
 
     pub fn step_end(&mut self, step: Steps) {
         self.step_times.get_mut(&step).map(|a| {
+            if !a.0 {
+                panic!("Step not started");
+            }
             a.0 = false;
-            a.2 += a.1.elapsed().as_millis()
+            a.2 += a.1.elapsed().as_nanos();
         });
     }
 
-    pub fn get_elapsed_time(&self) -> u128 {
-        self.end_time.duration_since(self.start_time).as_millis()
+    pub fn step_time(&self, step: Steps) -> Option<Duration> {
+        self.step_times.get(&step).map(|a| Duration::from_nanos(a.2 as u64))
+    }
+
+    pub fn total_time(&self) -> u128 {
+        self.end_time.duration_since(self.start_time).as_nanos()
     }
 
     pub fn plot_chart(

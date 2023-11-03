@@ -81,9 +81,10 @@ fn main() {
 
         evolution.run();
 
-        evolution.plot_chart(&"NQueens.png".to_string(), &"NQueens Problem".to_string()).unwrap();
+        evolution.plot_chart("NQueens.png", "NQueens Problem").unwrap();
 
         println!("Best individual: {:?}", evolution.current_best());
         println!("Best fitness: {}", evolution.current_best_fitness());
+        evolution.time_digest();
     }
 }

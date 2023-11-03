@@ -83,7 +83,7 @@
 
 pub mod config_read;
 pub mod experiment_runner;
-pub mod plot_evolution;
+pub mod metrics;
 
 mod coding;
 mod crossover;

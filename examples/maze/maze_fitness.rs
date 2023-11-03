@@ -61,6 +61,6 @@ impl Fitness<Real> for MazeFitness {
 
         let dist = ((*x as i32 - self.end.0 as i32).abs() + (*y as i32 - self.end.1 as i32).abs()) as f64;
 
-        self.max_dist - dist - (path.len() as f64 / individual.chromosome.len() as f64)
+        self.max_dist - dist // - (path.len() as f64 / individual.chromosome.len() as f64)
     }
 }

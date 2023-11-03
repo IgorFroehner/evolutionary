@@ -48,4 +48,7 @@ fn main() {
 
     println!("Best individual: {:?}", evolution.current_best());
     println!("Best fitness: {}", evolution.current_best_fitness());
+
+    evolution.population_digest();
+    evolution.time_digest();
 }
