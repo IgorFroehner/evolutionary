@@ -20,13 +20,14 @@ impl Default for DeltaMutation {
 
 impl Mutation<Real> for DeltaMutation {
     fn mutate(&self, population: &mut Vec<Real>) {
-        population
-            .par_iter_mut()
-            .for_each_init(|| thread_rng(), |rng, individual| {
+        population.par_iter_mut().for_each_init(
+            || thread_rng(),
+            |rng, individual| {
                 for j in 0..individual.chromosome.len() {
                     if rng.gen_bool(self.mutation_rate) {
-                        let delta = rng.gen_range(individual.range.0..individual.range.1) / self.frac;
-                        
+                        let delta =
+                            rng.gen_range(individual.range.0..individual.range.1) / self.frac;
+
                         let result = if rng.gen_bool(0.5) {
                             individual.chromosome[j] - delta
                         } else {
@@ -42,6 +43,7 @@ impl Mutation<Real> for DeltaMutation {
                         }
                     }
                 }
-            });
+            },
+        );
     }
 }

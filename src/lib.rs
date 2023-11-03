@@ -111,7 +111,7 @@ pub mod prelude {
     pub use crate::experiment_runner::ExperimentRunner;
     pub use crate::fitness::Fitness;
     pub use crate::mutation::*;
-    pub use crate::population::{GeneCod, Bin, IntPerm, Real, Int};
+    pub use crate::population::{Bin, GeneCod, Int, IntPerm, Real};
     pub use crate::selection::*;
     pub use crate::utils::{convert_bin, within_range};
     pub use crate::Evolution;

@@ -6,8 +6,8 @@ use crate::population::Bin;
 use super::Crossover;
 
 /// # N Points Crossover
-/// 
-/// Generates `n` random points to "crossover" the sections between the parents. This can be 
+///
+/// Generates `n` random points to "crossover" the sections between the parents. This can be
 /// a `Single-Point Crossover` using `n_points = 1` a `Two-Points Crossover` using `n_points = 2`
 /// or any number you'd like.
 #[derive(Clone)]

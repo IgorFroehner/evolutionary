@@ -72,16 +72,16 @@ fn main() {
             .with_crossover(crossover.clone())
             .with_mutation(mutation.clone())
             .with_coding(NQueensCoding)
-            .with_stop_condition(move |best_fitness, _, _| {
-                best_fitness == max_colisions
-            })
+            .with_stop_condition(move |best_fitness, _, _| best_fitness == max_colisions)
             .with_title("NQueens".to_string());
 
         let mut evolution = evolution_builder.build().unwrap();
 
         evolution.run();
 
-        evolution.plot_chart("NQueens.png", "NQueens Problem").unwrap();
+        evolution
+            .plot_chart("NQueens.png", "NQueens Problem")
+            .unwrap();
 
         println!("Best individual: {:?}", evolution.current_best());
         println!("Best fitness: {}", evolution.current_best_fitness());

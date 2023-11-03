@@ -6,8 +6,8 @@ use crate::{
     coding::Coding,
     crossover::Crossover,
     fitness::Fitness,
-    mutation::Mutation,
     metrics::{Metrics, Steps},
+    mutation::Mutation,
     population::{GeneCod, Individual},
     selection::Selection,
 };
@@ -173,13 +173,6 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
         self.metrics.end_clock();
     }
 
-    /// Returns the fitness calculated of a given individual based on its index.
-    pub fn calculate_individual_fitness(&self, index: usize) -> f64 {
-        let individual = &self.current_population[index];
-
-        self.calculate_fitness(&individual)
-    }
-
     pub fn population_digest(&self) {
         println!("---------------------------------------------");
         println!("Iteration: {}", self.metrics.iterations);
@@ -196,26 +189,52 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
         }
     }
 
+    /// Prints total time and the time spent in each step of the evolution. In the following
+    /// format:
+    /// ```text
+    /// ------------ Time Digest ------------
+    /// Total time: X.XXXXs
+    /// Selection time: X.XXXXs (XX.XX%)
+    /// Crossover time: X.XXXXs (XX.XX%)
+    /// Mutation time: X.XXXXs (XX.XX%)
+    /// Fitness time: X.XXXXs (XX.XX%)
+    /// ---------------------------------------
+    /// ```
     pub fn time_digest(&self) {
-        println!("---------------------------------------------");
-        println!("Total time: {:?}", Duration::from_nanos(self.metrics.total_time() as u64));
+        println!("------------ Time Digest ------------");
         println!(
-            "Selection time: {:?}",
-            self.metrics.step_time(Steps::Selection).unwrap()
+            "Total time: {:?}",
+            Duration::from_nanos(self.metrics.total_time() as u64)
         );
         println!(
-            "Crossover time: {:?}",
-            self.metrics.step_time(Steps::Crossover).unwrap()
-
+            "Selection time: {:?} ({:.2}%)",
+            self.metrics.step_time(Steps::Selection).unwrap(),
+            self.metrics.step_time(Steps::Selection).unwrap().as_nanos() as f64
+                / self.metrics.total_time() as f64
+                * 100.0
         );
         println!(
-            "Mutation time: {:?}",
-            self.metrics.step_time(Steps::Mutation).unwrap()
+            "Crossover time: {:?} ({:.2}%)",
+            self.metrics.step_time(Steps::Crossover).unwrap(),
+            self.metrics.step_time(Steps::Crossover).unwrap().as_nanos() as f64
+                / self.metrics.total_time() as f64
+                * 100.0
         );
         println!(
-            "Fitness time: {:?}",
-            self.metrics.step_time(Steps::Fitness).unwrap()
+            "Mutation time: {:?} ({:.2}%)",
+            self.metrics.step_time(Steps::Mutation).unwrap(),
+            self.metrics.step_time(Steps::Mutation).unwrap().as_nanos() as f64
+                / self.metrics.total_time() as f64
+                * 100.0
         );
+        println!(
+            "Fitness time: {:?} ({:.2}%)",
+            self.metrics.step_time(Steps::Fitness).unwrap(),
+            self.metrics.step_time(Steps::Fitness).unwrap().as_nanos() as f64
+                / self.metrics.total_time() as f64
+                * 100.0
+        );
+        println!("---------------------------------------");
     }
 
     /// Returns the best individual of the current population.
@@ -242,22 +261,6 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
             self.metrics.iterations,
             self.metrics.gens_without_improvement,
         )
-    }
-
-    fn process_fitness(&mut self) {
-        self.metrics.step_start(Steps::Fitness);
-
-        let fitness_values: Vec<f64> = self
-            .current_population
-            .par_iter()
-            .map(|individual| self.calculate_fitness(individual))
-            .collect();
-
-        for (individual, fitness) in self.current_population.iter_mut().zip(fitness_values) {
-            individual.set_fitness(fitness);
-        }
-
-        self.metrics.step_end(Steps::Fitness);
     }
 
     pub fn current_best_fitness(&self) -> f64 {
@@ -288,5 +291,21 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
 
     fn cmp_by_fitness(a: &T, b: &T) -> std::cmp::Ordering {
         a.get_fitness().partial_cmp(&b.get_fitness()).unwrap()
+    }
+
+    fn process_fitness(&mut self) {
+        self.metrics.step_start(Steps::Fitness);
+
+        let fitness_values: Vec<f64> = self
+            .current_population
+            .par_iter()
+            .map(|individual| self.calculate_fitness(individual))
+            .collect();
+
+        for (individual, fitness) in self.current_population.iter_mut().zip(fitness_values) {
+            individual.set_fitness(fitness);
+        }
+
+        self.metrics.step_end(Steps::Fitness);
     }
 }

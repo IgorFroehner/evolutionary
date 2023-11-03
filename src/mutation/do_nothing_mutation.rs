@@ -1,4 +1,3 @@
-
 use crate::{Individual, Mutation};
 
 #[derive(Clone)]

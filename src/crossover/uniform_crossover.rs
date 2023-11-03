@@ -6,14 +6,14 @@ use crate::Individual;
 use super::Crossover;
 
 /// # Uniform Crossover
-/// 
-/// For each gene, it selects whether to swap them between the parents based on the `toss_probability`. 
+///
+/// For each gene, it selects whether to swap them between the parents based on the `toss_probability`.
 #[derive(Clone)]
 pub struct UniformCrossover {
     /// The probability of crossover occurring.
     pub crossover_rate: f64,
     /// The probability of swaping the genes.
-    pub toss_probability: f64
+    pub toss_probability: f64,
 }
 
 impl Default for UniformCrossover {

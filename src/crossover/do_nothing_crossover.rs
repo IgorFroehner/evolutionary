@@ -1,5 +1,4 @@
-
-use crate::{Individual, Crossover};
+use crate::{Crossover, Individual};
 
 #[derive(Clone)]
 pub struct DoNothingCrossover;

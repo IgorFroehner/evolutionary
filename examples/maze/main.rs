@@ -1,4 +1,3 @@
-
 use evolutionary::prelude::*;
 use maze::read_matrix_from_file;
 use maze_fitness::MazeFitness;

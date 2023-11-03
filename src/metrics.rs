@@ -1,5 +1,5 @@
-use std::{collections::HashMap, time::Instant};
 use std::time::Duration;
+use std::{collections::HashMap, time::Instant};
 
 use crate::utils::plot_chart;
 
@@ -84,7 +84,9 @@ impl Metrics {
     }
 
     pub fn step_time(&self, step: Steps) -> Option<Duration> {
-        self.step_times.get(&step).map(|a| Duration::from_nanos(a.2 as u64))
+        self.step_times
+            .get(&step)
+            .map(|a| Duration::from_nanos(a.2 as u64))
     }
 
     pub fn total_time(&self) -> u128 {

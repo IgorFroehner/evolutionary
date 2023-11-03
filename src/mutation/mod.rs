@@ -10,8 +10,8 @@ mod real;
 
 pub use bin_mutation::*;
 pub use do_nothing_mutation::*;
-pub use swap_mutation::*;
 pub use real::*;
+pub use swap_mutation::*;
 
 /// Trait that defines the mutation method. You can implement your own mutation method by
 /// implementing this trait.

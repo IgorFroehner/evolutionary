@@ -24,9 +24,9 @@ impl Default for SwapMutation {
 
 impl<T: Individual> Mutation<T> for SwapMutation {
     fn mutate(&self, population: &mut Vec<T>) {
-        population
-            .par_iter_mut()
-            .for_each_init(|| thread_rng(), |rng, individual| {
+        population.par_iter_mut().for_each_init(
+            || thread_rng(),
+            |rng, individual| {
                 for j in 0..individual.get_chromosome().len() {
                     if rng.gen_bool(self.mutation_rate) {
                         let swap_with = rng.gen_range(0..individual.get_chromosome().len());
@@ -36,6 +36,7 @@ impl<T: Individual> Mutation<T> for SwapMutation {
                         individual.set_gene(swap_with, temp);
                     }
                 }
-            });
+            },
+        );
     }
 }
