@@ -7,7 +7,7 @@ struct MathFitnessMin;
 
 impl MathFitnessMin {
     fn get_x(&self, bin: &Bin) -> f64 {
-        let d = convert_bin(&bin.chromosome);
+        let d = convert_bin(&bin.get_chromosome());
 
         within_range(RANGE, L, d)
     }

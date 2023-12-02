@@ -63,7 +63,7 @@ fn main() {
 
     evolution.time_digest();
 
-    // let mut experiment = ExperimentRunner::new("Maze  - Caminho Minimo".to_string(), 30, evolution_builder);
+    let mut experiment = ExperimentRunner::new("Maze  - Caminho Minimo".to_string(), 30, evolution_builder);
 
     // experiment.run();
 

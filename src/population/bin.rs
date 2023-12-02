@@ -4,7 +4,7 @@ use super::Individual;
 
 #[derive(Debug, Clone)]
 pub struct Bin {
-    pub chromosome: Vec<bool>,
+    chromosome: Vec<bool>,
     fitness: f64,
 }
 
@@ -32,6 +32,10 @@ impl Individual for Bin {
 
     fn get_chromosome(&self) -> &Vec<Self::Gene> {
         &self.chromosome
+    }
+
+    fn get_mut_chromosome(&mut self) -> &mut Vec<Self::Gene> {
+        &mut self.chromosome
     }
 
     fn set_gene(&mut self, index: usize, value: Self::Gene) {

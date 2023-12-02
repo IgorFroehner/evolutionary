@@ -67,6 +67,7 @@ pub trait Individual: 'static + Clone + Send + Sync {
 
     fn generate_member(dimension: u32, b: &Self::RangeType) -> Self;
     fn get_chromosome(&self) -> &Vec<Self::Gene>;
+    fn get_mut_chromosome(&mut self) -> &mut Vec<Self::Gene>;
     fn set_gene(&mut self, index: usize, value: Self::Gene);
     fn set_fitness(&mut self, fitness: f64);
     fn get_fitness(&self) -> f64;

@@ -1,5 +1,6 @@
 use rand::{seq::IteratorRandom, thread_rng, Rng};
 use rayon::{prelude::ParallelIterator, slice::ParallelSliceMut};
+use crate::Individual;
 
 use crate::population::Bin;
 
@@ -46,7 +47,7 @@ impl Crossover<Bin> for NPointsCrossover {
                     let mut parent1 = chunk[0].clone();
                     let mut parent2 = chunk[1].clone();
 
-                    let len = parent1.chromosome.len();
+                    let len = parent1.get_chromosome().len();
 
                     let mut points: Vec<usize> = (0..len).choose_multiple(&mut rng, self.n_points);
 
@@ -56,8 +57,8 @@ impl Crossover<Bin> for NPointsCrossover {
 
                     for point in points {
                         NPointsCrossover::swap_sections(
-                            &mut parent1.chromosome,
-                            &mut parent2.chromosome,
+                            &mut parent1.get_mut_chromosome(),
+                            &mut parent2.get_mut_chromosome(),
                             start,
                             point,
                         );

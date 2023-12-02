@@ -3,14 +3,14 @@ use evolutionary::prelude::*;
 use crate::{C, L, RANGE_LX, RANGE_ST};
 
 pub fn get_st(bin: &Bin) -> f64 {
-    let d = convert_bin(&bin.chromosome[0..5].to_vec());
+    let d = convert_bin(&bin.get_chromosome()[0..5].to_vec());
     let x = within_range(RANGE_ST, L, d);
 
     x.round()
 }
 
 pub fn get_lx(bin: &Bin) -> f64 {
-    let d = convert_bin(&bin.chromosome[5..10].to_vec());
+    let d = convert_bin(&bin.get_chromosome()[5..10].to_vec());
     let x = within_range(RANGE_LX, L, d);
 
     x.round()

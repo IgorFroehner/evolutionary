@@ -3,8 +3,8 @@ use evolutionary::prelude::*;
 fn f(individual: &Bin) -> f64 {
     let mut sum = 0.;
 
-    for i in 0..individual.chromosome.len() {
-        if individual.chromosome[i] {
+    for i in 0..individual.get_chromosome().len() {
+        if individual.get_chromosome()[i] {
             sum += 1.;
         }
     }
@@ -49,6 +49,6 @@ fn main() {
     println!("Best individual: {:?}", evolution.current_best());
     println!("Best fitness: {}", evolution.current_best_fitness());
 
-    evolution.population_digest();
+    // evolution.population_digest();
     evolution.time_digest();
 }

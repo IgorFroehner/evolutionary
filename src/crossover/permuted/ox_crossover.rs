@@ -105,13 +105,12 @@ impl Crossover<IntPerm> for OXCrossover {
 #[cfg(test)]
 mod tests {
     #[test]
-
     fn ox_crossover() {
         // let mut parent1 = vec![1, 2, 3, 4, 5, 6, 7, 8, 9];
         // let mut parent2 = vec![5, 7, 4, 9, 1, 3, 6, 2, 8];
-
+        //
         // OXCrossover::apply_ox(&mut parent1, &mut parent2, 2, 6);
-
+        //
         // assert_eq!(parent1, vec![7, 9, 3, 4, 5, 6, 1, 2, 8]);
         // assert_eq!(parent2, vec![2, 7, 4, 9, 1, 3, 5, 7, 8]);
     }

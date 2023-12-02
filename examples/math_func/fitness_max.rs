@@ -7,7 +7,7 @@ pub struct MathFitnessMax;
 
 impl MathFitnessMax {
     pub fn get_x(bin: &Bin) -> f64 {
-        let d = convert_bin(&bin.chromosome);
+        let d = convert_bin(&bin.get_chromosome());
 
         within_range(RANGE, L, d)
     }

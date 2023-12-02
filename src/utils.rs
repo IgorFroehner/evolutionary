@@ -38,7 +38,7 @@ pub fn plot_chart(
         .min_by(|a, b| a.partial_cmp(b).unwrap())
         .unwrap_or(&0.0);
 
-    let y_axis_start = if *min > 0.5 { min - 0.05 } else { 0.0 };
+    let y_axis_start = if *min > 0.5 { min } else { min };
 
     let y_axis_start = y_axis_start - (y_axis_start * 0.1);
 

@@ -24,6 +24,10 @@ impl Individual for Int {
         &self.0
     }
 
+    fn get_mut_chromosome(&mut self) -> &mut Vec<Self::Gene> {
+        &mut self.0
+    }
+
     fn set_gene(&mut self, index: usize, value: Self::Gene) {
         self.0[index] = value;
     }

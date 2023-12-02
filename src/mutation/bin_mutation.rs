@@ -1,5 +1,6 @@
 use rand::{thread_rng, Rng};
 use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
+use crate::Individual;
 
 use crate::population::Bin;
 
@@ -7,7 +8,7 @@ use super::Mutation;
 
 /// # Bit Swap Mutation
 ///
-/// For each gene in the binary representation it has `mutation_rate` probabity of swaping the bit (negating it).
+/// For each gene in the binary representation it has `mutation_rate` probability of swapping the bit (negating it).
 ///
 /// Example:
 /// ```rust
@@ -20,7 +21,7 @@ use super::Mutation;
 ///
 /// mutation.mutate(&mut population);
 ///
-/// assert_eq!(population[0].chromosome, vec![false, true, false, true, false, true, false, true]);
+/// assert_eq!(population[0].get_chromosome(), vec![false, true, false, true, false, true, false, true]);
 /// ```
 #[derive(Clone)]
 pub struct BitSwapMutation {
@@ -40,9 +41,9 @@ impl Mutation<Bin> for BitSwapMutation {
         population.par_iter_mut().for_each_init(
             || thread_rng(),
             |rng, member| {
-                for i in 0..member.chromosome.len() {
+                for i in 0..member.get_chromosome().len() {
                     if rng.gen_bool(self.mutation_rate) {
-                        member.chromosome[i] = !member.chromosome[i];
+                        member.set_gene(i, !member.get_chromosome()[i]);
                     }
                 }
             },
