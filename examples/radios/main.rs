@@ -12,20 +12,6 @@ const RANGE_ST: (f64, f64) = (0., 24.);
 const RANGE_LX: (f64, f64) = (0., 16.);
 const C: f64 = -1.;
 
-#[derive(Clone)]
-struct RadioCoding;
-
-impl Coding<Bin> for RadioCoding {
-    type Output = (f64, f64);
-
-    fn decode(&self, individual: &Bin) -> Self::Output {
-        let st = get_st(individual);
-        let lx = get_lx(individual);
-
-        (st, lx)
-    }
-}
-
 fn main() {
     let file_name = "examples/radios/Config.toml";
 
@@ -51,10 +37,7 @@ fn main() {
             .with_crossover(crossover)
             .with_mutation(mutation)
             .with_title("Radios".to_string())
-            .with_stop_condition(move |_, iterations, _| iterations > max_runs as u32)
-            .with_coding(RadioCoding)
-            // .set_elitism(false)
-            ;
+            .with_stop_condition(move |_, iterations, _| iterations > max_runs as u32);
 
         let mut experiment = ExperimentRunner::new("radios".to_string(), 10, evolution_builder);
 

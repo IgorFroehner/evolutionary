@@ -4,18 +4,6 @@ mod nqueens_fitness;
 
 use nqueens_fitness::NQueensFitness;
 
-#[derive(Clone)]
-struct NQueensCoding;
-
-impl Coding<IntPerm> for NQueensCoding {
-    type Output = f64;
-
-    fn decode(&self, _individual: &IntPerm) -> Self::Output {
-        // count_colisions(individual)
-        0.0
-    }
-}
-
 fn main() {
     let file_name = "examples/nqueens_valued/Config.toml";
 
@@ -38,7 +26,6 @@ fn main() {
             .with_selection(TournamentSelection::default())
             .with_crossover(crossover.clone())
             .with_mutation(mutation.clone())
-            .with_coding(NQueensCoding)
             .with_stop_condition(move |_, _max_iterations, gens_not_improving| {
                 gens_not_improving == 20_000
             })

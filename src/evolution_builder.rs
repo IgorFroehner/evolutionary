@@ -1,5 +1,4 @@
 use crate::{
-    coding::Coding,
     crossover::Crossover,
     evolution::{Evolution, EvolutionConfig, StopConditionFn},
     fitness::Fitness,
@@ -23,18 +22,9 @@ use std::sync::Arc;
 /// #        0.0
 /// #    }
 /// # }
-/// # #[derive(Clone)]
-/// # struct YourCoding;
-/// # impl Coding<Bin> for YourCoding {
-/// #     type Output = f64;
-/// #     fn decode(&self, individual: &Bin) -> Self::Output {
-/// #         0.0
-/// #     }
-/// # }
 /// fn main() {
 ///     let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
 ///         .with_fitness(YourFitness)
-///         .with_coding(YourCoding)
 ///         .with_selection(TournamentSelection::default())
 ///         .with_crossover(NPointsCrossover::default())
 ///         .with_mutation(BitSwapMutation::default())
@@ -43,19 +33,18 @@ use std::sync::Arc;
 ///         .build().unwrap();
 /// }
 /// ```
-pub struct EvolutionBuilder<T: Individual, C: Coding<T>> {
+pub struct EvolutionBuilder<T: Individual> {
     title: Option<String>,
     evolution_config: Option<EvolutionConfig<T>>,
     fitness: Option<Box<dyn Fitness<T>>>,
     selection: Option<Box<dyn Selection<T>>>,
     crossover: Option<Box<dyn Crossover<T>>>,
     mutation: Option<Box<dyn Mutation<T>>>,
-    coding: Option<Box<C>>,
     elitism: Option<bool>,
     stop_condition: Option<StopConditionFn>,
 }
 
-impl<T: Individual, C: Coding<T>> EvolutionBuilder<T, C> {
+impl<T: Individual> EvolutionBuilder<T> {
     pub fn new(
         population_size: u32,
         dimension: u32,
@@ -77,7 +66,6 @@ impl<T: Individual, C: Coding<T>> EvolutionBuilder<T, C> {
             crossover: None,
             mutation: None,
             stop_condition: None,
-            coding: None,
             elitism: None,
         }
     }
@@ -138,13 +126,6 @@ impl<T: Individual, C: Coding<T>> EvolutionBuilder<T, C> {
         self
     }
 
-    /// Sets the Coding of the evolution and will be used in the future as the way to calculate
-    /// the fitness. Receives a struct that implements the `Coding` trait.
-    pub fn with_coding(mut self, c: C) -> Self {
-        self.coding = Some(Box::new(c));
-        self
-    }
-
     /// Whether or not to use elitism. Defaults to `true`.
     pub fn with_elitism(mut self, elitism: bool) -> Self {
         self.elitism = Some(elitism);
@@ -157,17 +138,16 @@ impl<T: Individual, C: Coding<T>> EvolutionBuilder<T, C> {
         self
     }
 
-    pub fn build(&self) -> Result<Evolution<T, C>, String> {
+    pub fn build(&self) -> Result<Evolution<T>, String> {
         let title = self.title.clone().unwrap_or("".to_string());
 
         let evolution_config = self.evolution_config.clone().ok_or("No config provided")?;
 
-        if let (Some(f), Some(s), Some(x), Some(m), Some(c)) = (
+        if let (Some(f), Some(s), Some(x), Some(m)) = (
             self.fitness.as_ref().map(|f| f.as_ref()),
             self.selection.as_ref().map(|s| s.as_ref()),
             self.crossover.as_ref().map(|c| c.as_ref()),
             self.mutation.as_ref().map(|m| m.as_ref()),
-            &self.coding,
         ) {
             Ok(Evolution::new(
                 title.clone(),
@@ -176,7 +156,6 @@ impl<T: Individual, C: Coding<T>> EvolutionBuilder<T, C> {
                 dyn_clone::clone_box(&*s),
                 dyn_clone::clone_box(&*x),
                 dyn_clone::clone_box(&*m),
-                dyn_clone::clone_box(&*c),
                 self.elitism.unwrap_or(true),
                 Arc::clone(self.stop_condition.as_ref().unwrap()),
             ))

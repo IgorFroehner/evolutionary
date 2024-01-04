@@ -95,7 +95,6 @@ mod population;
 mod selection;
 pub mod utils;
 
-pub use coding::Coding;
 pub use crossover::Crossover;
 pub use evolution::Evolution;
 pub use evolution_builder::EvolutionBuilder;
@@ -105,7 +104,6 @@ pub use population::Individual;
 pub use selection::Selection;
 
 pub mod prelude {
-    pub use crate::coding::Coding;
     pub use crate::config_read::{read_config, RawConfig};
     pub use crate::crossover::*;
     pub use crate::experiment_runner::ExperimentRunner;

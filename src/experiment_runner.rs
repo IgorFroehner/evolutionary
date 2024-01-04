@@ -2,7 +2,7 @@ use std::fs::create_dir_all;
 use std::time::{Duration, Instant};
 
 use crate::utils::plot_chart;
-use crate::{coding::Coding, evolution_builder::EvolutionBuilder, population::Individual};
+use crate::{evolution_builder::EvolutionBuilder, population::Individual};
 
 use rayon::prelude::*;
 
@@ -10,10 +10,10 @@ struct ExperimentMetrics {
     total_time: u128,
 }
 
-pub struct ExperimentRunner<T: Individual, C: Coding<T>> {
+pub struct ExperimentRunner<T: Individual> {
     runs: u32,
     name: String,
-    evolution_builder: EvolutionBuilder<T, C>,
+    evolution_builder: EvolutionBuilder<T>,
     experiment_metrics: ExperimentMetrics,
     pub experiment_results: Vec<ExperimentResult<T>>,
 }
@@ -26,8 +26,8 @@ pub struct ExperimentResult<T> {
     pub best_found: T,
 }
 
-impl<T: Individual, C: Coding<T>> ExperimentRunner<T, C> {
-    pub fn new(name: String, runs: u32, evolution_builder: EvolutionBuilder<T, C>) -> Self {
+impl<T: Individual> ExperimentRunner<T> {
+    pub fn new(name: String, runs: u32, evolution_builder: EvolutionBuilder<T>) -> Self {
         Self {
             name,
             runs,

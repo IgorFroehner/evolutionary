@@ -14,17 +14,6 @@ pub fn f(x: f64) -> f64 {
     (20. * x).cos() - (x.abs() / 2.) + (x.powf(3.) / 4.)
 }
 
-#[derive(Clone)]
-struct MathFuncCoding;
-
-impl Coding<Bin> for MathFuncCoding {
-    type Output = f64;
-
-    fn decode(&self, individual: &Bin) -> Self::Output {
-        within_range(RANGE, L, convert_bin(&individual.get_chromosome()))
-    }
-}
-
 fn main() {
     let file_name = "examples/math_func/Config.toml";
 

@@ -21,17 +21,6 @@ impl Fitness<Bin> for MaxFitness {
     }
 }
 
-#[derive(Clone)]
-struct MaxCoding;
-
-impl Coding<Bin> for MaxCoding {
-    type Output = f64;
-
-    fn decode(&self, individual: &Bin) -> Self::Output {
-        f(individual)
-    }
-}
-
 fn main() {
     let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
         .with_fitness(MaxFitness)

@@ -3,7 +3,6 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use crate::{
-    coding::Coding,
     crossover::Crossover,
     fitness::Fitness,
     metrics::{Metrics, Steps},
@@ -34,15 +33,8 @@ pub struct EvolutionConfig<T: Individual> {
 /// # impl Fitness<Bin> for YourFitness {
 /// #    fn calculate_fitness(&self, individual: &Bin) -> f64 { 0.0 }
 /// # }
-/// # #[derive(Clone)]
-/// # struct YourCoding;
-/// # impl Coding<Bin> for YourCoding {
-/// #     type Output = f64;
-/// #     fn decode(&self, individual: &Bin) -> Self::Output { 0.0 }
-/// # }
 /// # let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
 /// #     .with_fitness(YourFitness)
-/// #     .with_coding(YourCoding)
 /// #     .with_selection(TournamentSelection::default())
 /// #     .with_crossover(NPointsCrossover::default())
 /// #     .with_mutation(BitSwapMutation::default())
@@ -59,7 +51,7 @@ pub struct EvolutionConfig<T: Individual> {
 /// // or you can run it until the stop condition is met with the `run` method:
 /// evolution.run();
 /// ```
-pub struct Evolution<T: Individual, C: Coding<T>> {
+pub struct Evolution<T: Individual> {
     _title: String,
     current_population: Vec<T>,
     config: EvolutionConfig<T>,
@@ -67,13 +59,12 @@ pub struct Evolution<T: Individual, C: Coding<T>> {
     selection: Box<dyn Selection<T>>,
     crossover: Box<dyn Crossover<T>>,
     mutation: Box<dyn Mutation<T>>,
-    _coding: Box<C>,
     elitism: bool,
     stop_condition: StopConditionFn,
     pub metrics: Metrics,
 }
 
-impl<T: Individual, C: Coding<T>> Evolution<T, C> {
+impl<T: Individual> Evolution<T> {
     pub fn new(
         title: String,
         config: EvolutionConfig<T>,
@@ -81,7 +72,6 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
         selection: Box<dyn Selection<T>>,
         crossover: Box<dyn Crossover<T>>,
         mutation: Box<dyn Mutation<T>>,
-        coding: Box<C>,
         elitism: bool,
         stop_condition: StopConditionFn,
     ) -> Self {
@@ -93,7 +83,6 @@ impl<T: Individual, C: Coding<T>> Evolution<T, C> {
             selection,
             crossover,
             mutation,
-            _coding: coding,
             elitism,
             stop_condition,
             metrics: Metrics::new(),

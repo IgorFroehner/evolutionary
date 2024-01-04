@@ -5,17 +5,6 @@ use maze_fitness::MazeFitness;
 mod maze;
 mod maze_fitness;
 
-#[derive(Clone)]
-pub struct MazeCoding;
-
-impl Coding<Real> for MazeCoding {
-    type Output = ();
-
-    fn decode(&self, _individual: &Real) -> Self::Output {
-        ()
-    }
-}
-
 fn main() {
     let maze = read_matrix_from_file("examples/maze/maze0.in");
 
@@ -53,9 +42,8 @@ fn main() {
         .with_crossover(crossover)
         .with_mutation(SubstituteMutation::default())
         .with_title("Maze".to_string())
-        .with_stop_condition(move |best_fitness, _, _| best_fitness == max_score)
-        // .with_stop_condition(|_, iterations, _| iterations >= 10_000)
-        .with_coding(MazeCoding);
+        .with_stop_condition(move |best_fitness, _, _| best_fitness == max_score);
+        // .with_stop_condition(|_, iterations, _| iterations >= 10_000);
 
     let mut evolution = evolution_builder.build().unwrap();
 

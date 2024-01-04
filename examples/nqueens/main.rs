@@ -37,17 +37,6 @@ impl Fitness<IntPerm> for NQueensFitness {
     }
 }
 
-#[derive(Clone)]
-struct NQueensCoding;
-
-impl Coding<IntPerm> for NQueensCoding {
-    type Output = f64;
-
-    fn decode(&self, individual: &IntPerm) -> Self::Output {
-        count_collisions(individual)
-    }
-}
-
 fn main() {
     let file_name = "examples/nqueens/Config.toml";
 
@@ -71,7 +60,6 @@ fn main() {
             .with_selection(TournamentSelection::default())
             .with_crossover(crossover.clone())
             .with_mutation(mutation.clone())
-            .with_coding(NQueensCoding)
             .with_stop_condition(move |best_fitness, _, _| best_fitness == max_colisions)
             .with_title("NQueens".to_string());
 
