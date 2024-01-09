@@ -5,8 +5,8 @@
 
 A fully extensible Rust framework for using paralyzed genetic algorithms to solve problems. 
 
-Currently, it supports coding in `Binary`, `Real`, `Permuted Integers`, `Integers` and any other coding you may want to implement. 
-It also has built in implementation of the following genetic operators:
+Currently, it supports coding in `Binary`, `Real`, `Permuted Integers`, `Integers` and any other coding you may want to 
+implement. It also has built in implementation of the following genetic operators:
 
 - Selection:
   - [Roulette Wheel](./src/selection/roulette_selection.rs)
@@ -19,9 +19,10 @@ It also has built in implementation of the following genetic operators:
   - [Bit Flip (Binary)](./src/mutation/bin_mutation.rs)
   - [Swap (Permuted)](./src/mutation/perm_mutation.rs)
 
-As well you can code your own selection, crossover or mutation and use it on the `EvolutionBuilder`.
+As well, you can code your own `selection`, `crossover` or `mutation` implementing the traits and passing it to the 
+`EvolutionBuilder`.
 
-## Example:
+## Getting Started:
 
 First you'll need to code your Fitness function:
 
@@ -50,22 +51,7 @@ impl Fitness<Bin> for MaxFitness {
 }
 ```
 
-Then you'll need to create a coding for you individual so you can get the response at the end:
-
-```rust
-#[derive(Clone)]
-struct MaxCoding;
-
-impl Coding<Bin> for MaxCoding {
-    type Output = f64;
-
-    fn decode(&self, individual: &Bin) -> Self::Output {
-        f(individual)
-    }
-}
-```
-
-Then you will be able to build a evolution object using the `EvolutionBuiler` and setting all the required parameters:
+Then you will be able to build an evolution object using the `EvolutionBuiler` and setting all the required parameters:
 
 ```rust
 fn main() {
@@ -76,7 +62,6 @@ fn main() {
         .with_mutation(BinMutation::default())
         .with_title("Max".to_string())
         .with_stop_condition(move |_, iterations, _| iterations >= 1000)
-        .with_coding(MaxCoding)
         .build().unwrap();
 
     evolution.run();
@@ -86,10 +71,16 @@ fn main() {
 }
 ```
 
-Find this and other examples in the [examples folder](./examples):
+## Examples and Projects:
+
+* [evolutionary-examples](https://github.com/IgorFroehner/evolutionary-examples) - A project with some visual 
+  examples of the `evolutionary` library use, implemented with the [bevy game engine](https://bevyengine.org/).
+
+There are some examples in the [examples folder](./examples):
 * [Max](./examples/bin_max)
+* [Math Function](./examples/math_func)
 * [NQueens](./examples/nqueens)
 * [Valued NQueens](./examples/nqueens_valued)
-* [Math Function](./examples/math_func)
 * [Maximize Radios Factory Profit](./examples/radios)
 * [Maze](./examples/maze)
+* [Subway](./examples/subway)

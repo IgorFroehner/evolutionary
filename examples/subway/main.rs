@@ -87,7 +87,7 @@ impl Fitness<Real> for MetroFitness {
 }
 
 fn main() {
-    let filename = "examples/metro/metro.in";
+    let filename = "examples/subway/subway.in";
     let content = fs::read_to_string(filename).expect("Failed to read the file");
 
     let first_line = content
@@ -126,7 +126,7 @@ fn main() {
     println!("adj: {:?}", adj);
     println!("start: {}, end: {}", start, end);
 
-    let dists_file = "examples/metro/dists.in";
+    let dists_file = "examples/subway/dists.in";
     let dists_content = fs::read_to_string(dists_file).expect("Failed to read the file");
 
     let mut dists = vec![vec![-1.0; n + 5]; n + 5];
