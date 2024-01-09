@@ -29,7 +29,6 @@ fn main() {
         .with_mutation(BitSwapMutation::default())
         .with_title("Max".to_string())
         .with_stop_condition(move |_, iterations, _| iterations >= 1000)
-        .with_coding(MaxCoding)
         .build()
         .unwrap();
 

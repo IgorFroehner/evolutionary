@@ -9,7 +9,7 @@ use crate::{
 use std::sync::Arc;
 
 /// This is the helper struct to create a new Evolution object. The `fitness`, `selection`,
-/// `crossover`, `mutation` and `stop_condition` and coding are required.
+/// `crossover`, `mutation` and `stop_condition` are required.
 ///
 /// # Example
 ///
@@ -79,7 +79,6 @@ impl<T: Individual> EvolutionBuilder<T> {
             crossover: None,
             mutation: None,
             stop_condition: None,
-            coding: None,
             evolution_config: Some(config.clone()),
             elitism: None,
         }

@@ -27,8 +27,8 @@
 //! fn f(individual: &Bin) -> f64 {
 //!     let mut sum = 0.;
 //!
-//!     for i in 0..individual.chromosome.len() {
-//!         if individual.chromosome[i] {
+//!     for i in 0..individual.get_chromosome().len() {
+//!         if individual.get_chromosome()[i] {
 //!             sum += 1.;
 //!         }
 //!     }
@@ -85,7 +85,6 @@ pub mod config_read;
 pub mod experiment_runner;
 pub mod metrics;
 
-mod coding;
 mod crossover;
 mod evolution;
 mod evolution_builder;
