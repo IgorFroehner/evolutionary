@@ -19,8 +19,8 @@ use crate::population::Individual;
 ///     fn calculate_fitness(&self, individual: &Bin) -> f64 {
 ///         let mut sum = 0.0;
 ///
-///         for i in 0..individual.chromosome.len() {
-///             if individual.chromosome[i] {
+///         for i in 0..individual.get_chromosome().len() {
+///             if individual.get_chromosome()[i] {
 ///                 sum += 1.0;
 ///             }
 ///         }

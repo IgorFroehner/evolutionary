@@ -27,8 +27,8 @@ pub use swap_mutation::*;
 /// impl Mutation<Bin> for AlwaysMutateMutation {
 ///     fn mutate(&self, population: &mut Vec<Bin>) {
 ///         for individual in population.iter_mut() {
-///             for i in 0..individual.chromosome.len() {
-///                 individual.chromosome[i] = !individual.chromosome[i];
+///             for i in 0..individual.get_chromosome().len() {
+///                 individual.set_gene(i, !individual.get_chromosome()[i]);
 ///             }
 ///         }
 ///     }

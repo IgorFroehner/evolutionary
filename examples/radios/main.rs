@@ -2,7 +2,7 @@ use evolutionary::prelude::*;
 
 use radio_fitness::RadioFitness;
 
-use crate::radio_fitness::{get_lx, get_st};
+
 
 mod radio_fitness;
 

@@ -46,19 +46,6 @@
 //!     }
 //! }
 //!
-//! // You'll need to create a Coding for you individual,
-//! // so you can get the response at the end:
-//! #[derive(Clone)]
-//! struct MaxCoding;
-//!
-//! impl Coding<Bin> for MaxCoding {
-//!     type Output = f64;
-//!
-//!     fn decode(&self, individual: &Bin) -> Self::Output {
-//!         f(individual)
-//!     }
-//! }
-//!
 //! // Then you will be able to build a evolution object using the `EvolutionBuiler`
 //! // and setting all the required parameters:
 //! fn main() {
@@ -69,12 +56,11 @@
 //!         .with_mutation(BitSwapMutation::default())
 //!         .with_title("Max".to_string())
 //!         .with_stop_condition(move |best_fitness, _, _| best_fitness == 10.0)
-//!         .with_coding(MaxCoding)
 //!         .build().unwrap();
 //!
 //!     evolution.run();
 //!
-//!     assert_eq!(evolution.current_best().chromosome, vec![true; 10]);
+//!     assert_eq!(*evolution.current_best().get_chromosome(), vec![true; 10]);
 //!     assert_eq!(evolution.current_best_fitness(), 10.0);
 //! }
 //! ```

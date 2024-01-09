@@ -117,7 +117,7 @@ fn main() {
         .map(|v| v.iter().map(|(_, c, _)| c).sum::<f64>())
         .sum::<f64>();
 
-    let max_time = sum_cost / 40.0 + (m as f64 - 1.0) * 5.0;
+    let _max_time = sum_cost / 40.0 + (m as f64 - 1.0) * 5.0;
 
     let start = 14usize;
     let end = 7usize;
@@ -150,7 +150,7 @@ fn main() {
         i += 1;
     }
 
-    let mut evolution_builder = EvolutionBuilder::new(30, 30,    GeneCod::Real, (0.0, 1.0))
+    let evolution_builder = EvolutionBuilder::new(30, 30,    GeneCod::Real, (0.0, 1.0))
         .with_fitness(MetroFitness {
             start,
             end,

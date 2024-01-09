@@ -48,6 +48,10 @@ pub enum GeneCod {
 ///         &self.chromosome
 ///     }
 ///
+///     fn get_mut_chromosome(&mut self) -> &mut Vec<Self::Gene> {
+///         &mut self.chromosome
+///     }
+///
 ///     fn set_gene(&mut self, index: usize, value: Self::Gene) {
 ///         self.chromosome[index] = value;
 ///     }

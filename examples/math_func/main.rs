@@ -35,7 +35,6 @@ fn main() {
             .with_mutation(BitSwapMutation::default())
             .with_title("Math Function".to_string())
             .with_stop_condition(move |_, iterations, _| iterations >= runs as u32)
-            .with_coding(MathFuncCoding)
             .build()
             .unwrap();
 

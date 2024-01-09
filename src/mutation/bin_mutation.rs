@@ -21,7 +21,7 @@ use super::Mutation;
 ///
 /// mutation.mutate(&mut population);
 ///
-/// assert_eq!(population[0].get_chromosome(), vec![false, true, false, true, false, true, false, true]);
+/// assert_eq!(*population[0].get_chromosome(), vec![false, true, false, true, false, true, false, true]);
 /// ```
 #[derive(Clone)]
 pub struct BitSwapMutation {
