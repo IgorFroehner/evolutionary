@@ -6,20 +6,13 @@
 A fully extensible Rust framework for using paralyzed genetic algorithms to solve problems. 
 
 Currently, it supports coding in `Binary`, `Real`, `Permuted Integers`, `Integers` and any other coding you may want to 
-implement. It also has built in implementation of the following genetic operators:
+implement. Check out the built-in implementation for the genetic operators:
 
-- Selection:
-  - [Roulette Wheel](./src/selection/roulette_selection.rs)
-  - [Tournament](./src/selection/tournament_selection)
-- Crossover:
-  - [Multiple Point Crossover (MPX) (Binary)](./src/crossover/bin_crossover.rs) 
-  - [Partially Mapped Crossover (PMX) (Permuted)](./src/crossover/pmx_crossover.rs)
-  - [Cycle Crossover (CX) (Permuted)](./src/crossover/cx_crossover.rs)
-- Mutation:
-  - [Bit Flip (Binary)](./src/mutation/bin_mutation.rs)
-  - [Swap (Permuted)](./src/mutation/perm_mutation.rs)
+- [Selection](./src/selection)
+- [Crossover](./src/crossover)
+- [Mutation](./src/mutation)
 
-As well, you can code your own `selection`, `crossover` or `mutation` implementing the traits and passing it to the 
+You can also code your own `selection`, `crossover` or `mutation` implementing the traits and passing them to the 
 `EvolutionBuilder`.
 
 ## Getting Started:
