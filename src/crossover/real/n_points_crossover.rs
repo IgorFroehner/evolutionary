@@ -4,10 +4,10 @@ use rayon::iter::ParallelIterator;
 use rayon::prelude::ParallelSliceMut;
 use crate::{Crossover, Individual};
 use crate::crossover::NPointsCrossover;
-use crate::population::Bin;
+use crate::population::Real;
 
-impl Crossover<Bin> for NPointsCrossover {
-    fn crossover(&self, population: &mut Vec<Bin>) {
+impl Crossover<Real> for NPointsCrossover {
+    fn crossover(&self, population: &mut Vec<Real>) {
         population.par_chunks_mut(2).for_each_init(
             || thread_rng(),
             |mut rng, chunk| {

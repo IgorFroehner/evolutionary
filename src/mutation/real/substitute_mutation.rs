@@ -3,6 +3,10 @@ use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::{population::Real, Individual, Mutation};
 
+/// # Substitute Mutation
+///
+/// For each gene in the real representation it has `mutation_rate` probability of substituting
+/// the gene with a random value.
 #[derive(Clone)]
 pub struct SubstituteMutation {
     pub mutation_rate: f64,

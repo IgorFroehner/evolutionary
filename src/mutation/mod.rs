@@ -2,13 +2,13 @@ use dyn_clone::DynClone;
 
 use crate::population::Individual;
 
-mod bin_mutation;
+mod bit_swap_mutation;
 mod do_nothing_mutation;
 mod swap_mutation;
 
 mod real;
 
-pub use bin_mutation::*;
+pub use bit_swap_mutation::*;
 pub use do_nothing_mutation::*;
 pub use real::*;
 pub use swap_mutation::*;
