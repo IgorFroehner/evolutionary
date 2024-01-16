@@ -3,7 +3,10 @@ use rand::{thread_rng, Rng};
 use super::Individual;
 
 #[derive(Debug, Clone)]
-pub struct Int(pub Vec<i64>, f64);
+pub struct Int {
+    chromosome: Vec<i64>,
+    fitness: f64,
+}
 
 impl Individual for Int {
     type Gene = i64;
@@ -12,31 +15,35 @@ impl Individual for Int {
     fn generate_member(dimension: u32, range: &Self::RangeType) -> Self {
         let mut rng = thread_rng();
 
-        Self(
-            (0..dimension)
+        Self {
+            chromosome: (0..dimension)
                 .map(|_| rng.gen_range(range.0..=range.1))
                 .collect::<Vec<i64>>(),
-            0.0,
-        )
+            fitness: 0.0,
+        }
     }
 
     fn get_chromosome(&self) -> &Vec<Self::Gene> {
-        &self.0
+        &self.chromosome
     }
 
     fn get_mut_chromosome(&mut self) -> &mut Vec<Self::Gene> {
-        &mut self.0
+        &mut self.chromosome
     }
 
     fn set_gene(&mut self, index: usize, value: Self::Gene) {
-        self.0[index] = value;
+        self.chromosome[index] = value;
+    }
+
+    fn get_gene(&self, index: usize) -> Self::Gene {
+        self.chromosome[index]
     }
 
     fn set_fitness(&mut self, fitness: f64) {
-        self.1 = fitness;
+        self.fitness = fitness;
     }
 
     fn get_fitness(&self) -> f64 {
-        self.1
+        self.fitness
     }
 }

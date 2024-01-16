@@ -36,6 +36,10 @@ impl Individual for IntPerm {
         self.chromosome[index] = value;
     }
 
+    fn get_gene(&self, index: usize) -> Self::Gene {
+        self.chromosome[index]
+    }
+
     fn set_fitness(&mut self, fitness: f64) {
         self.fitness = fitness;
     }

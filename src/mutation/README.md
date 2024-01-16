@@ -1,6 +1,16 @@
 # Mutation
 
-- [Bit Flip (Binary)](./bit_swap_mutation)
-- [Swap (Permuted)](./swap_mutation.rs)
-- [Delta (Real)](real/delta_mutation.rs)
-- [Substitute (Real)](real/substitute_mutation.rs)
+* Real:
+  - [Delta](real/delta_mutation.rs)
+  - [Substitute](real/substitute_mutation.rs)
+  - [Swap](./swap_mutation.rs)
+
+* Binary:
+  - [Bit Flip](./bit_swap_mutation)
+  - [Swap](./swap_mutation.rs)
+
+* Integer:
+  - [Swap](./swap_mutation.rs)
+
+* Permuted:
+  - [Swap](./swap_mutation.rs)

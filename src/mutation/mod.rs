@@ -2,17 +2,20 @@ use dyn_clone::DynClone;
 
 use crate::population::Individual;
 
-mod bit_swap_mutation;
 mod do_nothing_mutation;
 mod swap_mutation;
 
 mod real;
+mod binary;
 
-pub use bit_swap_mutation::*;
-pub use do_nothing_mutation::*;
 pub use real::*;
+pub use binary::*;
+
+pub use do_nothing_mutation::*;
 pub use swap_mutation::*;
 
+/// # Mutation Trait
+///
 /// Trait that defines the mutation method. You can implement your own mutation method by
 /// implementing this trait.
 ///
@@ -28,7 +31,7 @@ pub use swap_mutation::*;
 ///     fn mutate(&self, population: &mut Vec<Bin>) {
 ///         for individual in population.iter_mut() {
 ///             for i in 0..individual.get_chromosome().len() {
-///                 individual.set_gene(i, !individual.get_chromosome()[i]);
+///                 individual.set_gene(i, !individual.get_gene(i));
 ///             }
 ///         }
 ///     }

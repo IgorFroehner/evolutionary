@@ -31,8 +31,8 @@ impl<T: Individual> Mutation<T> for SwapMutation {
                     if rng.gen_bool(self.mutation_rate) {
                         let swap_with = rng.gen_range(0..individual.get_chromosome().len());
 
-                        let temp = individual.get_chromosome()[j];
-                        individual.set_gene(j, individual.get_chromosome()[swap_with]);
+                        let temp = individual.get_gene(j);
+                        individual.set_gene(j, individual.get_gene(swap_with));
                         individual.set_gene(swap_with, temp);
                     }
                 }

@@ -56,6 +56,10 @@ pub enum GeneCod {
 ///         self.chromosome[index] = value;
 ///     }
 ///
+///     fn get_gene(&self, index: usize) -> Self::Gene {
+///        self.chromosome[index]
+///     }
+///
 ///     fn set_fitness(&mut self, fitness: f64) {
 ///         self.fitness = fitness;
 ///     }
@@ -73,6 +77,7 @@ pub trait Individual: 'static + Clone + Send + Sync {
     fn get_chromosome(&self) -> &Vec<Self::Gene>;
     fn get_mut_chromosome(&mut self) -> &mut Vec<Self::Gene>;
     fn set_gene(&mut self, index: usize, value: Self::Gene);
+    fn get_gene(&self, index: usize) -> Self::Gene;
     fn set_fitness(&mut self, fitness: f64);
     fn get_fitness(&self) -> f64;
 }

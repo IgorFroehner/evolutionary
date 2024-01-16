@@ -21,8 +21,8 @@ impl Crossover<Real> for UniformCrossover {
 
                     for i in 0..len {
                         if distribution.sample(&mut rng) {
-                            let temp = parent1.get_chromosome()[i];
-                            parent1.set_gene(i, parent2.get_chromosome()[i]);
+                            let temp = parent1.get_gene(i);
+                            parent1.set_gene(i, parent2.get_gene(i));
                             parent2.set_gene(i, temp);
                         }
                     }

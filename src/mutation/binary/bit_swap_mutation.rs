@@ -1,10 +1,8 @@
 use rand::{thread_rng, Rng};
 use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
-use crate::Individual;
+use crate::{Individual, Mutation};
 
 use crate::population::Bin;
-
-use super::Mutation;
 
 /// # Bit Swap Mutation
 ///
@@ -43,7 +41,7 @@ impl Mutation<Bin> for BitSwapMutation {
             |rng, member| {
                 for i in 0..member.get_chromosome().len() {
                     if rng.gen_bool(self.mutation_rate) {
-                        member.set_gene(i, !member.get_chromosome()[i]);
+                        member.set_gene(i, !member.get_gene(i));
                     }
                 }
             },

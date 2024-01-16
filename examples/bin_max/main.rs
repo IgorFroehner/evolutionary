@@ -4,7 +4,7 @@ fn f(individual: &Bin) -> f64 {
     let mut sum = 0.;
 
     for i in 0..individual.get_chromosome().len() {
-        if individual.get_chromosome()[i] {
+        if individual.get_gene(i) {
             sum += 1.;
         }
     }
