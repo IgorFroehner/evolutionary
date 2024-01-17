@@ -2,25 +2,9 @@ use rand::{thread_rng, Rng};
 use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::{population::Real, Individual, Mutation};
+use crate::mutation::random_resetting_mutation::RandomResettingMutation;
 
-/// # Substitute Mutation
-///
-/// For each gene in the real representation it has `mutation_rate` probability of substituting
-/// the gene with a random value.
-#[derive(Clone)]
-pub struct SubstituteMutation {
-    pub mutation_rate: f64,
-}
-
-impl Default for SubstituteMutation {
-    fn default() -> Self {
-        SubstituteMutation {
-            mutation_rate: 0.05,
-        }
-    }
-}
-
-impl Mutation<Real> for SubstituteMutation {
+impl Mutation<Real> for RandomResettingMutation {
     fn mutate(&self, population: &mut Vec<Real>) {
         population.par_iter_mut().for_each_init(
             || thread_rng(),

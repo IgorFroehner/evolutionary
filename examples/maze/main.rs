@@ -40,7 +40,7 @@ fn main() {
         })
         .with_selection(RouletteSelection::default())
         .with_crossover(crossover)
-        .with_mutation(SubstituteMutation::default())
+        .with_mutation(RandomResettingMutation::default())
         .with_title("Maze".to_string())
         .with_stop_condition(move |best_fitness, _, _| best_fitness == max_score);
         // .with_stop_condition(|_, iterations, _| iterations >= 10_000);

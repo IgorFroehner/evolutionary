@@ -6,6 +6,7 @@ use super::Individual;
 pub struct Int {
     chromosome: Vec<i64>,
     fitness: f64,
+    pub range: <Int as Individual>::RangeType,
 }
 
 impl Individual for Int {
@@ -20,6 +21,7 @@ impl Individual for Int {
                 .map(|_| rng.gen_range(range.0..=range.1))
                 .collect::<Vec<i64>>(),
             fitness: 0.0,
+            range: *range,
         }
     }
 

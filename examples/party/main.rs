@@ -32,7 +32,7 @@ fn main() {
         // Use the Binary Crossover
         .with_crossover(NPointsCrossover::default())
         // Use the Binary Mutation with a mutation rate of 0.05 (which is the default)
-        .with_mutation(BitSwapMutation { mutation_rate: 0.05 })
+        .with_mutation(BitFlipMutation { mutation_rate: 0.05 })
         // Set the stop condition based on the number of iterations
         .with_stop_condition(move |_, iterations, _| iterations >= 1000)
         .build().unwrap();

@@ -25,7 +25,7 @@ fn main() {
             n_points: 1,
         };
 
-        let mutation = BitSwapMutation {
+        let mutation = BitFlipMutation {
             mutation_rate: 0.05,
         };
 

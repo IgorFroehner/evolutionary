@@ -13,7 +13,7 @@ use crate::population::Bin;
 /// use evolutionary::prelude::*;
 /// let mut population = vec![Bin::new(vec![true, false, true, false, true, false, true, false])];
 ///
-/// let mut mutation = BitSwapMutation {
+/// let mut mutation = BitFlipMutation {
 ///    mutation_rate: 1.0,
 /// };
 ///
@@ -22,19 +22,19 @@ use crate::population::Bin;
 /// assert_eq!(*population[0].get_chromosome(), vec![false, true, false, true, false, true, false, true]);
 /// ```
 #[derive(Clone)]
-pub struct BitSwapMutation {
+pub struct BitFlipMutation {
     pub mutation_rate: f64,
 }
 
-impl Default for BitSwapMutation {
+impl Default for BitFlipMutation {
     fn default() -> Self {
-        BitSwapMutation {
+        BitFlipMutation {
             mutation_rate: 0.05,
         }
     }
 }
 
-impl Mutation<Bin> for BitSwapMutation {
+impl Mutation<Bin> for BitFlipMutation {
     fn mutate(&self, population: &mut Vec<Bin>) {
         population.par_iter_mut().for_each_init(
             || thread_rng(),

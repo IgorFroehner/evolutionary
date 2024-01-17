@@ -161,7 +161,7 @@ fn main() {
         })
         .with_selection(TournamentSelection::default())
         .with_crossover(UniformCrossover::default())
-        .with_mutation(SubstituteMutation::default())
+        .with_mutation(RandomResettingMutation::default())
         .with_title("Metro".to_string())
         .with_stop_condition(move |_, iterations, _| iterations >= 100)
         // .build()

@@ -5,6 +5,7 @@ use crate::population::Individual;
 mod do_nothing_selection;
 mod roulette_selection;
 mod tournament_selection;
+mod rank_selection;
 
 pub use do_nothing_selection::*;
 pub use roulette_selection::*;

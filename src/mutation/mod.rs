@@ -2,17 +2,21 @@ use dyn_clone::DynClone;
 
 use crate::population::Individual;
 
-mod do_nothing_mutation;
-mod swap_mutation;
-
 mod real;
 mod binary;
+mod integer;
+
+mod do_nothing_mutation;
+mod swap_mutation;
+mod random_resetting_mutation;
 
 pub use real::*;
 pub use binary::*;
+pub use integer::*;
 
 pub use do_nothing_mutation::*;
 pub use swap_mutation::*;
+pub use random_resetting_mutation::*;
 
 /// # Mutation Trait
 ///

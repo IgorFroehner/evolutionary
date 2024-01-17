@@ -27,7 +27,7 @@ use std::sync::Arc;
 ///         .with_fitness(YourFitness)
 ///         .with_selection(TournamentSelection::default())
 ///         .with_crossover(NPointsCrossover::default())
-///         .with_mutation(BitSwapMutation::default())
+///         .with_mutation(BitFlipMutation::default())
 ///         .with_title("Max".to_string())
 ///         .with_stop_condition(move |_, iterations, _| iterations >= 1000)
 ///         .build().unwrap();

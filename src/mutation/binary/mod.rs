@@ -1,4 +1,4 @@
 
-mod bit_swap_mutation;
+mod bit_flip_mutation;
 
-pub use bit_swap_mutation::*;
+pub use bit_flip_mutation::*;

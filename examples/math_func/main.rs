@@ -32,7 +32,7 @@ fn main() {
             .with_fitness(max_fitness)
             .with_selection(RouletteSelection::default())
             .with_crossover(NPointsCrossover::default())
-            .with_mutation(BitSwapMutation::default())
+            .with_mutation(BitFlipMutation::default())
             .with_title("Math Function".to_string())
             .with_stop_condition(move |_, iterations, _| iterations >= runs as u32)
             .build()

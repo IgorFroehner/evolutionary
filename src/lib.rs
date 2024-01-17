@@ -20,25 +20,21 @@
 //! use evolutionary::prelude::*;
 //!
 //! // First you'll need to code your Fitness function:
-//! fn f(individual: &Bin) -> f64 {
-//!     let mut sum = 0.;
-//!
-//!     for i in 0..individual.get_chromosome().len() {
-//!         if individual.get_gene(i) {
-//!             sum += 1.;
-//!         }
-//!     }
-//!
-//!     sum
-//! }
-//!
 //! #[derive(Clone)]
 //! pub struct MaxFitness;
 //!
 //! // To do this you need to implement the Fitness trait.
 //! impl Fitness<Bin> for MaxFitness {
 //!     fn calculate_fitness(&self, individual: &Bin) -> f64 {
-//!         f(individual)
+//!         let mut sum = 0.;
+//!
+//!         for i in 0..individual.get_chromosome().len() {
+//!             if individual.get_gene(i) {
+//!                 sum += 1.;
+//!             }
+//!         }
+//!
+//!         sum
 //!     }
 //! }
 //!
@@ -49,9 +45,9 @@
 //!         .with_fitness(MaxFitness)
 //!         .with_selection(TournamentSelection::default())
 //!         .with_crossover(NPointsCrossover::default())
-//!         .with_mutation(BitSwapMutation::default())
+//!         .with_mutation(BitFlipMutation::default())
 //!         .with_title("Max".to_string())
-//!         .with_stop_condition(move |best_fitness, _, _| best_fitness == 10.0)
+//!         .with_stop_condition(move |_, iterations, _| iterations >= 100)
 //!         .build().unwrap();
 //!
 //!     evolution.run();

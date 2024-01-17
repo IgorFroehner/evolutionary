@@ -76,7 +76,7 @@ fn main() {
         // Use the Binary Crossover
         .with_crossover(NPointsCrossover::default())
         // Use the Binary Mutation with a mutation rate of 0.05 (which is the default)
-        .with_mutation(BitSwapMutation { mutation_rate: 0.05 })
+        .with_mutation(BitFlipMutation { mutation_rate: 0.05 })
         // Set the stop condition based on the number of iterations
         .with_stop_condition(move |_, iterations, _| iterations >= 1000)
         .build().unwrap();
@@ -95,7 +95,7 @@ fn main() {
 }
 ```
 
-In this example we used the `TournamentSelection`, the `NPointsCrossover` and the `BitSwapMutation`, which are the 
+In this example we used the `TournamentSelection`, the `NPointsCrossover` and the `BitFlipMutation`, which are the 
 already implemented in the framework. Please try to play and change these parameters, this is the core of the modular 
 and extensibility of the framework We also set a stop condition to stop the evolution after 1000 iterations, 
 we could also use a fitness threshold or the number of generations without improvement.
