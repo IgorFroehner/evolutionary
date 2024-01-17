@@ -1,7 +1,7 @@
 use std::time::Duration;
 use std::{collections::HashMap, time::Instant};
 
-use crate::utils::plot_chart;
+use crate::plotting::plot_chart;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum Steps {

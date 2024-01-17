@@ -75,6 +75,7 @@ mod mutation;
 mod population;
 mod selection;
 pub mod utils;
+pub mod plotting;
 
 pub use crossover::Crossover;
 pub use evolution::Evolution;
