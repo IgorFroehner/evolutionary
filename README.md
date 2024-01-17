@@ -20,26 +20,22 @@ You can also code your own `selection`, `crossover` or `mutation` implementing t
 First you'll need to code your Fitness function:
 
 ```rust
-use evolutionary::prelude::*; 
-
-fn f(individual: &Bin) -> f64 {
-    let mut sum = 0.;
-
-    for i in 0..individual.0.len() {
-        if individual.0[i] {
-            sum += 1.;
-        }
-    }
-
-    sum
-}
+use evolutionary::prelude::*;
 
 #[derive(Clone)]
 pub struct MaxFitness;
 
 impl Fitness<Bin> for MaxFitness {
     fn calculate_fitness(&self, individual: &Bin) -> f64 {
-        f(individual)
+        let mut sum = 0.;
+  
+        for i in 0..individual.get_chromosome().len() {
+            if individual.get_gene(i) {
+                sum += 1.;
+            }
+        }
+  
+        sum
     }
 }
 ```
@@ -51,9 +47,8 @@ fn main() {
     let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
         .with_fitness(MaxFitness)
         .with_selection(TournamentSelection::default())
-        .with_crossover(BinCrossover::default())
-        .with_mutation(BinMutation::default())
-        .with_title("Max".to_string())
+        .with_crossover(NPointsCrossover::default())
+        .with_mutation(BitSwapMutation::default())
         .with_stop_condition(move |_, iterations, _| iterations >= 1000)
         .build().unwrap();
 
