@@ -1,7 +1,7 @@
 use std::fs::create_dir_all;
 use std::time::{Duration, Instant};
 
-use crate::utils::plot_chart;
+use crate::plotting::plot_chart;
 use crate::{evolution_builder::EvolutionBuilder, population::Individual};
 
 use rayon::prelude::*;
