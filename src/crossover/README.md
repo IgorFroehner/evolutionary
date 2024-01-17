@@ -1,17 +1,23 @@
 # Crossover
 
-* Binary:
+### Binary:
   - [Multiple Point Crossover (MPX)](./binary/n_points_crossover.rs)
   - [Uniform Crossover (UX)](./binary/uniform_crossover.rs)
 
-* Real:
+### Real:
   - [Multiple Point Crossover (MPX)](./real/n_points_crossover.rs)
   - [Uniform Crossover (UX)](./real/uniform_crossover.rs)
+  - [Blend Crossover (BLX)](./real/blend_crossover.rs)
+  - TODO:
+    - [Simulated Binary Crossover (SBX)](./real/simulated_binary_crossover.rs)
+    - [Linear Crossover (LX)](./real/linear_crossover.rs)
+    - [Arithmetic Crossover (AX)](./real/arithmetic_crossover.rs)
 
-* Integer:
+### Integer:
   - [Multiple Point Crossover (MPX)](./integer/n_points_crossover.rs) 
   - [Uniform Crossover (UX)](./integer/uniform_crossover.rs)
 
-* Permuted Integer:
+### Permuted Integer:
   - [Partially Mapped Crossover (PMX)](./permuted/pmx_crossover.rs)
   - [Cycle Crossover (CX)](./permuted/cx_crossover.rs)
+  - [Order Crossover (OX)](./permuted/ox_crossover.rs)

@@ -133,9 +133,7 @@ impl<T: Individual> Evolution<T> {
 
         self.current_population = mating_pool;
 
-        self.metrics.step_start(Steps::Fitness);
         self.process_fitness();
-        self.metrics.step_end(Steps::Fitness);
 
         if self.elitism && current_best_solution.is_some() {
             let worst_index = self

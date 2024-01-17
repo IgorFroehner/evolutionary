@@ -64,13 +64,15 @@ fn main() {
 }
 ```
 
+There is an extended getting started [here](./docs/getting_started.md).
+
 ## Examples and Projects:
 
 * [evolutionary-examples](https://github.com/IgorFroehner/evolutionary-examples) - A project with some visual 
   examples of the `evolutionary` library use, implemented with the [bevy game engine](https://bevyengine.org/).
 
 There are some examples in the [examples folder](./examples):
-* [Max](./examples/bin_max)
+* [Max](./examples/party)
 * [Math Function](./examples/math_func)
 * [NQueens](./examples/nqueens)
 * [Valued NQueens](./examples/nqueens_valued)

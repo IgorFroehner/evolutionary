@@ -15,8 +15,8 @@ use crate::population::Real;
 /// for constrained numerical optimization problems](https://ieeexplore.ieee.org/document/7036347)
 #[derive(Clone, Debug)]
 pub struct BlendCrossover {
-    crossover_rate: f64,
-    alpha: f64,
+    pub crossover_rate: f64,
+    pub alpha: f64,
 }
 
 impl Default for BlendCrossover {
@@ -25,6 +25,23 @@ impl Default for BlendCrossover {
             crossover_rate: 0.8,
             alpha: 0.5,
         }
+    }
+}
+
+impl BlendCrossover {
+    pub fn new(crossover_rate: f64, alpha: f64) -> Self {
+        Self {
+            crossover_rate,
+            alpha,
+        }
+    }
+
+    fn blend_min_max(&self, x1: f64, x2: f64) -> (f64, f64) {
+        let (x1, x2) = (x1.min(x2), x1.max(x2));
+        let diff = x2 - x1;
+        let min = x1 - diff * self.alpha;
+        let max = x2 + diff * self.alpha;
+        (min, max)
     }
 }
 
@@ -41,15 +58,7 @@ impl Crossover<Real> for BlendCrossover {
                     let len = parent1.get_chromosome().len();
 
                     for i in 0..len {
-                        let (x1, x2) = (
-                            parent1.get_gene(i).min(parent2.get_gene(i)),
-                            parent1.get_gene(i).max(parent2.get_gene(i)),
-                        );
-
-                        let diff = x1 - x2;
-
-                        let min = x1 - diff * self.alpha;
-                        let max = x2 + diff * self.alpha;
+                        let (min, max) = self.blend_min_max(parent1.get_gene(i), parent2.get_gene(i));
 
                         let gene = rng.gen_range(min..=max);
 
@@ -61,3 +70,15 @@ impl Crossover<Real> for BlendCrossover {
         );
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::crossover::BlendCrossover;
+
+    #[test]
+    fn test_blend_min_max() {
+        let blend = BlendCrossover::new(0.8, 0.5);
+        assert_eq!(blend.blend_min_max(1.0, 2.0), (0.5, 2.5));
+    }
+}
+

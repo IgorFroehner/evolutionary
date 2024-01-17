@@ -1,5 +1,3 @@
-use plotters::prelude::*;
-use plotters::style::{RED, WHITE};
 
 pub fn convert_bin(vec: &Vec<bool>) -> f64 {
     let mut res = 0.0;
