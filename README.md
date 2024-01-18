@@ -81,7 +81,8 @@ There are some examples in the [examples folder](./examples):
   - [ ] Tree-based chromosomes
 - Selection:
   - [x] Rank Selection
-  - [ ] Stochastic Universal Sampling
+  - [x] Stochastic Universal Sampling
+    - [ ] Parallelize the SUS Selection
   - [ ] N Individuals Elitism
 - Crossover:
   - Real:

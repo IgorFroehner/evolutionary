@@ -9,6 +9,7 @@ pub enum Steps {
     Crossover,
     Mutation,
     Fitness,
+    Elitism,
 }
 
 pub struct Metrics {
@@ -28,6 +29,7 @@ impl Metrics {
         step_times.insert(Steps::Crossover, (false, Instant::now(), 0));
         step_times.insert(Steps::Mutation, (false, Instant::now(), 0));
         step_times.insert(Steps::Fitness, (false, Instant::now(), 0));
+        step_times.insert(Steps::Elitism, (false, Instant::now(), 0));
 
         Self {
             best_fitnesses: Vec::new(),

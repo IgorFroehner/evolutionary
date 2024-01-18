@@ -1,6 +1,9 @@
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::sync::Arc;
 use std::time::Duration;
+use ordered_float::OrderedFloat;
 
 use crate::{
     crossover::Crossover,
@@ -59,7 +62,7 @@ pub struct Evolution<T: Individual> {
     selection: Box<dyn Selection<T>>,
     crossover: Box<dyn Crossover<T>>,
     mutation: Box<dyn Mutation<T>>,
-    elitism: bool,
+    elitism: u32,
     stop_condition: StopConditionFn,
     pub metrics: Metrics,
 }
@@ -72,7 +75,7 @@ impl<T: Individual> Evolution<T> {
         selection: Box<dyn Selection<T>>,
         crossover: Box<dyn Crossover<T>>,
         mutation: Box<dyn Mutation<T>>,
-        elitism: bool,
+        elitism: u32,
         stop_condition: StopConditionFn,
     ) -> Self {
         Self {
@@ -114,10 +117,25 @@ impl<T: Individual> Evolution<T> {
     /// This method runs one generation of the evolution.
     /// It selects the mating pool, crossover, mutate and calculates the fitness of the new population.
     pub fn next(&mut self) {
-        let mut current_best_solution = None;
-        if self.elitism {
-            current_best_solution = Some(self.current_best().clone());
-        }
+        self.metrics.step_start(Steps::Elitism);
+        let elitists = if self.elitism == 1 {
+            vec![self.current_best().clone()]
+        } else if self.elitism > 1 {
+            // Find self.elitism best ones.
+            let mut better_heap: BinaryHeap<(OrderedFloat<f64>, usize)> =
+                self.current_population.par_iter().enumerate()
+                    .map(|(index, individual)| (OrderedFloat(individual.get_fitness()), index))
+                    .collect();
+
+            (0..self.elitism).into_iter().map(|_| {
+                let (_, idx) = better_heap.pop().unwrap();
+
+                self.current_population[idx].clone()
+            }).collect()
+        } else {
+            vec![]
+        };
+        self.metrics.step_end(Steps::Elitism);
 
         self.metrics.step_start(Steps::Selection);
         let mut mating_pool = self.selection.get_mating_pool(&self.current_population);
@@ -135,17 +153,21 @@ impl<T: Individual> Evolution<T> {
 
         self.process_fitness();
 
-        if self.elitism && current_best_solution.is_some() {
-            let worst_index = self
-                .current_population
-                .par_iter()
-                .enumerate()
-                .min_by(|(_, a), (_, b)| Self::cmp_by_fitness(a, b))
-                .unwrap()
-                .0;
+        self.metrics.step_start(Steps::Elitism);
+        if self.elitism != 0 && !elitists.is_empty() {
+            // Builds a MinHeap with (fitness, idx) of the population
+            let mut worst_heap: BinaryHeap<(Reverse<OrderedFloat<f64>>, usize)> =
+                self.current_population.par_iter().enumerate()
+                    .map(|(index, individual)| (Reverse(OrderedFloat(individual.get_fitness())), index))
+                    .collect();
 
-            self.current_population[worst_index] = current_best_solution.unwrap();
+            for elitist in elitists {
+                let (_, idx) = worst_heap.pop().unwrap();
+
+                self.current_population[idx] = elitist.clone();
+            }
         }
+        self.metrics.step_end(Steps::Elitism);
 
         self.metrics
             .record(self.current_best_fitness(), self.current_fitness_average());
@@ -220,6 +242,13 @@ impl<T: Individual> Evolution<T> {
             "Fitness time: {:?} ({:.2}%)",
             self.metrics.step_time(Steps::Fitness).unwrap(),
             self.metrics.step_time(Steps::Fitness).unwrap().as_nanos() as f64
+                / self.metrics.total_time() as f64
+                * 100.0
+        );
+        println!(
+            "Elitism time: {:?} ({:.2}%)",
+            self.metrics.step_time(Steps::Elitism).unwrap(),
+            self.metrics.step_time(Steps::Elitism).unwrap().as_nanos() as f64
                 / self.metrics.total_time() as f64
                 * 100.0
         );

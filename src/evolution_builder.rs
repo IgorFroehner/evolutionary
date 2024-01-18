@@ -40,7 +40,7 @@ pub struct EvolutionBuilder<T: Individual> {
     selection: Option<Box<dyn Selection<T>>>,
     crossover: Option<Box<dyn Crossover<T>>>,
     mutation: Option<Box<dyn Mutation<T>>>,
-    elitism: Option<bool>,
+    elitism: Option<u32>,
     stop_condition: Option<StopConditionFn>,
 }
 
@@ -125,8 +125,8 @@ impl<T: Individual> EvolutionBuilder<T> {
         self
     }
 
-    /// Whether or not to use elitism. Defaults to `true`.
-    pub fn with_elitism(mut self, elitism: bool) -> Self {
+    /// Number of elitist population members to ensure that keeps in the pool. Default is 1.
+    pub fn with_elitism(mut self, elitism: u32) -> Self {
         self.elitism = Some(elitism);
         self
     }
@@ -142,6 +142,10 @@ impl<T: Individual> EvolutionBuilder<T> {
 
         let evolution_config = self.evolution_config.clone().ok_or("No config provided")?;
 
+        if self.elitism.unwrap_or(1) > self.evolution_config.as_ref().unwrap().dimension {
+            return Err("Number of elitist bigger then the population size".to_string());
+        }
+
         if let (Some(f), Some(s), Some(x), Some(m)) = (
             self.fitness.as_ref().map(|f| f.as_ref()),
             self.selection.as_ref().map(|s| s.as_ref()),
@@ -155,7 +159,7 @@ impl<T: Individual> EvolutionBuilder<T> {
                 dyn_clone::clone_box(&*s),
                 dyn_clone::clone_box(&*x),
                 dyn_clone::clone_box(&*m),
-                self.elitism.unwrap_or(true),
+                self.elitism.unwrap_or(1),
                 Arc::clone(self.stop_condition.as_ref().unwrap()),
             ))
         } else {

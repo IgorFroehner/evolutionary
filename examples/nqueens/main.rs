@@ -44,7 +44,7 @@ fn main() {
 
     if let GeneCod::IntPerm = config.gene_cod {
         let crossover = PMXCrossover {
-            crossover_rate: 1.0,
+            crossover_rate: 0.8,
         };
 
         let mutation = SwapMutation::new(0.02);
@@ -57,9 +57,10 @@ fn main() {
 
         let evolution_builder = EvolutionBuilder::from_config(config.into())
             .with_fitness(fitness)
-            .with_selection(StochasticUniversalSamplingSelection::default())
+            .with_selection(TournamentSelection::default())
             .with_crossover(crossover.clone())
             .with_mutation(mutation.clone())
+            .with_elitism(1)
             .with_stop_condition(move |best_fitness, _, _| best_fitness == max_colisions)
             .with_title("NQueens".to_string());
 

@@ -21,3 +21,4 @@ serde_derive = "1.0.183"
 rayon = "1.7"
 dyn-clone = "1.0.13"
 plotters = "0.3.5"
+ordered-float = { version = "4.2.0", default-features = false }
