@@ -80,7 +80,7 @@ There are some examples in the [examples folder](./examples):
 - Individuals:
   - [ ] Tree-based chromosomes
 - Selection:
-  - [ ] Rank Selection
+  - [x] Rank Selection
   - [ ] Stochastic Universal Sampling
   - [ ] N Individuals Elitism
 - Crossover:

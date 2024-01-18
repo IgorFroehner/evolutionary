@@ -7,9 +7,10 @@ mod roulette_selection;
 mod tournament_selection;
 mod rank_selection;
 
-pub use do_nothing_selection::*;
-pub use roulette_selection::*;
-pub use tournament_selection::*;
+pub use do_nothing_selection::DoNothingSelection;
+pub use roulette_selection::RouletteSelection;
+pub use tournament_selection::TournamentSelection;
+pub use rank_selection::RankSelection;
 
 /// Trait that defines the selection method. You can implement your own selection method by
 /// implementing this trait.
