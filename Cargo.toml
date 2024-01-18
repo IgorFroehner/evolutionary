@@ -1,6 +1,6 @@
 [package]
 name = "evolutionary"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 homepage = "https://github.com/IgorFroehner/evolutionary-computing"
