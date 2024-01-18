@@ -83,7 +83,7 @@ There are some examples in the [examples folder](./examples):
   - [x] Rank Selection
   - [x] Stochastic Universal Sampling
     - [ ] Parallelize the SUS Selection
-  - [ ] N Individuals Elitism
+  - [x] N Individuals Elitism
 - Crossover:
   - Real:
     - [ ] Linear Crossover (LX)

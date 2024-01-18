@@ -118,23 +118,7 @@ impl<T: Individual> Evolution<T> {
     /// It selects the mating pool, crossover, mutate and calculates the fitness of the new population.
     pub fn next(&mut self) {
         self.metrics.step_start(Steps::Elitism);
-        let elitists = if self.elitism == 1 {
-            vec![self.current_best().clone()]
-        } else if self.elitism > 1 {
-            // Find self.elitism best ones.
-            let mut better_heap: BinaryHeap<(OrderedFloat<f64>, usize)> =
-                self.current_population.par_iter().enumerate()
-                    .map(|(index, individual)| (OrderedFloat(individual.get_fitness()), index))
-                    .collect();
-
-            (0..self.elitism).into_iter().map(|_| {
-                let (_, idx) = better_heap.pop().unwrap();
-
-                self.current_population[idx].clone()
-            }).collect()
-        } else {
-            vec![]
-        };
+        let elitists = self.find_elitists();
         self.metrics.step_end(Steps::Elitism);
 
         self.metrics.step_start(Steps::Selection);
@@ -155,17 +139,7 @@ impl<T: Individual> Evolution<T> {
 
         self.metrics.step_start(Steps::Elitism);
         if self.elitism != 0 && !elitists.is_empty() {
-            // Builds a MinHeap with (fitness, idx) of the population
-            let mut worst_heap: BinaryHeap<(Reverse<OrderedFloat<f64>>, usize)> =
-                self.current_population.par_iter().enumerate()
-                    .map(|(index, individual)| (Reverse(OrderedFloat(individual.get_fitness())), index))
-                    .collect();
-
-            for elitist in elitists {
-                let (_, idx) = worst_heap.pop().unwrap();
-
-                self.current_population[idx] = elitist.clone();
-            }
+            self.replace_worsts_with_elitists(elitists);
         }
         self.metrics.step_end(Steps::Elitism);
 
@@ -301,6 +275,39 @@ impl<T: Individual> Evolution<T> {
         test_name: impl Into<String>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.metrics.plot_chart(&path.into(), &test_name.into())
+    }
+
+    fn find_elitists(&self) -> Vec<T> {
+        if self.elitism == 1 {
+            vec![self.current_best().clone()]
+        } else if self.elitism > 1 {
+            let mut better_heap: BinaryHeap<(OrderedFloat<f64>, usize)> =
+                self.current_population.par_iter().enumerate()
+                    .map(|(index, individual)| (OrderedFloat(individual.get_fitness()), index))
+                    .collect();
+
+            (0..self.elitism).into_iter().map(|_| {
+                let (_, idx) = better_heap.pop().unwrap();
+
+                self.current_population[idx].clone()
+            }).collect()
+        } else {
+            vec![]
+        }
+    }
+
+    fn replace_worsts_with_elitists(&mut self, elitists: Vec<T>) {
+        // Builds a MinHeap with (fitness, idx) of the population
+        let mut worst_heap: BinaryHeap<(Reverse<OrderedFloat<f64>>, usize)> =
+            self.current_population.par_iter().enumerate()
+                .map(|(index, individual)| (Reverse(OrderedFloat(individual.get_fitness())), index))
+                .collect();
+
+        for elitist in elitists {
+            let (_, idx) = worst_heap.pop().unwrap();
+
+            self.current_population[idx] = elitist.clone();
+        }
     }
 
     fn calculate_fitness(&self, individual: &T) -> f64 {

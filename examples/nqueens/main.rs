@@ -60,7 +60,7 @@ fn main() {
             .with_selection(TournamentSelection::default())
             .with_crossover(crossover.clone())
             .with_mutation(mutation.clone())
-            .with_elitism(1)
+            .with_elitism(10)
             .with_stop_condition(move |best_fitness, _, _| best_fitness == max_colisions)
             .with_title("NQueens".to_string());
 
