@@ -57,7 +57,7 @@ fn main() {
 
         let evolution_builder = EvolutionBuilder::from_config(config.into())
             .with_fitness(fitness)
-            .with_selection(TournamentSelection::default())
+            .with_selection(StochasticUniversalSamplingSelection::default())
             .with_crossover(crossover.clone())
             .with_mutation(mutation.clone())
             .with_stop_condition(move |best_fitness, _, _| best_fitness == max_colisions)
