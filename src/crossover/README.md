@@ -8,6 +8,8 @@
   - [Multiple Point Crossover (MPX)](./real/n_points_crossover.rs)
   - [Uniform Crossover (UX)](./real/uniform_crossover.rs)
   - [Blend Crossover (BLX)](./real/blend_crossover.rs)
+  - [Arithmetic Crossover (AX)](./real/arithmetic_crossover.rs)
+  - [Linear Crossover (LX)](./real/linear_crossover.rs)
 
 ### Integer:
   - [Multiple Point Crossover (MPX)](./integer/n_points_crossover.rs) 
