@@ -16,6 +16,6 @@
   - [Uniform Crossover (UX)](./integer/uniform_crossover.rs)
 
 ### Permuted Integer:
-  - [Partially Mapped Crossover (PMX)](./permuted/pmx_crossover.rs)
-  - [Cycle Crossover (CX)](./permuted/cx_crossover.rs)
-  - [Order Crossover (OX)](./permuted/ox_crossover.rs)
+  - [Partially Mapped Crossover (PMX)](./permuted/partially_mapped_crossover)
+  - [Cycle Crossover (CX)](./permuted/cycle_crossover)
+  - [Order Crossover (OX)](./permuted/ordered_crossover)

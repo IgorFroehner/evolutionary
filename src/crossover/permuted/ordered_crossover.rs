@@ -14,19 +14,19 @@ use super::Crossover;
 /// probability it chooses two points in the parents, maintain the elements between the points and
 /// fill the remaining positions with the elements of the other parent in the order they appear.
 #[derive(Clone)]
-pub struct OXCrossover {
+pub struct OrderedCrossover {
     pub crossover_rate: f64,
 }
 
-impl Default for OXCrossover {
+impl Default for OrderedCrossover {
     fn default() -> Self {
-        OXCrossover {
+        OrderedCrossover {
             crossover_rate: 0.8,
         }
     }
 }
 
-impl OXCrossover {
+impl OrderedCrossover {
     pub fn apply_ox(parent1: &mut Vec<i64>, parent2: &mut Vec<i64>, start: usize, end: usize) {
         let len = parent1.len();
 
@@ -65,7 +65,7 @@ impl OXCrossover {
     }
 }
 
-impl Crossover<IntPerm> for OXCrossover {
+impl Crossover<IntPerm> for OrderedCrossover {
     fn crossover(&self, population: &mut Vec<IntPerm>) {
         population.par_chunks_mut(2).for_each_init(
             || thread_rng(),
@@ -79,7 +79,7 @@ impl Crossover<IntPerm> for OXCrossover {
                     let start = rng.gen_range(0..len);
                     let end = rng.gen_range(start..len);
 
-                    OXCrossover::apply_ox(
+                    OrderedCrossover::apply_ox(
                         &mut parent1.chromosome,
                         &mut parent2.chromosome,
                         start,
@@ -96,7 +96,7 @@ impl Crossover<IntPerm> for OXCrossover {
 
 #[cfg(test)]
 mod tests {
-    use crate::crossover::OXCrossover;
+    use crate::crossover::OrderedCrossover;
 
     #[test]
     fn ox_crossover() {
@@ -104,7 +104,7 @@ mod tests {
         let mut parent1 = vec![1, 2, 3, 4, 5, 6, 7, 8, 9];
         let mut parent2 = vec![5, 7, 4, 9, 1, 3, 6, 2, 8];
 
-        OXCrossover::apply_ox(&mut parent1, &mut parent2, 2, 5);
+        OrderedCrossover::apply_ox(&mut parent1, &mut parent2, 2, 5);
 
         assert_eq!(parent1, vec![7, 9, 3, 4, 5, 6, 1, 2, 8]);
         assert_eq!(parent2, vec![2, 5, 4, 9, 1, 3, 6, 7, 8]);

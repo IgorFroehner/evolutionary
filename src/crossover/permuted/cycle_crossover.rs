@@ -8,19 +8,19 @@ use crate::population::IntPerm;
 use super::Crossover;
 
 #[derive(Clone)]
-pub struct CXCrossover {
+pub struct CycleCrossover {
     pub crossover_rate: f64,
 }
 
-impl Default for CXCrossover {
+impl Default for CycleCrossover {
     fn default() -> Self {
-        CXCrossover {
+        CycleCrossover {
             crossover_rate: 0.8,
         }
     }
 }
 
-impl CXCrossover {
+impl CycleCrossover {
     fn cx_crossover(parent1: &mut Vec<i64>, parent2: &mut Vec<i64>) {
         let mut aux_hash1 = HashMap::new();
         let mut aux_hash2 = HashMap::new();
@@ -49,7 +49,7 @@ impl CXCrossover {
     }
 }
 
-impl Crossover<IntPerm> for CXCrossover {
+impl Crossover<IntPerm> for CycleCrossover {
     fn crossover(&self, population: &mut Vec<IntPerm>) {
         population.par_chunks_mut(2).for_each_init(
             || thread_rng(),
@@ -58,7 +58,7 @@ impl Crossover<IntPerm> for CXCrossover {
                     let mut parent1 = chunk[0].clone();
                     let mut parent2 = chunk[1].clone();
 
-                    CXCrossover::cx_crossover(&mut parent1.chromosome, &mut parent2.chromosome);
+                    CycleCrossover::cx_crossover(&mut parent1.chromosome, &mut parent2.chromosome);
 
                     chunk[0] = parent1;
                     chunk[1] = parent2;
@@ -75,7 +75,7 @@ mod tests {
         let mut parent1 = vec![1, 2, 3, 4, 5, 6, 7, 8, 9];
         let mut parent2 = vec![9, 3, 7, 8, 2, 6, 5, 1, 4];
 
-        super::CXCrossover::cx_crossover(&mut parent1, &mut parent2);
+        super::CycleCrossover::cx_crossover(&mut parent1, &mut parent2);
 
         assert_eq!(parent1, vec![1, 3, 7, 4, 2, 6, 5, 8, 9]);
         assert_eq!(parent2, vec![9, 2, 3, 8, 5, 6, 7, 1, 4]);
@@ -86,7 +86,7 @@ mod tests {
         let mut parent1 = vec![9, 8, 2, 1, 7, 4, 5, 10, 6, 3];
         let mut parent2 = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-        super::CXCrossover::cx_crossover(&mut parent1, &mut parent2);
+        super::CycleCrossover::cx_crossover(&mut parent1, &mut parent2);
 
         assert_eq!(parent1, vec![9, 2, 3, 1, 5, 4, 7, 8, 6, 10]);
         assert_eq!(parent2, vec![1, 8, 2, 4, 7, 6, 5, 10, 9, 3]);
@@ -97,7 +97,7 @@ mod tests {
         let mut parent1 = vec![1, 2, 3, 4, 5];
         let mut parent2 = vec![3, 5, 2, 1, 4];
 
-        super::CXCrossover::cx_crossover(&mut parent1, &mut parent2);
+        super::CycleCrossover::cx_crossover(&mut parent1, &mut parent2);
 
         assert_eq!(parent1, vec![1, 2, 3, 4, 5]);
         assert_eq!(parent2, vec![3, 5, 2, 1, 4]);

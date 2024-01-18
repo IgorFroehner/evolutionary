@@ -53,7 +53,7 @@ fn main() {
     let mut evolution = EvolutionBuilder::new(30, size as u32, GeneCod::IntPerm, ())
         .with_selection(TournamentSelection::default())
         .with_fitness(fitness)
-        .with_crossover(OXCrossover::default())
+        .with_crossover(OrderedCrossover::default())
         .with_mutation(SwapMutation::default())
         .with_title("TSP".to_string())
         .with_stop_condition(move |best_fitness, _, _| best_fitness >= best_fitness_possible)

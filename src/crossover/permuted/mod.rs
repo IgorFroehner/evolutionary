@@ -1,9 +1,9 @@
 use crate::*;
 
-mod cx_crossover;
-mod ox_crossover;
-mod pmx_crossover;
+mod cycle_crossover;
+mod ordered_crossover;
+mod partially_mapped_crossover;
 
-pub use cx_crossover::*;
-pub use ox_crossover::*;
-pub use pmx_crossover::*;
+pub use cycle_crossover::*;
+pub use ordered_crossover::*;
+pub use partially_mapped_crossover::*;

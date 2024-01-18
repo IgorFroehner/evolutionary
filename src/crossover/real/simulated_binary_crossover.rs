@@ -5,7 +5,7 @@ use crate::population::Real;
 pub struct SimulatedBinaryCrossover;
 
 impl Crossover<Real> for SimulatedBinaryCrossover {
-    fn crossover(&self, population: &mut Vec<Real>) {
+    fn crossover(&self, _population: &mut Vec<Real>) {
         todo!()
     }
 }

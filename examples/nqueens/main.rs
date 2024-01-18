@@ -43,7 +43,7 @@ fn main() {
     let config = read_config(file_name).expect("Failed to read config file");
 
     if let GeneCod::IntPerm = config.gene_cod {
-        let crossover = PMXCrossover {
+        let crossover = PartiallyMappedCrossover {
             crossover_rate: 0.8,
         };
 

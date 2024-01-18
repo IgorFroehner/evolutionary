@@ -8,19 +8,19 @@ use crate::{population::IntPerm, Individual};
 use super::Crossover;
 
 #[derive(Clone)]
-pub struct PMXCrossover {
+pub struct PartiallyMappedCrossover {
     pub crossover_rate: f64,
 }
 
-impl Default for PMXCrossover {
+impl Default for PartiallyMappedCrossover {
     fn default() -> Self {
-        PMXCrossover {
+        PartiallyMappedCrossover {
             crossover_rate: 0.8,
         }
     }
 }
 
-impl PMXCrossover {
+impl PartiallyMappedCrossover {
     fn pmx_matching(parent1: &mut Vec<i64>, parent2: &mut Vec<i64>, start: usize, end: usize) {
         let mut matching_section_1 = HashMap::new();
         let mut matching_section_2 = HashMap::new();
@@ -56,7 +56,7 @@ impl PMXCrossover {
     }
 }
 
-impl Crossover<IntPerm> for PMXCrossover {
+impl Crossover<IntPerm> for PartiallyMappedCrossover {
     fn crossover(&self, population: &mut Vec<IntPerm>) {
         population.par_chunks_mut(2).for_each_init(
             || thread_rng(),
@@ -70,7 +70,7 @@ impl Crossover<IntPerm> for PMXCrossover {
                     let start = rng.gen_range(0..len);
                     let end = rng.gen_range(start..len);
 
-                    PMXCrossover::pmx_matching(
+                    PartiallyMappedCrossover::pmx_matching(
                         &mut parent1.chromosome,
                         &mut parent2.chromosome,
                         start,
@@ -92,7 +92,7 @@ mod tests {
         let mut parent1 = vec![9, 8, 4, 5, 6, 7, 1, 3, 2, 10];
         let mut parent2 = vec![8, 7, 1, 2, 3, 10, 9, 5, 4, 6];
 
-        super::PMXCrossover::pmx_matching(&mut parent1, &mut parent2, 3, 6);
+        super::PartiallyMappedCrossover::pmx_matching(&mut parent1, &mut parent2, 3, 6);
 
         assert_eq!(parent1, vec![9, 8, 4, 2, 3, 10, 1, 6, 5, 7]);
         assert_eq!(parent2, vec![8, 10, 1, 5, 6, 7, 9, 2, 4, 3]);
@@ -103,7 +103,7 @@ mod tests {
         let mut parent1 = vec![1, 2, 3, 4, 5, 6, 7, 8, 9];
         let mut parent2 = vec![9, 3, 7, 8, 2, 6, 5, 1, 4];
 
-        super::PMXCrossover::pmx_matching(&mut parent1, &mut parent2, 2, 6);
+        super::PartiallyMappedCrossover::pmx_matching(&mut parent1, &mut parent2, 2, 6);
 
         assert_eq!(parent1, vec![1, 5, 7, 8, 2, 6, 3, 4, 9]);
         assert_eq!(parent2, vec![9, 7, 3, 4, 5, 6, 2, 1, 8]);
@@ -114,7 +114,7 @@ mod tests {
         let mut parent1 = vec![4, 2, 3, 1, 5];
         let mut parent2 = vec![2, 3, 1, 4, 5];
 
-        super::PMXCrossover::pmx_matching(&mut parent1, &mut parent2, 1, 4);
+        super::PartiallyMappedCrossover::pmx_matching(&mut parent1, &mut parent2, 1, 4);
 
         assert_eq!(parent1, vec![2, 3, 1, 4, 5]);
         assert_eq!(parent2, vec![4, 2, 3, 1, 5]);
