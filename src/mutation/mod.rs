@@ -9,10 +9,13 @@ mod integer;
 mod do_nothing_mutation;
 mod swap_mutation;
 mod random_resetting_mutation;
+mod permuted;
+mod scramble_mutation;
 
 pub use real::*;
 pub use binary::*;
 pub use integer::*;
+pub use permuted::*;
 
 pub use do_nothing_mutation::*;
 pub use swap_mutation::*;

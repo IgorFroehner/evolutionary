@@ -80,23 +80,14 @@ There are some examples in the [examples folder](./examples):
 - Individuals:
   - [ ] Tree-based chromosomes
 - Selection:
-  - [x] Rank Selection
-  - [x] Stochastic Universal Sampling
     - [ ] Parallelize the SUS Selection
-  - [x] N Individuals Elitism
 - Crossover:
   - Real:
     - [ ] Linear Crossover (LX)
-    - [ ] Arithmetic Crossover (AX)
     - [ ] Simulated Binary Crossover (SBX)
-- Mutation:
-  - Real:
-    - [ ] Gaussian Mutation (GM)
-  - Permutation:
-    - [ ] Insertion Mutation (IM)
-    - [ ] Scramble Mutation (SM)
 - Usability and Performance:
-  - [ ] Create macro for implementing the `Individual` trait
+  - [ ] Logs System
+  - [ ] Create macros to simplify the implementation of the traits where possible;
   - [ ] Allow fitness to be a function and not a struct that must be implemented
 - Examples and Benchmark
   - [ ] Implement and Optimize the Salesman problem
