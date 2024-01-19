@@ -1,9 +1,10 @@
+use ordered_float::OrderedFloat;
+use rayon::iter::{IntoParallelIterator, IntoParallelRefMutIterator};
+use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
-use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::sync::Arc;
 use std::time::Duration;
-use ordered_float::OrderedFloat;
 
 use crate::{
     crossover::Crossover,
@@ -56,7 +57,6 @@ pub struct EvolutionConfig<T: Individual> {
 /// ```
 pub struct Evolution<T: Individual> {
     _title: String,
-    current_population: Vec<T>,
     config: EvolutionConfig<T>,
     fitness: Box<dyn Fitness<T>>,
     selection: Box<dyn Selection<T>>,
@@ -65,6 +65,7 @@ pub struct Evolution<T: Individual> {
     elitism: u32,
     stop_condition: StopConditionFn,
     pub metrics: Metrics,
+    current_population: Vec<T>,
 }
 
 impl<T: Individual> Evolution<T> {
@@ -100,6 +101,11 @@ impl<T: Individual> Evolution<T> {
         self.metrics.start_clock();
 
         let _ = &self.current_population.clear();
+
+        self.current_population = (0..self.config.population_size)
+            .into_par_iter()
+            .map(|_| T::generate_member(self.config.dimension, &self.config.range))
+            .collect();
 
         for _ in 0..self.config.population_size {
             let _ = &self.current_population.push(T::generate_member(
@@ -310,8 +316,10 @@ impl<T: Individual> Evolution<T> {
         }
     }
 
-    fn calculate_fitness(&self, individual: &T) -> f64 {
-        self.fitness.calculate_fitness(&individual)
+    fn calculate_individual_fitness(fitness: &dyn Fitness<T>, individual: &mut T) -> f64 {
+        let fitness_value = fitness.calculate_fitness(&individual);
+        individual.set_fitness(fitness_value);
+        fitness_value
     }
 
     fn cmp_by_fitness(a: &T, b: &T) -> std::cmp::Ordering {
@@ -321,15 +329,11 @@ impl<T: Individual> Evolution<T> {
     fn process_fitness(&mut self) {
         self.metrics.step_start(Steps::Fitness);
 
-        let fitness_values: Vec<f64> = self
-            .current_population
-            .par_iter()
-            .map(|individual| self.calculate_fitness(individual))
-            .collect();
-
-        for (individual, fitness) in self.current_population.iter_mut().zip(fitness_values) {
-            individual.set_fitness(fitness);
-        }
+        self.current_population
+            .par_iter_mut()
+            .for_each(|individual| {
+                Self::calculate_individual_fitness(self.fitness.as_ref(), individual);
+            });
 
         self.metrics.step_end(Steps::Fitness);
     }
