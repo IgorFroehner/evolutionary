@@ -57,6 +57,29 @@ fn operators(c: &mut Criterion) {
     c.bench_function("tournament k=5 300x300", |b| {
         b.iter(|| black_box(tournament.get_mating_pool(&population, &rngs)))
     });
+
+    let uniform = UniformCrossover::default();
+    c.bench_function("uniform crossover 300x300", |b| {
+        b.iter_batched_ref(
+            || population.clone(),
+            |population| uniform.crossover(population, &rngs),
+            BatchSize::SmallInput,
+        )
+    });
+
+    // Fitness-proportional selections need positive fitnesses.
+    let mut weighted_population = population.clone();
+    for (index, individual) in weighted_population.iter_mut().enumerate() {
+        individual.set_fitness((index % 97 + 1) as f64);
+    }
+
+    c.bench_function("roulette 300x300", |b| {
+        b.iter(|| black_box(RouletteSelection.get_mating_pool(&weighted_population, &rngs)))
+    });
+
+    c.bench_function("rank 300x300", |b| {
+        b.iter(|| black_box(RankSelection.get_mating_pool(&weighted_population, &rngs)))
+    });
 }
 
 criterion_group!(benches, generation, operators);
