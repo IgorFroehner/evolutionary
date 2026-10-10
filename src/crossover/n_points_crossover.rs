@@ -24,11 +24,9 @@ impl Default for NPointsCrossover {
 }
 
 impl NPointsCrossover {
-    pub fn swap_sections<T: Copy>(vec1: &mut Vec<T>, vec2: &mut Vec<T>, start: usize, end: usize) {
+    pub fn swap_sections<T: Copy>(vec1: &mut [T], vec2: &mut [T], start: usize, end: usize) {
         for i in start..end {
-            let temp = vec1[i];
-            vec1[i] = vec2[i];
-            vec2[i] = temp;
+            std::mem::swap(&mut vec1[i], &mut vec2[i]);
         }
     }
 }

@@ -25,14 +25,12 @@ impl Default for PartiallyMappedCrossover {
 }
 
 impl PartiallyMappedCrossover {
-    fn pmx_matching(parent1: &mut Vec<i64>, parent2: &mut Vec<i64>, start: usize, end: usize) {
+    fn pmx_matching(parent1: &mut [i64], parent2: &mut [i64], start: usize, end: usize) {
         let mut matching_section_1 = HashMap::new();
         let mut matching_section_2 = HashMap::new();
 
         for i in start..end {
-            let aux = parent1[i];
-            parent1[i] = parent2[i];
-            parent2[i] = aux;
+            std::mem::swap(&mut parent1[i], &mut parent2[i]);
 
             matching_section_1.insert(parent2[i], parent1[i]);
             matching_section_2.insert(parent1[i], parent2[i]);

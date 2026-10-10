@@ -25,7 +25,7 @@ impl Default for CycleCrossover {
 }
 
 impl CycleCrossover {
-    fn cx_crossover(parent1: &mut Vec<i64>, parent2: &mut Vec<i64>) {
+    fn cx_crossover(parent1: &mut [i64], parent2: &mut [i64]) {
         let mut aux_hash1 = HashMap::new();
         let mut aux_hash2 = HashMap::new();
 
@@ -45,9 +45,7 @@ impl CycleCrossover {
 
         for i in 0..parent1.len() {
             if !cycle.contains(&i) {
-                let aux = parent1[i];
-                parent1[i] = parent2[i];
-                parent2[i] = aux;
+                std::mem::swap(&mut parent1[i], &mut parent2[i]);
             }
         }
     }

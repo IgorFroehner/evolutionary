@@ -9,7 +9,7 @@ struct TSPFitness {
     worst: f64,
 }
 
-fn calculate_distance(path: &Vec<i64>, matrix: &Vec<Vec<f64>>) -> f64 {
+fn calculate_distance(path: &[i64], matrix: &[Vec<f64>]) -> f64 {
     let mut distance = 0.;
 
     for i in 0..path.len() - 1 {

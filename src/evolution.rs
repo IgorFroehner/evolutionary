@@ -82,6 +82,8 @@ pub struct Evolution<T: Individual> {
 }
 
 impl<T: Individual> Evolution<T> {
+    /// Use [`EvolutionBuilder`](crate::EvolutionBuilder), which checks the parameters.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         title: String,
         config: EvolutionConfig<T>,
@@ -440,7 +442,7 @@ impl<T: Individual> Evolution<T> {
     }
 
     fn calculate_individual_fitness(fitness: &dyn Fitness<T>, individual: &mut T) -> f64 {
-        let fitness_value = fitness.calculate_fitness(&individual);
+        let fitness_value = fitness.calculate_fitness(individual);
         individual.set_fitness(fitness_value);
         fitness_value
     }

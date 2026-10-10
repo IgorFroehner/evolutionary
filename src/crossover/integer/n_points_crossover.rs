@@ -27,8 +27,8 @@ impl Crossover<Int> for NPointsCrossover {
 
                     for point in points {
                         NPointsCrossover::swap_sections(
-                            &mut parent1.get_mut_chromosome(),
-                            &mut parent2.get_mut_chromosome(),
+                            parent1.get_mut_chromosome(),
+                            parent2.get_mut_chromosome(),
                             start,
                             point,
                         );

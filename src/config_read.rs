@@ -15,22 +15,22 @@ pub struct RawConfig {
     pub dimension: u32,
 }
 
-impl Into<EvolutionConfig<Bin>> for RawConfig {
-    fn into(self) -> EvolutionConfig<Bin> {
+impl From<RawConfig> for EvolutionConfig<Bin> {
+    fn from(val: RawConfig) -> Self {
         EvolutionConfig {
-            dimension: self.dimension,
-            population_size: self.population_size,
+            dimension: val.dimension,
+            population_size: val.population_size,
             range: (),
             gene_cod: GeneCod::Bin,
         }
     }
 }
 
-impl Into<EvolutionConfig<IntPerm>> for RawConfig {
-    fn into(self) -> EvolutionConfig<IntPerm> {
+impl From<RawConfig> for EvolutionConfig<IntPerm> {
+    fn from(val: RawConfig) -> Self {
         EvolutionConfig {
-            dimension: self.dimension,
-            population_size: self.population_size,
+            dimension: val.dimension,
+            population_size: val.population_size,
             range: (),
             gene_cod: GeneCod::Bin,
         }

@@ -95,8 +95,8 @@ change. Breaking changes are recorded in `CHANGELOG.md` as they land.
   `evolutionary-computing`, and the description says "paralyzed" instead of
   "parallelized".
 - [x] Remove the unused-import warnings in `crossover` and `mutation`.
-- [ ] CI: also run `cargo clippy` and `cargo test --all-features`. The `--all-features`
-  and `--no-default-features` test runs are in (step 4); clippy is left.
+- [x] CI: also run `cargo clippy` and `cargo test --all-features`. Clippy runs with
+  `-D warnings`, after clearing the existing warnings in the library and the examples.
 - [ ] Release 0.3.0: bump the version and date the `CHANGELOG.md` entry.
 
 ## 7. Neuroevolution "hello world": XOR

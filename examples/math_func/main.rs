@@ -3,11 +3,12 @@ use evolutionary::prelude::*;
 use fitness_max::MathFitnessMax;
 
 mod fitness_max;
+// The minimisation variant of the example, to use in place of `MathFitnessMax`.
+#[allow(dead_code)]
 mod fitness_min;
 
 const L: f64 = 16.;
 const RANGE: (f64, f64) = (-2., 2.);
-const C_MAX: f64 = 2.;
 const C_MIN: f64 = -4.;
 
 pub fn f(x: f64) -> f64 {
@@ -30,7 +31,7 @@ fn main() {
 
         let mut evolution = EvolutionBuilder::new(population_size, dimension, gene_cod, ())
             .with_fitness(max_fitness)
-            .with_selection(RouletteSelection::default())
+            .with_selection(RouletteSelection)
             .with_crossover(NPointsCrossover::default())
             .with_mutation(BitFlipMutation::default())
             .with_title("Math Function".to_string())
@@ -43,7 +44,7 @@ fn main() {
         let best_found = evolution.current_best();
 
         println!("Best found: {:?}", best_found);
-        let x = within_range(RANGE, L, convert_bin(&best_found.get_chromosome()));
+        let x = within_range(RANGE, L, convert_bin(best_found.get_chromosome()));
         println!("x: {}", x);
         println!("f(x): {}", f(x));
 

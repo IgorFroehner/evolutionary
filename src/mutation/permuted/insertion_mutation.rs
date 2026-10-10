@@ -40,7 +40,7 @@ impl Mutation<IntPerm> for InsertionMutation {
                     let to = rng.random_range(0..individual.chromosome.len());
 
                     if from != to {
-                        Self::insert(&mut individual.get_mut_chromosome(), from, to);
+                        Self::insert(individual.get_mut_chromosome(), from, to);
                     }
                 }
             });

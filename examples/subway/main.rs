@@ -12,7 +12,7 @@ pub struct MetroFitness {
 }
 
 fn get_path(
-    adj: &Vec<Vec<(usize, f64, usize)>>,
+    adj: &[Vec<(usize, f64, usize)>],
     individual: &Real,
     start: usize,
     end: usize,
@@ -49,20 +49,20 @@ fn get_path(
     path
 }
 
-fn calc_path_time(path: &Vec<(usize, f64, usize)>) -> f64 {
+fn calc_path_time(path: &[(usize, f64, usize)]) -> f64 {
     let mut path_dist = 0.0;
     let mut line_change = 0;
     let mut last_line = 0;
-    for i in 0..path.len() {
-        path_dist += path[i].1;
+    for (i, &(_, dist, line)) in path.iter().enumerate() {
+        path_dist += dist;
         if i == 0 {
-            last_line = path[i].2;
+            last_line = line;
             continue;
         }
-        if path[i].2 != last_line {
+        if line != last_line {
             line_change += 1;
         }
-        last_line = path[i].2;
+        last_line = line;
     }
 
     path_dist / (2.0 / 3.0) + line_change as f64 * 5.0
@@ -103,7 +103,7 @@ fn main() {
 
     for line in content.lines().skip(1) {
         let line = line.split(" ").collect::<Vec<&str>>();
-        let x = line.get(0).unwrap().parse::<usize>().unwrap();
+        let x = line.first().unwrap().parse::<usize>().unwrap();
         let y = line.get(1).unwrap().parse::<usize>().unwrap();
         let c = line.get(2).unwrap().parse::<f64>().unwrap();
         let d = line.get(3).unwrap().parse::<usize>().unwrap();
@@ -132,22 +132,15 @@ fn main() {
     let mut dists = vec![vec![-1.0; n + 5]; n + 5];
     let mut max_real_dist: f64 = -1.0;
 
-    let mut i = 1;
-    for line in dists_content.lines() {
-        let line = line.split(",").collect::<Vec<&str>>();
-
-        let mut j = 1;
-        for n in line {
+    for (i, line) in dists_content.lines().enumerate() {
+        for (j, n) in line.split(",").enumerate() {
             if n != "-" {
-                let a = n.parse::<f64>();
-                if a.is_ok() {
-                    dists[i][j] = a.unwrap();
-                    max_real_dist = max_real_dist.max(dists[i][j]);
+                if let Ok(dist) = n.parse::<f64>() {
+                    dists[i + 1][j + 1] = dist;
+                    max_real_dist = max_real_dist.max(dist);
                 }
             }
-            j += 1;
         }
-        i += 1;
     }
 
     let evolution_builder = EvolutionBuilder::new(30, 30,    GeneCod::Real, (0.0, 1.0))

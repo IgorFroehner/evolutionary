@@ -61,8 +61,8 @@ impl NQueensFitness {
         let genes = &individual.chromosome;
 
         let mut total_score = 0.0;
-        for i in 0..self.dimension {
-            total_score += self.board[((genes[i] as usize - 1) * self.dimension) + i];
+        for (i, &gene) in genes.iter().take(self.dimension).enumerate() {
+            total_score += self.board[((gene as usize - 1) * self.dimension) + i];
         }
 
         total_score

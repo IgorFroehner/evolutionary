@@ -26,6 +26,12 @@ pub struct Metrics {
     pub step_times: HashMap<Steps, (bool, Instant, u128)>,
 }
 
+impl Default for Metrics {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Metrics {
     pub fn new() -> Self {
         let mut step_times = HashMap::new();
@@ -74,23 +80,23 @@ impl Metrics {
     }
 
     pub fn step_start(&mut self, step: Steps) {
-        self.step_times.get_mut(&step).map(|a| {
+        if let Some(a) = self.step_times.get_mut(&step) {
             if a.0 {
                 panic!("Step already started");
             }
             a.0 = true;
             a.1 = Instant::now();
-        });
+        }
     }
 
     pub fn step_end(&mut self, step: Steps) {
-        self.step_times.get_mut(&step).map(|a| {
+        if let Some(a) = self.step_times.get_mut(&step) {
             if !a.0 {
                 panic!("Step not started");
             }
             a.0 = false;
             a.2 += a.1.elapsed().as_nanos();
-        });
+        }
     }
 
     pub fn step_time(&self, step: Steps) -> Option<Duration> {

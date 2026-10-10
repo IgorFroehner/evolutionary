@@ -26,7 +26,7 @@ impl Default for ArithmeticCrossover {
 }
 
 impl ArithmeticCrossover {
-    fn get_offspring(&self, parent1: &Vec<f64>, parent2: &Vec<f64>) -> Vec<f64> {
+    fn get_offspring(&self, parent1: &[f64], parent2: &[f64]) -> Vec<f64> {
         parent1
             .iter()
             .zip(parent2.iter())

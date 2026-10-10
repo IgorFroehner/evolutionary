@@ -10,12 +10,12 @@ fn main() {
 
     let mut start = (0, 0);
     let mut end = (0, 0);
-    for i in 0..maze.len() {
-        for j in 0..maze[0].len() {
-            if maze[i][j] == 2 {
+    for (i, row) in maze.iter().enumerate() {
+        for (j, &cell) in row.iter().enumerate() {
+            if cell == 2 {
                 start = (i, j);
             }
-            if maze[i][j] == 3 {
+            if cell == 3 {
                 end = (i, j);
             }
         }
@@ -38,7 +38,7 @@ fn main() {
             end,
             maze: maze.clone(),
         })
-        .with_selection(RouletteSelection::default())
+        .with_selection(RouletteSelection)
         .with_crossover(crossover)
         .with_mutation(RandomResettingMutation::default())
         .with_title("Maze".to_string())

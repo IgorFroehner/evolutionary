@@ -80,6 +80,11 @@
 
 ### Changed
 
+- Public helpers take slices instead of vectors: `convert_bin`, `NPointsCrossover::swap_sections`,
+  `OrderedCrossover::apply_ox` and the `plotting` functions. Calls with a `&Vec` still compile.
+- `RawConfig` converts to `EvolutionConfig` with `From` instead of `Into`, so both `.into()` and
+  `EvolutionConfig::from` work.
+- `Metrics` implements `Default`.
 - Operators no longer use the thread-local generator. Each individual, pair of parents or
   mating pool slot gets a ChaCha8 generator derived from the seed, the generation, the step and
   its index, so the result doesn't depend on how rayon schedules the work.

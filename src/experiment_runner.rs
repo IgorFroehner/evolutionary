@@ -129,7 +129,7 @@ impl<T: Individual> ExperimentRunner<T> {
             .map(|a| a / self.runs as f64)
             .collect::<Vec<f64>>();
 
-        let path = format!("{}/{}.png", &path, self.name);
+        let path = format!("{}/{}.png", path, self.name);
         plot_chart(
             &best_fitness_per_generation,
             &average_fitness_per_generation,

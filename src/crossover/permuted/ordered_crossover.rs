@@ -31,7 +31,7 @@ impl Default for OrderedCrossover {
 }
 
 impl OrderedCrossover {
-    pub fn apply_ox(parent1: &mut Vec<i64>, parent2: &mut Vec<i64>, start: usize, end: usize) {
+    pub fn apply_ox(parent1: &mut [i64], parent2: &mut [i64], start: usize, end: usize) {
         let len = parent1.len();
 
         let mut missing1 = HashSet::new();

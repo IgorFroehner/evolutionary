@@ -10,8 +10,8 @@ pub struct MazeFitness {
 
 impl MazeFitness {
     pub fn calculate_path(
-        vec: &Vec<f64>,
-        maze: &Vec<Vec<i32>>,
+        vec: &[f64],
+        maze: &[Vec<i32>],
         start: (usize, usize),
     ) -> Vec<(usize, usize)> {
         let mut x = start.0;
@@ -21,8 +21,7 @@ impl MazeFitness {
 
         let mut path = vec![start];
 
-        for i in 0..vec.len() {
-            let step = vec[i];
+        for &step in vec {
 
             vis[x][y] = true;
             let mut possibilities = vec![];
@@ -39,7 +38,7 @@ impl MazeFitness {
                 possibilities.push((x, y + 1));
             }
 
-            if possibilities.len() == 0 {
+            if possibilities.is_empty() {
                 break;
             }
 

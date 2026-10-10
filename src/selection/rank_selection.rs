@@ -17,7 +17,7 @@ impl<T: Individual> Selection<T> for RankSelection {
         sorted_population.par_sort_by(|a, b| fitness_cmp(a.get_fitness(), b.get_fitness()));
 
         let population_size = sorted_population.len();
-        let weights: Vec<_> = (1..=population_size).map(|rank| rank).collect();
+        let weights: Vec<_> = (1..=population_size).collect();
 
         let dist = WeightedIndex::new(&weights).unwrap();
 

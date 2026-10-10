@@ -1,8 +1,10 @@
 
-pub fn convert_bin(vec: &Vec<bool>) -> f64 {
+pub fn convert_bin(vec: &[bool]) -> f64 {
     let mut res = 0.0;
-    for i in 0..vec.len() {
-        res += (if vec[i] { 1.0 } else { 0.0 }) * 2f64.powf(i as f64);
+    for (i, &bit) in vec.iter().enumerate() {
+        if bit {
+            res += 2f64.powf(i as f64);
+        }
     }
 
     res
