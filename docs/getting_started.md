@@ -1,7 +1,7 @@
 
 # Getting Started
 
-Evolutionary is a fully extensible Rust framework for using paralyzed genetic algorithms to solve problems. 
+Evolutionary is a fully extensible Rust framework for using parallelized genetic algorithms to solve problems. 
 By fully extensible, we mean that you can code your own `selection`, `crossover` or `mutation`, and even your 
 own `individuals`. You just need to implement the traits and use them on the Evolution.
 
@@ -132,7 +132,7 @@ You can also drive the evolution yourself instead of calling `run`, and look at 
 We have our list of invited friends as the best individual at the end of the evolution, which we expect to be all true. 
 But you can also make some analysis of the evolution. For example, you can plot the fitness of the best individual 
 and average fitness of the population over the generations, and notice that it found the best solution pretty fast 
-(before 10 generations):
+(before 10 generations). Charts need the `plot` feature (`features = ["plot"]` in your `Cargo.toml`):
 
 ```rust
     evolution.plot_chart("party_fitness.png", "Party Fitness").unwrap(); ;

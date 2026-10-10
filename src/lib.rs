@@ -1,6 +1,6 @@
 //! # Evolutionary
 //!
-//! A fully extensible Rust framework for using paralyzed genetic algorithms to solve problems.
+//! A fully extensible Rust framework for using parallelized genetic algorithms to solve problems.
 //!
 //! Currently, it supports coding in [`Bin`](struct@population::Bin), [`Real`](struct@population::Real),
 //! [`Permuted Integers`](struct@population::IntPerm), [`Integers`](struct@population::Int) and any
@@ -58,6 +58,16 @@
 //! ```
 //!
 //! Find this and other examples in the [examples folder](./examples).
+//!
+//! ## Features
+//!
+//! None is on by default, so embedding the library only compiles the genetic algorithm.
+//!
+//! - `serde`: `Serialize` and `Deserialize` for the built-in individuals, to save and load
+//!   populations.
+//! - `config`: reads the evolution parameters from a TOML file, with `read_config`.
+//! - `plot`: saves fitness charts with `Evolution::plot_chart` and from the
+//!   [`ExperimentRunner`](prelude::ExperimentRunner), with `plotters`.
 
 #[cfg(feature = "config")]
 pub mod config_read;
@@ -74,6 +84,7 @@ mod report;
 mod rng;
 mod selection;
 pub mod utils;
+#[cfg(feature = "plot")]
 pub mod plotting;
 
 pub use crossover::Crossover;

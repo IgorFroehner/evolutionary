@@ -19,9 +19,14 @@
 - `generations_without_improvement` (in the report and in `Metrics`) counts the generations since
   the best fitness of the whole run improved. It used to count the generations whose best was
   equal to the previous one, so a best that dropped and came back counted as improving.
-- `toml` and `serde` are optional. The TOML config reader (`config_read`, and `read_config` and
-  `RawConfig` in the prelude) is behind the `config` feature, which is on by default.
-  `GeneCod` implements `Deserialize` only with the `serde` feature, which `config` turns on.
+- No feature is on by default, so embedding the library compiles neither `plotters`, `toml` nor
+  `serde`. Enable what you use:
+  - `plot` for `Evolution::plot_chart`, `Metrics::plot_chart` and the `plotting` module.
+    `ExperimentRunner` works without it, but only saves its chart with it.
+  - `config` for the TOML config reader: `config_read`, and `read_config` and `RawConfig` in
+    the prelude.
+  - `serde` for `Serialize` and `Deserialize`. `GeneCod` implements `Deserialize` only with it,
+    and `config` turns it on.
 - `BuildError` has two new variants, `InitialPopulationTooLarge` and
   `InitialIndividualDimension`. It is `#[non_exhaustive]`, so only matches without a wildcard
   arm break.
@@ -61,10 +66,13 @@
   choose them for a few hundred genes.
 - A `cargo bench` benchmark of `Real` at 300 individuals of 300 genes, and tests at that scale
   of Gaussian mutation, elitism above 1 and tournaments above 2.
+- `ExperimentResult::average_fitnesses` and `best_fitnesses` are public.
 - A seeded `ExperimentRunner` is reproducible, and each of its runs gets its own seed.
 
 ### Fixed
 
+- The crate description said "paralyzed" instead of "parallelized", and `homepage` and
+  `repository` pointed to `evolutionary-computing` instead of `evolutionary`.
 - A manual `start()` / `next()` loop left the clock stopped at its creation, so `total_time` and
   `time_digest` reported 0. Every generation now updates it, as `run()` does.
 - Every crossover that pairs parents panicked on a population of odd size, as soon as the

@@ -1,6 +1,8 @@
+#[cfg(feature = "plot")]
 use std::fs::create_dir_all;
 use std::time::{Duration, Instant};
 
+#[cfg(feature = "plot")]
 use crate::plotting::plot_chart;
 use crate::rng::{Rngs, Step};
 use crate::{evolution_builder::EvolutionBuilder, population::Individual};
@@ -22,8 +24,10 @@ pub struct ExperimentRunner<T: Individual> {
 
 pub struct ExperimentResult<T> {
     total_time: u128,
-    average_fitnesses: Vec<f64>,
-    best_fitnesses: Vec<f64>,
+    /// The average fitness of each generation of the run.
+    pub average_fitnesses: Vec<f64>,
+    /// The best fitness of each generation of the run.
+    pub best_fitnesses: Vec<f64>,
     pub iterations: u32,
     pub best_found: T,
 }
@@ -39,10 +43,10 @@ impl<T: Individual> ExperimentRunner<T> {
         }
     }
 
+    /// Runs the evolution `runs` times, in parallel. With the `plot` feature, it also saves a
+    /// chart of the best and average fitness per generation, averaged over the runs, to
+    /// `results/<name>/<name>.png`.
     pub fn run(&mut self) {
-        let path = format!("results/{}", self.name);
-        let _ = create_dir_all(path.clone());
-
         let results: Vec<ExperimentResult<T>> = (0..self.runs)
             .into_par_iter()
             .map(|run| {
@@ -77,9 +81,27 @@ impl<T: Individual> ExperimentRunner<T> {
             })
             .collect();
 
-        let iterations = results.iter().map(|r| r.iterations).max().unwrap();
-
         self.experiment_results.extend(results);
+
+        for result in &self.experiment_results {
+            self.experiment_metrics.total_time += result.total_time;
+        }
+
+        #[cfg(feature = "plot")]
+        self.save_chart();
+    }
+
+    #[cfg(feature = "plot")]
+    fn save_chart(&self) {
+        let path = format!("results/{}", self.name);
+        let _ = create_dir_all(path.clone());
+
+        let iterations = self
+            .experiment_results
+            .iter()
+            .map(|r| r.iterations)
+            .max()
+            .unwrap();
 
         let mut average_fitness_sum_per_generation = vec![0f64; iterations as usize];
         let mut best_fitness_sum_per_generation = vec![0f64; iterations as usize];
@@ -96,8 +118,6 @@ impl<T: Individual> ExperimentRunner<T> {
                 best_fitness_sum_per_generation[i] +=
                     result.best_fitnesses[(result.iterations - 1) as usize];
             }
-
-            self.experiment_metrics.total_time += result.total_time;
         }
 
         let average_fitness_per_generation = average_fitness_sum_per_generation

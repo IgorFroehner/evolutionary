@@ -351,6 +351,9 @@ impl<T: Individual> Evolution<T> {
         sum / count as f64
     }
 
+    /// Saves a chart of the best and average fitness per generation to `path`. Needs the `plot`
+    /// feature.
+    #[cfg(feature = "plot")]
     pub fn plot_chart(
         &self,
         path: impl Into<String>,

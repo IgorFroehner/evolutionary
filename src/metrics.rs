@@ -2,6 +2,7 @@ use std::time::Duration;
 use std::{collections::HashMap, time::Instant};
 
 use crate::fitness::fitness_cmp;
+#[cfg(feature = "plot")]
 use crate::plotting::plot_chart;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
@@ -102,6 +103,8 @@ impl Metrics {
         self.end_time.duration_since(self.start_time).as_nanos()
     }
 
+    /// Saves a chart of the best and average fitness per generation. Needs the `plot` feature.
+    #[cfg(feature = "plot")]
     pub fn plot_chart(
         &self,
         path: &String,

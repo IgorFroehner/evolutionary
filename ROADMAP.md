@@ -88,10 +88,10 @@ change. Breaking changes are recorded in `CHANGELOG.md` as they land.
 
 ## 6. Lean and tidy
 
-- [ ] Put `plotters` and the `toml` config reader behind cargo features, so projects
-  embedding the GA don't compile a charting stack. `toml` is done (`config`, step 4);
-  `plotters` is left, and whether these features stay on by default.
-- [ ] Fix crate metadata: `homepage` and `repository` point to
+- [x] Put `plotters` and the `toml` config reader behind cargo features, so projects
+  embedding the GA don't compile a charting stack. `plot`, `config` and `serde`, all off by
+  default.
+- [x] Fix crate metadata: `homepage` and `repository` point to
   `evolutionary-computing`, and the description says "paralyzed" instead of
   "parallelized".
 - [x] Remove the unused-import warnings in `crossover` and `mutation`.

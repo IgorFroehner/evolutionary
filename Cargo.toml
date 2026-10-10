@@ -3,10 +3,10 @@ name = "evolutionary"
 version = "0.2.0"
 edition = "2021"
 include = ["/src/**/*", "/Cargo.toml", "/README.md", "/CHANGELOG.md", "/LICENSE"]
-homepage = "https://github.com/IgorFroehner/evolutionary-computing"
+homepage = "https://github.com/IgorFroehner/evolutionary"
 readme = "README.md"
-description = "A fully extensible Rust framework for using paralyzed genetic algorithms to solve problems. "
-repository = "https://github.com/IgorFroehner/evolutionary-computing"
+description = "A fully extensible Rust framework for using parallelized genetic algorithms to solve problems."
+repository = "https://github.com/IgorFroehner/evolutionary"
 keywords = ["framework", "genetic", "optimization", "evolutionary", "search"]
 categories = ["algorithms", "science"]
 license = "MIT"
@@ -21,7 +21,7 @@ serde = { version = "1.0.136", optional = true }
 serde_derive = { version = "1.0.183", optional = true }
 rayon = "1.7"
 dyn-clone = "1.0.13"
-plotters = "0.3.5"
+plotters = { version = "0.3.5", optional = true }
 rand_distr = "0.5"
 
 [dev-dependencies]
@@ -29,11 +29,13 @@ criterion = { version = "0.8", default-features = false, features = ["cargo_benc
 serde_json = "1.0"
 
 [features]
-default = ["config"]
+default = []
 # Reads evolution parameters from a TOML file: `config_read`.
 config = ["dep:toml", "serde"]
 # `Serialize` and `Deserialize` for the built-in individuals and `GeneCod`.
 serde = ["dep:serde", "dep:serde_derive"]
+# Fitness charts: `Evolution::plot_chart`, and the chart saved by `ExperimentRunner`.
+plot = ["dep:plotters"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -46,7 +48,7 @@ required-features = ["config"]
 [[example]]
 name = "nqueens"
 path = "examples/nqueens/main.rs"
-required-features = ["config"]
+required-features = ["config", "plot"]
 
 [[example]]
 name = "nqueens_valued"
@@ -57,6 +59,16 @@ required-features = ["config"]
 name = "radios"
 path = "examples/radios/main.rs"
 required-features = ["config"]
+
+[[example]]
+name = "party"
+path = "examples/party/main.rs"
+required-features = ["plot"]
+
+[[example]]
+name = "tsp"
+path = "examples/tsp/main.rs"
+required-features = ["plot"]
 
 [[bench]]
 name = "real_at_scale"
