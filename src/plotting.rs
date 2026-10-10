@@ -12,8 +12,8 @@ fn normalize(values: &[f64], max: f64) -> Vec<f64> {
 pub fn plot_chart(
     best_fitness: &[f64],
     average_fitness: &[f64],
-    path: &String,
-    test_name: &String,
+    path: &str,
+    test_name: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let max = *average_fitness
         .iter()

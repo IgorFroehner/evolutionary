@@ -1,9 +1,16 @@
-// The Uniform Crossover works for Binary, Integer and Reals but not for Permuted Integers,
-// so the implementations are in each module.
+use rand::{distr::Bernoulli, distr::Distribution, Rng};
+use rayon::iter::{IndexedParallelIterator, ParallelIterator};
+use rayon::prelude::ParallelSliceMut;
+
+use crate::population::{Bin, Int, Real};
+use crate::{Crossover, Individual, Rngs};
 
 /// # Uniform Crossover
 ///
 /// For each gene, it selects whether to swap them between the parents based on the `toss_probability`.
+///
+/// It works for [`Bin`], [`Int`] and [`Real`], but not for permuted individuals, as swapping
+/// genes between two permutations rarely yields permutations.
 #[derive(Clone)]
 pub struct UniformCrossover {
     /// The probability of crossover occurring.
@@ -18,5 +25,51 @@ impl Default for UniformCrossover {
             crossover_rate: 0.8,
             toss_probability: 0.5,
         }
+    }
+}
+
+impl UniformCrossover {
+    /// The crossover is the same for every individual whose genes can be swapped one by one,
+    /// only the gene type changes.
+    fn crossover_population<T: Individual>(&self, population: &mut [T], rngs: &Rngs) {
+        let toss = Bernoulli::new(self.toss_probability).unwrap();
+
+        population
+            .par_chunks_exact_mut(2)
+            .enumerate()
+            .for_each(|(pair, chunk)| {
+                let mut rng = rngs.rng(pair);
+                if rng.random_bool(self.crossover_rate) {
+                    let (first, second) = chunk.split_at_mut(1);
+
+                    for (gene1, gene2) in first[0]
+                        .get_mut_chromosome()
+                        .iter_mut()
+                        .zip(second[0].get_mut_chromosome())
+                    {
+                        if toss.sample(&mut rng) {
+                            std::mem::swap(gene1, gene2);
+                        }
+                    }
+                }
+            });
+    }
+}
+
+impl Crossover<Bin> for UniformCrossover {
+    fn crossover(&self, population: &mut [Bin], rngs: &Rngs) {
+        self.crossover_population(population, rngs);
+    }
+}
+
+impl Crossover<Int> for UniformCrossover {
+    fn crossover(&self, population: &mut [Int], rngs: &Rngs) {
+        self.crossover_population(population, rngs);
+    }
+}
+
+impl Crossover<Real> for UniformCrossover {
+    fn crossover(&self, population: &mut [Real], rngs: &Rngs) {
+        self.crossover_population(population, rngs);
     }
 }

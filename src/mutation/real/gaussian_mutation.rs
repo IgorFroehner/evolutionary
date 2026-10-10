@@ -1,5 +1,6 @@
 use crate::prelude::Real;
-use crate::{Individual, Mutation, Rngs};
+use crate::{Mutation, Rngs};
+use rand::distr::{Bernoulli, Distribution};
 use rand::Rng;
 use rand_distr::Normal;
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
@@ -74,6 +75,8 @@ impl Default for GaussianMutation {
 impl Mutation<Real> for GaussianMutation {
     fn mutate(&self, population: &mut [Real], rngs: &Rngs) {
         let gaussian_distribution = Normal::new(0.0, self.sigma).unwrap();
+        // Built once: `Rng::random_bool` builds the same distribution again at every call.
+        let mutates = Bernoulli::new(self.mutation_rate).unwrap();
 
         population
             .par_iter_mut()
@@ -81,13 +84,13 @@ impl Mutation<Real> for GaussianMutation {
             .for_each(|(index, individual)| {
                 let mut rng = rngs.rng(index);
                 let (low, high) = individual.range;
-                for j in 0..individual.get_chromosome().len() {
-                    if rng.random_bool(self.mutation_rate) {
-                        let mut gene = individual.get_gene(j) + rng.sample(gaussian_distribution);
+                for gene in individual.chromosome.iter_mut() {
+                    if mutates.sample(&mut rng) {
+                        let mut mutated = *gene + rng.sample(gaussian_distribution);
                         if self.clamp_to_range {
-                            gene = gene.clamp(low, high);
+                            mutated = mutated.clamp(low, high);
                         }
-                        individual.set_gene(j, gene);
+                        *gene = mutated;
                     }
                 }
             });
@@ -97,6 +100,7 @@ impl Mutation<Real> for GaussianMutation {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::Individual;
 
     /// A few hundred individuals of a few hundred genes, the size of a small neural network.
     fn population(range: (f64, f64)) -> Vec<Real> {

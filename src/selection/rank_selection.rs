@@ -13,10 +13,17 @@ pub struct RankSelection;
 
 impl<T: Individual> Selection<T> for RankSelection {
     fn get_mating_pool(&self, initial_population: &[T], rngs: &Rngs) -> Vec<T> {
-        let mut sorted_population = initial_population.to_vec();
-        sorted_population.par_sort_by(|a, b| fitness_cmp(a.get_fitness(), b.get_fitness()));
+        // Ranks the indices rather than a copy of the population, so only the individuals
+        // drawn into the pool are cloned.
+        let mut ranked: Vec<usize> = (0..initial_population.len()).collect();
+        ranked.par_sort_by(|&a, &b| {
+            fitness_cmp(
+                initial_population[a].get_fitness(),
+                initial_population[b].get_fitness(),
+            )
+        });
 
-        let population_size = sorted_population.len();
+        let population_size = initial_population.len();
         let weights: Vec<_> = (1..=population_size).collect();
 
         let dist = WeightedIndex::new(&weights).unwrap();
@@ -25,7 +32,7 @@ impl<T: Individual> Selection<T> for RankSelection {
             .into_par_iter()
             .map(|slot| {
                 let index = dist.sample(&mut rngs.rng(slot));
-                sorted_population[index].clone()
+                initial_population[ranked[index]].clone()
             })
             .collect()
     }

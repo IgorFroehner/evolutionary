@@ -3,14 +3,12 @@ use crate::rng::Rngs;
 
 use dyn_clone::DynClone;
 
-mod binary;
 mod permuted;
 mod real;
 
 mod do_nothing_crossover;
-mod uniform_crossover;
-mod integer;
 mod n_points_crossover;
+mod uniform_crossover;
 
 pub use permuted::*;
 pub use real::*;
