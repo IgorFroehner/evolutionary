@@ -621,10 +621,7 @@ mod tests {
     fn best_ever_survives_without_elitism() {
         let mut evolution = builder(10, NearOrigin)
             .with_elitism(0)
-            .with_mutation(GaussianMutation {
-                mutation_rate: 1.0,
-                sigma: 1.0,
-            })
+            .with_mutation(GaussianMutation::new(1.0, 1.0))
             .with_seed(1)
             .with_stop_condition(|report| report.generation >= 50)
             .build()

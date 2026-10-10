@@ -163,10 +163,7 @@ fn real_tournament_blend_gaussian() {
             .with_fitness(Sphere)
             .with_selection(TournamentSelection::new(4, 0.9))
             .with_crossover(BlendCrossover::default())
-            .with_mutation(GaussianMutation {
-                mutation_rate: 0.1,
-                sigma: 0.1,
-            })
+            .with_mutation(GaussianMutation::new(0.1, 0.1))
             .with_elitism(3)
             .with_stop_condition(stop)
             .with_seed(seed)

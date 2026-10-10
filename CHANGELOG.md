@@ -25,6 +25,9 @@
 - `BuildError` has two new variants, `InitialPopulationTooLarge` and
   `InitialIndividualDimension`. It is `#[non_exhaustive]`, so only matches without a wildcard
   arm break.
+- `GaussianMutation` has a new public field, `clamp_to_range`, so building it with a struct
+  literal needs the field or `..Default::default()`. `GaussianMutation::new(mutation_rate,
+  sigma)` builds an unclamped one.
 - `Individual::generate_member` takes the generator to draw the genes from:
   `generate_member<R: Rng + ?Sized>(dimension, range, rng)`.
 
@@ -51,6 +54,13 @@
   not a permutation of `1..=n`.
 - The `serde` feature: `Serialize` and `Deserialize` for `Bin`, `Int`, `IntPerm`, `Real` and
   `GeneCod`, to save and load populations and champions.
+- `GaussianMutation::clamp_to_range` keeps mutated genes within the individual's `range`. Off
+  by default: the `range` still only bounds the initial population, which is what network
+  weights need.
+- `GaussianMutation` documents its defaults (`mutation_rate = 0.05`, `sigma = 1.0`) and how to
+  choose them for a few hundred genes.
+- A `cargo bench` benchmark of `Real` at 300 individuals of 300 genes, and tests at that scale
+  of Gaussian mutation, elitism above 1 and tournaments above 2.
 - A seeded `ExperimentRunner` is reproducible, and each of its runs gets its own seed.
 
 ### Fixed

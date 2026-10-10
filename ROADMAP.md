@@ -74,12 +74,15 @@ change. Breaking changes are recorded in `CHANGELOG.md` as they land.
 
 ## 5. `Real` at neuroevolution scale
 
-- [ ] Tests and a benchmark for a few hundred individuals with a few hundred genes:
+- [x] Tests and a benchmark for a few hundred individuals with a few hundred genes:
   `GaussianMutation`, elitism > 1 and tournament selection with `k > 2`.
-- [ ] Document `GaussianMutation`'s defaults (`mutation_rate = 0.05`, `sigma = 1.0`)
+  `tests/real_at_scale.rs` and `benches/real_at_scale.rs` (about 0.4 ms a generation at
+  300 × 300 on an M-series laptop).
+- [x] Document `GaussianMutation`'s defaults (`mutation_rate = 0.05`, `sigma = 1.0`)
   and when to lower `sigma`.
-- [ ] Optional clamping of mutated genes to `range`. Keep unbounded as the default:
+- [x] Optional clamping of mutated genes to `range`. Keep unbounded as the default:
   today `range` only bounds initialisation, which is what network weights need.
+  `GaussianMutation::clamp_to_range`.
 - `Fitness` stays `&T -> f64`. Lexicographic goals (laps first, lap time second) can be
   packed into one number by the caller, so no change is needed.
 

@@ -76,10 +76,7 @@ fn a_saved_population_resumes_a_run() {
             .with_fitness(NearOrigin)
             .with_selection(TournamentSelection::default())
             .with_crossover(BlendCrossover::default())
-            .with_mutation(GaussianMutation {
-                mutation_rate: 0.1,
-                sigma: 0.1,
-            })
+            .with_mutation(GaussianMutation::new(0.1, 0.1))
             .with_stop_condition(|report| report.generation >= 20)
             .with_seed(9)
     };
