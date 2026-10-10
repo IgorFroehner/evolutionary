@@ -6,7 +6,7 @@ use crate::mutation::random_resetting_mutation::RandomResettingMutation;
 use crate::Rngs;
 
 impl Mutation<Real> for RandomResettingMutation {
-    fn mutate(&self, population: &mut Vec<Real>, rngs: &Rngs) {
+    fn mutate(&self, population: &mut [Real], rngs: &Rngs) {
         population
             .par_iter_mut()
             .enumerate()

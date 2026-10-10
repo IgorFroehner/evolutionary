@@ -9,6 +9,9 @@
 - `Selection::get_mating_pool`, `Crossover::crossover` and `Mutation::mutate` take a new
   `rngs: &Rngs` argument, and custom operators must draw their random numbers from it, asking
   for one generator per unit of work: `rngs.rng(index)`.
+- The operator traits take slices: `get_mating_pool(&self, population: &[T], rngs)`,
+  `crossover(&self, population: &mut [T], rngs)` and `mutate(&self, population: &mut [T], rngs)`.
+  Calling them with a `&Vec` or `&mut Vec` still works.
 - `Individual::generate_member` takes the generator to draw the genes from:
   `generate_member<R: Rng + ?Sized>(dimension, range, rng)`.
 

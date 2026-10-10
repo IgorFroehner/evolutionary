@@ -20,7 +20,7 @@ impl Default for DeltaMutation {
 }
 
 impl Mutation<Real> for DeltaMutation {
-    fn mutate(&self, population: &mut Vec<Real>, rngs: &Rngs) {
+    fn mutate(&self, population: &mut [Real], rngs: &Rngs) {
         population
             .par_iter_mut()
             .enumerate()

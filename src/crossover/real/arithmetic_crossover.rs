@@ -36,7 +36,7 @@ impl ArithmeticCrossover {
 }
 
 impl Crossover<Real> for ArithmeticCrossover {
-    fn crossover(&self, population: &mut Vec<Real>, rngs: &Rngs) {
+    fn crossover(&self, population: &mut [Real], rngs: &Rngs) {
         population
             .par_chunks_exact_mut(2)
             .enumerate()

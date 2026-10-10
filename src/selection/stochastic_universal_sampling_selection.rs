@@ -8,7 +8,7 @@ use rayon::prelude::IntoParallelIterator;
 pub struct StochasticUniversalSamplingSelection;
 
 impl<T: Individual> Selection<T> for StochasticUniversalSamplingSelection {
-    fn get_mating_pool(&self, initial_population: &Vec<T>, rngs: &Rngs) -> Vec<T> {
+    fn get_mating_pool(&self, initial_population: &[T], rngs: &Rngs) -> Vec<T> {
         let total_fitness: f64 = initial_population
             .iter()
             .map(|ind| selection_weight(ind.get_fitness()))

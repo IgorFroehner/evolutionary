@@ -19,7 +19,7 @@ use rand_chacha::{rand_core::SeedableRng, ChaCha8Rng};
 /// struct FlipFirstGene;
 ///
 /// impl Mutation<Bin> for FlipFirstGene {
-///     fn mutate(&self, population: &mut Vec<Bin>, rngs: &Rngs) {
+///     fn mutate(&self, population: &mut [Bin], rngs: &Rngs) {
 ///         population
 ///             .par_iter_mut()
 ///             .enumerate()

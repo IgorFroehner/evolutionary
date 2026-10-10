@@ -54,7 +54,7 @@ impl Default for TournamentSelection {
 }
 
 impl<T: Individual> Selection<T> for TournamentSelection {
-    fn get_mating_pool(&self, initial_population: &Vec<T>, rngs: &Rngs) -> Vec<T> {
+    fn get_mating_pool(&self, initial_population: &[T], rngs: &Rngs) -> Vec<T> {
         (0..initial_population.len())
             .into_par_iter()
             .map(|slot| {

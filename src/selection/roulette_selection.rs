@@ -11,7 +11,7 @@ use super::Selection;
 pub struct RouletteSelection;
 
 impl<T: Individual> Selection<T> for RouletteSelection {
-    fn get_mating_pool(&self, initial_population: &Vec<T>, rngs: &Rngs) -> Vec<T> {
+    fn get_mating_pool(&self, initial_population: &[T], rngs: &Rngs) -> Vec<T> {
         (0..initial_population.len())
             .into_par_iter()
             .map(|slot| {

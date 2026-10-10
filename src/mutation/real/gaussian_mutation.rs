@@ -25,7 +25,7 @@ impl Default for GaussianMutation {
 }
 
 impl Mutation<Real> for GaussianMutation {
-    fn mutate(&self, population: &mut Vec<Real>, rngs: &Rngs) {
+    fn mutate(&self, population: &mut [Real], rngs: &Rngs) {
         let gaussian_distribution = Normal::new(0.0, self.sigma).unwrap();
 
         population

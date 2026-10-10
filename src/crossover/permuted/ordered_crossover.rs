@@ -70,7 +70,7 @@ impl OrderedCrossover {
 }
 
 impl Crossover<IntPerm> for OrderedCrossover {
-    fn crossover(&self, population: &mut Vec<IntPerm>, rngs: &Rngs) {
+    fn crossover(&self, population: &mut [IntPerm], rngs: &Rngs) {
         population
             .par_chunks_exact_mut(2)
             .enumerate()

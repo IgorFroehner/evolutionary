@@ -31,13 +31,13 @@ pub use stochastic_universal_sampling_selection::StochasticUniversalSamplingSele
 /// struct DoNothingSelection;
 ///
 /// impl<T: Individual> Selection<T> for DoNothingSelection {
-///    fn get_mating_pool(&self, initial_population: &Vec<T>, _rngs: &Rngs) -> Vec<T> {
-///       initial_population.clone()
+///    fn get_mating_pool(&self, initial_population: &[T], _rngs: &Rngs) -> Vec<T> {
+///       initial_population.to_vec()
 ///   }
 /// }
 /// ```
 pub trait Selection<T: Individual>: 'static + DynClone + Send + Sync {
     /// Method that performs the selection. It receives a reference to the initial population and
     /// should return a new population, drawing its random numbers from `rngs`.
-    fn get_mating_pool(&self, initial_population: &Vec<T>, rngs: &Rngs) -> Vec<T>;
+    fn get_mating_pool(&self, initial_population: &[T], rngs: &Rngs) -> Vec<T>;
 }

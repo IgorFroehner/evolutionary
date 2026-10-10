@@ -40,7 +40,7 @@ pub use scramble_mutation::*;
 /// struct AlwaysMutateMutation;
 ///
 /// impl Mutation<Bin> for AlwaysMutateMutation {
-///     fn mutate(&self, population: &mut Vec<Bin>, _rngs: &Rngs) {
+///     fn mutate(&self, population: &mut [Bin], _rngs: &Rngs) {
 ///         for individual in population.iter_mut() {
 ///             for i in 0..individual.get_chromosome().len() {
 ///                 individual.set_gene(i, !individual.get_gene(i));
@@ -52,5 +52,5 @@ pub use scramble_mutation::*;
 pub trait Mutation<T: Individual>: 'static + DynClone + Send + Sync {
     /// Method that performs the mutation. It receives a mutable reference to the population and
     /// should modify it in place, drawing its random numbers from `rngs`.
-    fn mutate(&self, population: &mut Vec<T>, rngs: &Rngs);
+    fn mutate(&self, population: &mut [T], rngs: &Rngs);
 }

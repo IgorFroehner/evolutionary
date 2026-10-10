@@ -23,7 +23,7 @@ impl Default for SwapMutation {
 }
 
 impl<T: Individual> Mutation<T> for SwapMutation {
-    fn mutate(&self, population: &mut Vec<T>, rngs: &Rngs) {
+    fn mutate(&self, population: &mut [T], rngs: &Rngs) {
         population
             .par_iter_mut()
             .enumerate()

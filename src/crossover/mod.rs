@@ -38,7 +38,7 @@ pub use n_points_crossover::*;
 /// struct DoNothingCrossover;
 ///
 /// impl<T: Individual> Crossover<T> for DoNothingCrossover {
-///     fn crossover(&self, population: &mut Vec<T>, _rngs: &Rngs) {
+///     fn crossover(&self, population: &mut [T], _rngs: &Rngs) {
 ///         // Do nothing
 ///     }
 /// }
@@ -46,5 +46,5 @@ pub use n_points_crossover::*;
 pub trait Crossover<T: Individual>: 'static + DynClone + Send + Sync {
     /// Method that performs the crossover. It receives a mutable reference to the population and
     /// should modify it in place, drawing its random numbers from `rngs`.
-    fn crossover(&self, population: &mut Vec<T>, rngs: &Rngs);
+    fn crossover(&self, population: &mut [T], rngs: &Rngs);
 }

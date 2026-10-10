@@ -7,7 +7,7 @@ use crate::crossover::UniformCrossover;
 use crate::population::Bin;
 
 impl Crossover<Bin> for UniformCrossover {
-    fn crossover(&self, population: &mut Vec<Bin>, rngs: &Rngs) {
+    fn crossover(&self, population: &mut [Bin], rngs: &Rngs) {
         let distribution = Bernoulli::new(self.toss_probability).unwrap();
 
         population

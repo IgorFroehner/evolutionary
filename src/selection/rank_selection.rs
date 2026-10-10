@@ -12,8 +12,8 @@ use rayon::prelude::*;
 pub struct RankSelection;
 
 impl<T: Individual> Selection<T> for RankSelection {
-    fn get_mating_pool(&self, initial_population: &Vec<T>, rngs: &Rngs) -> Vec<T> {
-        let mut sorted_population = initial_population.clone();
+    fn get_mating_pool(&self, initial_population: &[T], rngs: &Rngs) -> Vec<T> {
+        let mut sorted_population = initial_population.to_vec();
         sorted_population.par_sort_by(|a, b| fitness_cmp(a.get_fitness(), b.get_fitness()));
 
         let population_size = sorted_population.len();

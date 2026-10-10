@@ -7,7 +7,7 @@ use crate::crossover::UniformCrossover;
 use crate::population::Real;
 
 impl Crossover<Real> for UniformCrossover {
-    fn crossover(&self, population: &mut Vec<Real>, rngs: &Rngs) {
+    fn crossover(&self, population: &mut [Real], rngs: &Rngs) {
         let distribution = Bernoulli::new(self.toss_probability).unwrap();
 
         population

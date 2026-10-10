@@ -29,7 +29,7 @@ impl InsertionMutation {
 }
 
 impl Mutation<IntPerm> for InsertionMutation {
-    fn mutate(&self, population: &mut Vec<IntPerm>, rngs: &Rngs) {
+    fn mutate(&self, population: &mut [IntPerm], rngs: &Rngs) {
         population
             .par_iter_mut()
             .enumerate()

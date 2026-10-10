@@ -5,7 +5,7 @@ use crate::population::Real;
 pub struct LinearCrossover;
 
 impl Crossover<Real> for LinearCrossover {
-    fn crossover(&self, _population: &mut Vec<Real>, _rngs: &Rngs) {
+    fn crossover(&self, _population: &mut [Real], _rngs: &Rngs) {
         todo!()
     }
 }

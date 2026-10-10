@@ -21,7 +21,7 @@ impl Default for ScrambleMutation {
 }
 
 impl<T: Individual> Mutation<T> for ScrambleMutation {
-    fn mutate(&self, population: &mut Vec<T>, rngs: &Rngs) {
+    fn mutate(&self, population: &mut [T], rngs: &Rngs) {
         population
             .par_iter_mut()
             .enumerate()

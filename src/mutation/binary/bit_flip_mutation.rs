@@ -35,7 +35,7 @@ impl Default for BitFlipMutation {
 }
 
 impl Mutation<Bin> for BitFlipMutation {
-    fn mutate(&self, population: &mut Vec<Bin>, rngs: &Rngs) {
+    fn mutate(&self, population: &mut [Bin], rngs: &Rngs) {
         population
             .par_iter_mut()
             .enumerate()

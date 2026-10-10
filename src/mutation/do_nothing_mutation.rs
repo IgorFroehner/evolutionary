@@ -4,5 +4,5 @@ use crate::{Individual, Mutation, Rngs};
 pub struct DoNothingMutation;
 
 impl<T: Individual> Mutation<T> for DoNothingMutation {
-    fn mutate(&self, _population: &mut Vec<T>, _rngs: &Rngs) {}
+    fn mutate(&self, _population: &mut [T], _rngs: &Rngs) {}
 }
