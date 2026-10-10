@@ -2,22 +2,29 @@
 
 [![Crates.io](https://img.shields.io/crates/v/evolutionary.svg)](https://crates.io/crates/evolutionary)
 [![Documentation](https://docs.rs/evolutionary/badge.svg)](https://docs.rs/evolutionary)
+[![CI](https://github.com/IgorFroehner/evolutionary/actions/workflows/rust.yml/badge.svg)](https://github.com/IgorFroehner/evolutionary/actions/workflows/rust.yml)
 
-A fully extensible Rust framework for using parallelized genetic algorithms to solve problems.
+A fully extensible Rust framework for solving problems with parallelized genetic algorithms.
 
-Currently, it supports coding in `Binary`, `Real`, `Permuted Integers`, `Integers` and any other coding you may want to 
-implement. Check out the built-in implementation for the genetic operators:
+- **Four built-in encodings**: `Bin`, `Int`, `IntPerm` (permutations) and `Real`, plus your own by
+  implementing `Individual`.
+- **Built-in operators** for selection, crossover and mutation (see the table below), plus your own
+  by implementing `Selection`, `Crossover` or `Mutation`.
+- **Parallel by default**: fitness and the operators run on [rayon](https://github.com/rayon-rs/rayon).
+- **Reproducible**: a seeded run gives the same result however many threads it uses.
+- **Observable**: a report after every generation, a best-ever individual, per-step timings and
+  optional fitness charts.
+- **Lean**: no optional dependency is compiled unless you ask for it.
 
-- [Selection](./src/selection)
-- [Crossover](./src/crossover)
-- [Mutation](./src/mutation)
+## Getting started
 
-You can also code your own `selection`, `crossover` or `mutation` implementing the traits and passing them to the 
-`EvolutionBuilder`.
+```toml
+[dependencies]
+evolutionary = "0.3"
+```
 
-## Getting Started:
-
-First you'll need to code your Fitness function:
+First, code your fitness function by implementing `Fitness` for the encoding you use. Here the
+individual is a bit string and the fitness counts its ones:
 
 ```rust
 use evolutionary::prelude::*;
@@ -27,20 +34,13 @@ pub struct MaxFitness;
 
 impl Fitness<Bin> for MaxFitness {
     fn calculate_fitness(&self, individual: &Bin) -> f64 {
-        let mut sum = 0.;
-  
-        for i in 0..individual.get_chromosome().len() {
-            if individual.get_gene(i) {
-                sum += 1.;
-            }
-        }
-  
-        sum
+        individual.get_chromosome().iter().filter(|&&gene| gene).count() as f64
     }
 }
 ```
 
-Then you will be able to build an evolution object using the `EvolutionBuilder` and setting all the required parameters:
+Then build an `Evolution` with the `EvolutionBuilder`, picking the operators and the stop condition,
+and run it:
 
 ```rust
 fn main() {
@@ -50,7 +50,8 @@ fn main() {
         .with_crossover(NPointsCrossover::default())
         .with_mutation(BitFlipMutation::default())
         .with_stop_condition(|report| report.generation >= 1000)
-        .build().unwrap();
+        .build()
+        .unwrap();
 
     evolution.run();
 
@@ -59,59 +60,148 @@ fn main() {
 }
 ```
 
-To make a run reproducible, seed it with `.with_seed(42)`: two runs with the same seed give the
-same result, however many threads they use. Without a seed, `evolution.seed()` tells you the one
-a run drew, so you can replay it.
+`EvolutionBuilder::new` takes the population size, the chromosome length, the encoding and its
+range. The range is `()` for `Bin` and `IntPerm`, `(i64, i64)` for `Int` and `(f64, f64)` for
+`Real`. `build` returns a `BuildError` naming any missing or inconsistent parameter.
 
-`.with_on_generation(|report| ..)` follows a run generation by generation, and
-`.with_initial_population(saved)` starts one from known individuals, for example a population
-saved with the `serde` feature, which implements `Serialize` and `Deserialize` for the built-in
-individuals.
+The stop condition receives a `GenerationReport`, so it can look at the generation, the best and
+average fitness, or the generations without improvement:
 
-There is an extended getting started [here](./docs/getting_started.md).
+```rust
+.with_stop_condition(|report| {
+    report.best_fitness == 10.0 || report.generations_without_improvement >= 50
+})
+```
 
-## Features:
+There is a longer walkthrough in [docs/getting_started.md](./docs/getting_started.md), and the full
+API is on [docs.rs](https://docs.rs/evolutionary).
 
-None is on by default, so embedding the library only compiles the genetic algorithm:
+## Built-in operators
 
-- `serde`: `Serialize` and `Deserialize` for the built-in individuals, to save and load populations.
-- `config`: reads the evolution parameters from a TOML file, with `read_config`.
-- `plot`: saves fitness charts with `evolution.plot_chart(..)` and from the `ExperimentRunner`.
+Every operator has a `Default`, and most have fields or a `new` to tune them. The generic ones work
+with any `Individual`, including your own.
+
+| Operator | Works with |
+|---|---|
+| `TournamentSelection`, `RouletteSelection`, `RankSelection`, `StochasticUniversalSamplingSelection` | any |
+| `NPointsCrossover`, `UniformCrossover` | `Bin`, `Int`, `Real` |
+| `ArithmeticCrossover`, `BlendCrossover`, `LinearCrossover`, `SimulatedBinaryCrossover` | `Real` |
+| `OrderedCrossover`, `PartiallyMappedCrossover`, `CycleCrossover` | `IntPerm` |
+| `BitFlipMutation` | `Bin` |
+| `RandomResettingMutation` | `Int`, `Real` |
+| `GaussianMutation`, `DeltaMutation` | `Real` |
+| `InsertionMutation` | `IntPerm` |
+| `SwapMutation`, `ScrambleMutation` | any |
+
+`DoNothingSelection`, `DoNothingCrossover` and `DoNothingMutation` skip a step entirely.
+
+To write your own, implement the trait and pass it to the builder. Operators get their random
+numbers from an `Rngs`, asking for one generator per unit of work with `rngs.rng(index)`, which is
+what keeps a seeded run reproducible when the operator runs in parallel:
+
+```rust
+use evolutionary::prelude::*;
+use rayon::prelude::*;
+
+#[derive(Clone)]
+struct FlipFirstGene;
+
+impl Mutation<Bin> for FlipFirstGene {
+    fn mutate(&self, population: &mut [Bin], rngs: &Rngs) {
+        population
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(index, individual)| {
+                let mut rng = rngs.rng(index);
+                if rng.random_bool(0.5) {
+                    individual.set_gene(0, !individual.get_gene(0));
+                }
+            });
+    }
+}
+```
+
+## Reproducible runs
+
+Seed a run with `.with_seed(42)`: two runs with the same seed give the same populations and the
+same fitness history, whatever the number of threads or the platform. Without a seed every run
+differs, and `evolution.seed()` tells you the seed a run drew so you can replay it.
+
+## Following a run
+
+- `.with_on_generation(|report| ..)` is called after every generation, the initial one included,
+  with the same `GenerationReport` the stop condition gets.
+- `evolution.best_ever()` is the best individual seen in the whole run, which without elitism can
+  be better than `current_best()`.
+- `.with_elitism(n)` carries the `n` best individuals into the next generation unchanged. The
+  default is 1.
+- `evolution.start()` and `evolution.next()` drive the evolution one generation at a time, with
+  `evolution.report()` in between, as an alternative to `run()`.
+- `evolution.time_digest()` prints how long each step took.
+
+## Starting from a known population
+
+`.with_initial_population(individuals)` starts a run from given individuals, to resume one or to
+seed it with known good solutions. Random individuals fill the rest of the population. `Bin::new`,
+`Int::new`, `IntPerm::new` and `Real::new` build individuals from a chromosome, and the `serde`
+feature lets you save and load them.
+
+## Experiments
+
+`ExperimentRunner` runs the same builder several times in parallel and collects the best and
+average fitness of every generation of every run. With the `plot` feature it also saves a chart of
+the averages over the runs. A seeded experiment is reproducible, and each of its runs gets its own
+seed.
+
+## Features
+
+No feature is on by default, so embedding the library compiles only the genetic algorithm.
+
+| Feature | Adds |
+|---|---|
+| `serde` | `Serialize` and `Deserialize` for `Bin`, `Int`, `IntPerm`, `Real` and `GeneCod`. |
+| `config` | `read_config`, which reads the evolution parameters from a TOML file. Implies `serde`. |
+| `plot` | `Evolution::plot_chart`, `Metrics::plot_chart` and the chart saved by `ExperimentRunner`, with [plotters](https://github.com/plotters-rs/plotters). |
 
 ```toml
 evolutionary = { version = "0.3", features = ["serde", "plot"] }
 ```
 
-Some examples need them: `cargo run --example party --features plot`.
+## Examples
 
-## Examples and Projects:
+The [examples folder](./examples) covers every encoding. Some need a feature; `cargo run` tells you
+which if you forget it.
 
-* [evolutionary-examples](https://github.com/IgorFroehner/evolutionary-examples) - A project with some visual 
-  examples of the `evolutionary` library use, implemented with the [bevy game engine](https://bevyengine.org/).
+| Example | Encoding | Run with |
+|---|---|---|
+| [Party](./examples/party) (the getting-started problem) | `Bin` | `cargo run --example party --features plot` |
+| [Math function](./examples/math_func) | `Bin` | `cargo run --example math_func --features config` |
+| [Radios factory profit](./examples/radios) | `Bin` | `cargo run --example radios --features config` |
+| [Maze](./examples/maze) | `Real` | `cargo run --example maze` |
+| [Subway](./examples/subway) | `Real` | `cargo run --example subway` |
+| [N-Queens](./examples/nqueens) | `IntPerm` | `cargo run --example nqueens --features config,plot` |
+| [Valued N-Queens](./examples/nqueens_valued) | `IntPerm` | `cargo run --example nqueens_valued --features config` |
+| [Travelling salesman](./examples/tsp) | `IntPerm` | `cargo run --example tsp --features plot` |
+| [XOR](./examples/xor) (neuroevolution of an [only-brain](https://github.com/IgorFroehner/only-brain) network) | `Real` | `cargo run --release --example xor` |
 
-There are some examples in the [examples folder](./examples):
-* [Max](./examples/party)
-* [Math Function](./examples/math_func)
-* [NQueens](./examples/nqueens)
-* [Valued NQueens](./examples/nqueens_valued)
-* [Maximize Radios Factory Profit](./examples/radios)
-* [Maze](./examples/maze)
-* [Subway](./examples/subway)
-* [XOR](./examples/xor) - neuroevolution: the weights of an [only-brain](https://github.com/IgorFroehner/only-brain) network
+[evolutionary-examples](https://github.com/IgorFroehner/evolutionary-examples) has visual examples
+built with the [bevy game engine](https://bevyengine.org/).
 
-## TODO:
+## Development
 
-- Individuals:
-  - [ ] Tree-based chromosomes
-- Selection:
-    - [ ] Parallelize the SUS Selection
-- Crossover:
-  - Real:
-    - [ ] Linear Crossover (LX)
-    - [ ] Simulated Binary Crossover (SBX)
-- Usability and Performance:
-  - [ ] Logs System
-  - [ ] Create macros to simplify the implementation of the traits where possible;
-  - [ ] Allow fitness to be a function and not a struct that must be implemented
-- Examples and Benchmark
-  - [ ] Implement and Optimize the Salesman problem
+```bash
+cargo test                                          # unit, integration and doc tests
+cargo test --all-features                           # also the serde, config and plot code
+cargo clippy --all-targets --all-features -- -D warnings
+cargo bench                                         # a generation of Real at 300 individuals x 300 genes
+```
+
+Charts need `fontconfig` on Linux (`libfontconfig1-dev` on Debian and Ubuntu).
+
+A seeded run must replay identically across versions, so changes to how an operator draws its
+random numbers are breaking changes and are recorded in the [changelog](./CHANGELOG.md). The
+[roadmap](./ROADMAP.md) lists what is planned.
+
+## License
+
+MIT
