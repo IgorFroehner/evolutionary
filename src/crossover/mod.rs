@@ -11,7 +11,6 @@ mod uniform_crossover;
 mod integer;
 mod n_points_crossover;
 
-pub use binary::*;
 pub use permuted::*;
 pub use real::*;
 

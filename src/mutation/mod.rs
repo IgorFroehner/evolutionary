@@ -14,12 +14,12 @@ mod scramble_mutation;
 
 pub use real::*;
 pub use binary::*;
-pub use integer::*;
 pub use permuted::*;
 
 pub use do_nothing_mutation::*;
 pub use swap_mutation::*;
 pub use random_resetting_mutation::*;
+pub use scramble_mutation::*;
 
 /// # Mutation Trait
 ///
