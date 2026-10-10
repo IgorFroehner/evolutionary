@@ -1,7 +1,6 @@
 use crate::fitness::fitness_cmp;
-use crate::{Individual, Selection};
-use rand::distributions::{Distribution, WeightedIndex};
-use rand::thread_rng;
+use crate::{Individual, Rngs, Selection};
+use rand::distr::{weighted::WeightedIndex, Distribution};
 use rayon::prelude::*;
 
 /// # Rank Selection
@@ -13,7 +12,7 @@ use rayon::prelude::*;
 pub struct RankSelection;
 
 impl<T: Individual> Selection<T> for RankSelection {
-    fn get_mating_pool(&self, initial_population: &Vec<T>) -> Vec<T> {
+    fn get_mating_pool(&self, initial_population: &Vec<T>, rngs: &Rngs) -> Vec<T> {
         let mut sorted_population = initial_population.clone();
         sorted_population.par_sort_by(|a, b| fitness_cmp(a.get_fitness(), b.get_fitness()));
 
@@ -24,13 +23,10 @@ impl<T: Individual> Selection<T> for RankSelection {
 
         (0..population_size)
             .into_par_iter()
-            .map_init(
-                || thread_rng(),
-                |mut rng, _| {
-                    let index = dist.sample(&mut rng);
-                    sorted_population[index].clone()
-                },
-            )
+            .map(|slot| {
+                let index = dist.sample(&mut rngs.rng(slot));
+                sorted_population[index].clone()
+            })
             .collect()
     }
 }

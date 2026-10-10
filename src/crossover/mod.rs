@@ -1,4 +1,5 @@
 use crate::population::Individual;
+use crate::rng::Rngs;
 
 use dyn_clone::DynClone;
 
@@ -21,6 +22,10 @@ pub use n_points_crossover::*;
 /// Trait that defines the crossover method. You can implement your own crossover method by
 /// implementing this trait.
 ///
+/// Draw every random number from `rngs`, asking it for one generator per pair of parents
+/// (`rngs.rng(pair)`), so that a seeded run is reproducible even when the crossover runs in
+/// parallel. See [`Rngs`].
+///
 /// # Example
 ///
 /// ```
@@ -30,13 +35,13 @@ pub use n_points_crossover::*;
 /// struct DoNothingCrossover;
 ///
 /// impl<T: Individual> Crossover<T> for DoNothingCrossover {
-///     fn crossover(&self, population: &mut Vec<T>) {
+///     fn crossover(&self, population: &mut Vec<T>, _rngs: &Rngs) {
 ///         // Do nothing
 ///     }
 /// }
 /// ```
 pub trait Crossover<T: Individual>: 'static + DynClone + Send + Sync {
     /// Method that performs the crossover. It receives a mutable reference to the population and
-    /// should modify it in place.
-    fn crossover(&self, population: &mut Vec<T>);
+    /// should modify it in place, drawing its random numbers from `rngs`.
+    fn crossover(&self, population: &mut Vec<T>, rngs: &Rngs);
 }

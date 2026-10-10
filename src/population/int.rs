@@ -1,4 +1,4 @@
-use rand::{thread_rng, Rng};
+use rand::Rng;
 
 use super::Individual;
 
@@ -25,12 +25,14 @@ impl Individual for Int {
     type Gene = i64;
     type RangeType = (i64, i64);
 
-    fn generate_member(dimension: u32, range: &Self::RangeType) -> Self {
-        let mut rng = thread_rng();
-
+    fn generate_member<R: Rng + ?Sized>(
+        dimension: u32,
+        range: &Self::RangeType,
+        rng: &mut R,
+    ) -> Self {
         Self {
             chromosome: (0..dimension)
-                .map(|_| rng.gen_range(range.0..=range.1))
+                .map(|_| rng.random_range(range.0..=range.1))
                 .collect::<Vec<i64>>(),
             fitness: 0.0,
             range: *range,

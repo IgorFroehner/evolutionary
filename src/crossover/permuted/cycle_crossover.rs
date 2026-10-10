@@ -1,11 +1,15 @@
 use std::collections::HashMap;
 
-use rand::{thread_rng, Rng};
-use rayon::{prelude::ParallelIterator, slice::ParallelSliceMut};
+use rand::Rng;
+use rayon::{
+    prelude::{IndexedParallelIterator, ParallelIterator},
+    slice::ParallelSliceMut,
+};
 
 use crate::population::IntPerm;
 
 use super::Crossover;
+use crate::Rngs;
 
 #[derive(Clone)]
 pub struct CycleCrossover {
@@ -50,11 +54,13 @@ impl CycleCrossover {
 }
 
 impl Crossover<IntPerm> for CycleCrossover {
-    fn crossover(&self, population: &mut Vec<IntPerm>) {
-        population.par_chunks_mut(2).for_each_init(
-            || thread_rng(),
-            |rng, chunk| {
-                if rng.gen_bool(self.crossover_rate) {
+    fn crossover(&self, population: &mut Vec<IntPerm>, rngs: &Rngs) {
+        population
+            .par_chunks_mut(2)
+            .enumerate()
+            .for_each(|(pair, chunk)| {
+                let mut rng = rngs.rng(pair);
+                if rng.random_bool(self.crossover_rate) {
                     let mut parent1 = chunk[0].clone();
                     let mut parent2 = chunk[1].clone();
 
@@ -63,8 +69,7 @@ impl Crossover<IntPerm> for CycleCrossover {
                     chunk[0] = parent1;
                     chunk[1] = parent2;
                 }
-            },
-        );
+            });
     }
 }
 

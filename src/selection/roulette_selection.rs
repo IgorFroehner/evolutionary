@@ -1,8 +1,9 @@
-use rand::{seq::SliceRandom, thread_rng};
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+use rand::seq::IndexedRandom;
+use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
 use crate::fitness::selection_weight;
 use crate::population::Individual;
+use crate::rng::Rngs;
 
 use super::Selection;
 
@@ -10,20 +11,17 @@ use super::Selection;
 pub struct RouletteSelection;
 
 impl<T: Individual> Selection<T> for RouletteSelection {
-    fn get_mating_pool(&self, initial_population: &Vec<T>) -> Vec<T> {
-        initial_population
-            .par_iter()
-            .map_init(
-                || thread_rng(),
-                |mut rng, _| {
-                    initial_population
-                        .choose_weighted(&mut rng, |individual| {
-                            selection_weight(individual.get_fitness())
-                        })
-                        .unwrap()
-                        .clone()
-                },
-            )
+    fn get_mating_pool(&self, initial_population: &Vec<T>, rngs: &Rngs) -> Vec<T> {
+        (0..initial_population.len())
+            .into_par_iter()
+            .map(|slot| {
+                initial_population
+                    .choose_weighted(&mut rngs.rng(slot), |individual| {
+                        selection_weight(individual.get_fitness())
+                    })
+                    .unwrap()
+                    .clone()
+            })
             .collect()
     }
 }

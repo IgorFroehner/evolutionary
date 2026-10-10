@@ -1,6 +1,6 @@
-use rand::{thread_rng, Rng};
-use rayon::prelude::{IntoParallelRefMutIterator, ParallelIterator};
-use crate::{Individual, Mutation};
+use rand::Rng;
+use rayon::prelude::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
+use crate::{Individual, Mutation, Rngs};
 
 use crate::population::Bin;
 
@@ -17,7 +17,7 @@ use crate::population::Bin;
 ///    mutation_rate: 1.0,
 /// };
 ///
-/// mutation.mutate(&mut population);
+/// mutation.mutate(&mut population, &Rngs::new(0));
 ///
 /// assert_eq!(*population[0].get_chromosome(), vec![false, true, false, true, false, true, false, true]);
 /// ```
@@ -35,16 +35,17 @@ impl Default for BitFlipMutation {
 }
 
 impl Mutation<Bin> for BitFlipMutation {
-    fn mutate(&self, population: &mut Vec<Bin>) {
-        population.par_iter_mut().for_each_init(
-            || thread_rng(),
-            |rng, member| {
+    fn mutate(&self, population: &mut Vec<Bin>, rngs: &Rngs) {
+        population
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(index, member)| {
+                let mut rng = rngs.rng(index);
                 for i in 0..member.get_chromosome().len() {
-                    if rng.gen_bool(self.mutation_rate) {
+                    if rng.random_bool(self.mutation_rate) {
                         member.set_gene(i, !member.get_gene(i));
                     }
                 }
-            },
-        );
+            });
     }
 }

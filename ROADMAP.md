@@ -35,17 +35,18 @@ change. Breaking changes are recorded in `CHANGELOG.md` as they land.
 
 ## 2. Reproducible runs with `rand` 0.9 (0.3.0, breaking)
 
-- [ ] Move to `rand` 0.9 and `rand_distr` 0.5, matching only-brain.
-- [ ] `EvolutionBuilder::with_seed(u64)`. Without a seed, behave as today.
-- [ ] Stop calling `thread_rng()` / `random()` inside operators (27 files today).
+- [x] Move to `rand` 0.9 and `rand_distr` 0.5, matching only-brain.
+- [x] `EvolutionBuilder::with_seed(u64)`. Without a seed, behave as today.
+- [x] Stop calling `thread_rng()` / `random()` inside operators (27 files today).
   Inside rayon that can never be reproducible, since work-stealing decides which
-  thread handles which individual.
-- [ ] Give each parallel task its own RNG derived from `(seed, generation, index)`, so
-  results don't depend on thread scheduling.
-- [ ] Pass the RNG to operators: change the `Selection`, `Crossover` and `Mutation`
+  thread handles which individual. `Individual::generate_member` takes the generator too.
+- [x] Give each parallel task its own RNG derived from `(seed, generation, index)`, so
+  results don't depend on thread scheduling. The step (selection, crossover, mutation) is
+  part of the key too, so the steps of a generation don't share streams.
+- [x] Pass the RNG to operators: change the `Selection`, `Crossover` and `Mutation`
   trait signatures. This is the breaking change behind 0.3.0.
-- [ ] Test: two runs with the same seed produce the same best chromosome and the same
-  fitness history.
+- [x] Test: two runs with the same seed produce the same best chromosome and the same
+  fitness history. They run on 1 and on 8 threads and cover every built-in operator.
 
 ## 3. Observing a run
 

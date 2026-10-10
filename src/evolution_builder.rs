@@ -90,6 +90,7 @@ pub struct EvolutionBuilder<T: Individual> {
     mutation: Option<Box<dyn Mutation<T>>>,
     elitism: Option<u32>,
     stop_condition: Option<StopConditionFn>,
+    pub(crate) seed: Option<u64>,
 }
 
 impl<T: Individual> EvolutionBuilder<T> {
@@ -115,6 +116,7 @@ impl<T: Individual> EvolutionBuilder<T> {
             mutation: None,
             stop_condition: None,
             elitism: None,
+            seed: None,
         }
     }
 
@@ -129,6 +131,7 @@ impl<T: Individual> EvolutionBuilder<T> {
             stop_condition: None,
             evolution_config: Some(config.clone()),
             elitism: None,
+            seed: None,
         }
     }
 
@@ -179,6 +182,17 @@ impl<T: Individual> EvolutionBuilder<T> {
         self
     }
 
+    /// Seeds every random choice of the evolution, so that two runs with the same seed and the
+    /// same parameters produce the same populations, however many threads they run on. Without
+    /// a seed every run is different; [`Evolution::seed`] tells the seed a run used.
+    ///
+    /// The fitness, and any custom operator, must be deterministic too, and custom operators
+    /// must draw from the [`Rngs`](crate::Rngs) they receive.
+    pub fn with_seed(mut self, seed: u64) -> Self {
+        self.seed = Some(seed);
+        self
+    }
+
     /// Sets the title of the evolution to use when plotting. Defaults to `""`.
     pub fn with_title(mut self, title: String) -> Self {
         self.title = Some(title);
@@ -223,7 +237,7 @@ impl<T: Individual> EvolutionBuilder<T> {
             .as_ref()
             .ok_or(BuildError::MissingStopCondition)?;
 
-        Ok(Evolution::new(
+        let mut evolution = Evolution::new(
             self.title.clone().unwrap_or_default(),
             evolution_config,
             dyn_clone::clone_box(fitness),
@@ -232,7 +246,10 @@ impl<T: Individual> EvolutionBuilder<T> {
             dyn_clone::clone_box(mutation),
             elitism,
             Arc::clone(stop_condition),
-        ))
+        );
+        evolution.fixed_seed = self.seed;
+
+        Ok(evolution)
     }
 }
 

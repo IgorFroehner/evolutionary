@@ -1,6 +1,7 @@
 use dyn_clone::DynClone;
 
 use crate::population::Individual;
+use crate::rng::Rngs;
 
 mod real;
 mod binary;
@@ -26,6 +27,10 @@ pub use scramble_mutation::*;
 /// Trait that defines the mutation method. You can implement your own mutation method by
 /// implementing this trait.
 ///
+/// Draw every random number from `rngs`, asking it for one generator per individual
+/// (`rngs.rng(index)`), so that a seeded run is reproducible even when the mutation runs in
+/// parallel. See [`Rngs`].
+///
 /// Example:
 ///
 /// ```
@@ -35,7 +40,7 @@ pub use scramble_mutation::*;
 /// struct AlwaysMutateMutation;
 ///
 /// impl Mutation<Bin> for AlwaysMutateMutation {
-///     fn mutate(&self, population: &mut Vec<Bin>) {
+///     fn mutate(&self, population: &mut Vec<Bin>, _rngs: &Rngs) {
 ///         for individual in population.iter_mut() {
 ///             for i in 0..individual.get_chromosome().len() {
 ///                 individual.set_gene(i, !individual.get_gene(i));
@@ -46,6 +51,6 @@ pub use scramble_mutation::*;
 /// ```
 pub trait Mutation<T: Individual>: 'static + DynClone + Send + Sync {
     /// Method that performs the mutation. It receives a mutable reference to the population and
-    /// should modify it in place.
-    fn mutate(&self, population: &mut Vec<T>);
+    /// should modify it in place, drawing its random numbers from `rngs`.
+    fn mutate(&self, population: &mut Vec<T>, rngs: &Rngs);
 }

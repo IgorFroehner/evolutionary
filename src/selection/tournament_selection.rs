@@ -1,7 +1,8 @@
-use rand::{seq::SliceRandom, thread_rng, Rng};
+use rand::{seq::IndexedRandom, Rng};
 
 use crate::fitness::fitness_cmp;
 use crate::population::Individual;
+use crate::rng::Rngs;
 
 use super::Selection;
 
@@ -53,16 +54,18 @@ impl Default for TournamentSelection {
 }
 
 impl<T: Individual> Selection<T> for TournamentSelection {
-    fn get_mating_pool(&self, initial_population: &Vec<T>) -> Vec<T> {
-        initial_population
-            .par_iter()
-            .map_init(thread_rng, |rng, _| {
-                let mut tournament: Vec<&T> =
-                    initial_population.choose_multiple(rng, self.k).collect();
+    fn get_mating_pool(&self, initial_population: &Vec<T>, rngs: &Rngs) -> Vec<T> {
+        (0..initial_population.len())
+            .into_par_iter()
+            .map(|slot| {
+                let mut rng = rngs.rng(slot);
+                let mut tournament: Vec<&T> = initial_population
+                    .choose_multiple(&mut rng, self.k)
+                    .collect();
 
                 tournament.sort_unstable_by(|a, b| fitness_cmp(b.get_fitness(), a.get_fitness()));
 
-                let winner = if tournament.len() > 1 && !rng.gen_bool(self.kp) {
+                let winner = if tournament.len() > 1 && !rng.random_bool(self.kp) {
                     tournament[1]
                 } else {
                     tournament[0]
@@ -94,7 +97,7 @@ mod tests {
     fn whole_population_tournament_always_picks_the_best() {
         let population = population(&[1.0, 5.0, 3.0, 2.0]);
 
-        let pool = TournamentSelection::new(4, 1.0).get_mating_pool(&population);
+        let pool = TournamentSelection::new(4, 1.0).get_mating_pool(&population, &Rngs::new(0));
 
         assert_eq!(pool.len(), population.len());
         assert!(pool
@@ -106,7 +109,7 @@ mod tests {
     fn single_contestant_tournament_with_any_kp() {
         let population = population(&[1.0, 2.0, 3.0]);
 
-        let pool = TournamentSelection::new(1, 0.0).get_mating_pool(&population);
+        let pool = TournamentSelection::new(1, 0.0).get_mating_pool(&population, &Rngs::new(0));
 
         assert_eq!(pool.len(), population.len());
     }
@@ -115,7 +118,7 @@ mod tests {
     fn tournament_bigger_than_population() {
         let population = population(&[1.0, 2.0]);
 
-        let pool = TournamentSelection::new(10, 1.0).get_mating_pool(&population);
+        let pool = TournamentSelection::new(10, 1.0).get_mating_pool(&population, &Rngs::new(0));
 
         assert!(pool
             .iter()
@@ -126,7 +129,7 @@ mod tests {
     fn nan_fitness_never_wins() {
         let population = population(&[f64::NAN, 1.0]);
 
-        let pool = TournamentSelection::new(2, 1.0).get_mating_pool(&population);
+        let pool = TournamentSelection::new(2, 1.0).get_mating_pool(&population, &Rngs::new(0));
 
         assert!(pool
             .iter()

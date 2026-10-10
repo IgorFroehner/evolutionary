@@ -1,17 +1,19 @@
-use rand::{Rng, thread_rng};
+use rand::Rng;
 use rand::prelude::IteratorRandom;
-use rayon::iter::ParallelIterator;
+use rayon::iter::{IndexedParallelIterator, ParallelIterator};
 use rayon::prelude::ParallelSliceMut;
-use crate::{Crossover, Individual};
+use crate::{Crossover, Individual, Rngs};
 use crate::crossover::NPointsCrossover;
 use crate::population::Real;
 
 impl Crossover<Real> for NPointsCrossover {
-    fn crossover(&self, population: &mut Vec<Real>) {
-        population.par_chunks_mut(2).for_each_init(
-            || thread_rng(),
-            |mut rng, chunk| {
-                if rng.gen_bool(self.crossover_rate) {
+    fn crossover(&self, population: &mut Vec<Real>, rngs: &Rngs) {
+        population
+            .par_chunks_mut(2)
+            .enumerate()
+            .for_each(|(pair, chunk)| {
+                let mut rng = rngs.rng(pair);
+                if rng.random_bool(self.crossover_rate) {
                     let mut parent1 = chunk[0].clone();
                     let mut parent2 = chunk[1].clone();
 
@@ -37,7 +39,6 @@ impl Crossover<Real> for NPointsCrossover {
                     chunk[0] = parent1;
                     chunk[1] = parent2;
                 }
-            },
-        );
+            });
     }
 }

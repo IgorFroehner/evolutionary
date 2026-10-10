@@ -1,6 +1,7 @@
 use dyn_clone::DynClone;
 
 use crate::population::Individual;
+use crate::rng::Rngs;
 
 mod do_nothing_selection;
 mod roulette_selection;
@@ -17,6 +18,10 @@ pub use stochastic_universal_sampling_selection::StochasticUniversalSamplingSele
 /// Trait that defines the selection method. You can implement your own selection method by
 /// implementing this trait.
 ///
+/// Draw every random number from `rngs`, asking it for one generator per slot of the mating pool
+/// (`rngs.rng(slot)`), so that a seeded run is reproducible even when the selection runs in
+/// parallel. See [`Rngs`].
+///
 /// Example:
 ///
 /// ```
@@ -26,13 +31,13 @@ pub use stochastic_universal_sampling_selection::StochasticUniversalSamplingSele
 /// struct DoNothingSelection;
 ///
 /// impl<T: Individual> Selection<T> for DoNothingSelection {
-///    fn get_mating_pool(&self, initial_population: &Vec<T>) -> Vec<T> {
+///    fn get_mating_pool(&self, initial_population: &Vec<T>, _rngs: &Rngs) -> Vec<T> {
 ///       initial_population.clone()
 ///   }
 /// }
 /// ```
 pub trait Selection<T: Individual>: 'static + DynClone + Send + Sync {
     /// Method that performs the selection. It receives a reference to the initial population and
-    /// should return a new population.
-    fn get_mating_pool(&self, initial_population: &Vec<T>) -> Vec<T>;
+    /// should return a new population, drawing its random numbers from `rngs`.
+    fn get_mating_pool(&self, initial_population: &Vec<T>, rngs: &Rngs) -> Vec<T>;
 }

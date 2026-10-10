@@ -1,6 +1,6 @@
 use crate::fitness::selection_weight;
-use crate::{Individual, Selection};
-use rand::{thread_rng, Rng};
+use crate::{Individual, Rngs, Selection};
+use rand::Rng;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::IntoParallelIterator;
 
@@ -8,7 +8,7 @@ use rayon::prelude::IntoParallelIterator;
 pub struct StochasticUniversalSamplingSelection;
 
 impl<T: Individual> Selection<T> for StochasticUniversalSamplingSelection {
-    fn get_mating_pool(&self, initial_population: &Vec<T>) -> Vec<T> {
+    fn get_mating_pool(&self, initial_population: &Vec<T>, rngs: &Rngs) -> Vec<T> {
         let total_fitness: f64 = initial_population
             .iter()
             .map(|ind| selection_weight(ind.get_fitness()))
@@ -16,7 +16,7 @@ impl<T: Individual> Selection<T> for StochasticUniversalSamplingSelection {
         let population_size = initial_population.len();
         let pointer_spacing = total_fitness / population_size as f64;
 
-        let start_point = thread_rng().gen_range(0.0..pointer_spacing);
+        let start_point = rngs.rng(0).random_range(0.0..pointer_spacing);
 
         let pointers: Vec<_> = (0..population_size)
             .into_par_iter()

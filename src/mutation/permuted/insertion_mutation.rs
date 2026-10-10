@@ -1,6 +1,6 @@
-use rand::{Rng, thread_rng};
-use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
-use crate::{Individual, Mutation};
+use rand::Rng;
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
+use crate::{Individual, Mutation, Rngs};
 use crate::population::IntPerm;
 
 /// # Insertion Mutation
@@ -29,19 +29,21 @@ impl InsertionMutation {
 }
 
 impl Mutation<IntPerm> for InsertionMutation {
-    fn mutate(&self, population: &mut Vec<IntPerm>) {
-        population.par_iter_mut().for_each_init(
-            || thread_rng(),
-            |rng, individual| {
-                if rng.gen_bool(self.mutation_rate) {
-                    let from = rng.gen_range(0..individual.chromosome.len());
-                    let to = rng.gen_range(0..individual.chromosome.len());
+    fn mutate(&self, population: &mut Vec<IntPerm>, rngs: &Rngs) {
+        population
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(index, individual)| {
+                let mut rng = rngs.rng(index);
+                if rng.random_bool(self.mutation_rate) {
+                    let from = rng.random_range(0..individual.chromosome.len());
+                    let to = rng.random_range(0..individual.chromosome.len());
 
                     if from != to {
                         Self::insert(&mut individual.get_mut_chromosome(), from, to);
                     }
                 }
-        });
+            });
     }
 }
 

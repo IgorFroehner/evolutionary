@@ -69,6 +69,7 @@ mod evolution_builder;
 mod fitness;
 mod mutation;
 mod population;
+mod rng;
 mod selection;
 pub mod utils;
 pub mod plotting;
@@ -79,7 +80,12 @@ pub use evolution_builder::{BuildError, EvolutionBuilder};
 pub use fitness::Fitness;
 pub use mutation::Mutation;
 pub use population::Individual;
+pub use rng::{Rngs, TaskRng};
 pub use selection::Selection;
+
+/// The `rand` this crate is built with. Use its [`Rng`](rand::Rng) trait to draw numbers from a
+/// [`TaskRng`], or when implementing [`Individual::generate_member`].
+pub use rand;
 
 pub mod prelude {
     pub use crate::config_read::{read_config, RawConfig};
@@ -94,4 +100,6 @@ pub mod prelude {
     pub use crate::EvolutionBuilder;
     pub use crate::BuildError;
     pub use crate::Individual;
+    pub use crate::{Rngs, TaskRng};
+    pub use rand::Rng;
 }

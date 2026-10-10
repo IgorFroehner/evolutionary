@@ -10,6 +10,7 @@ use crate::{
     metrics::{Metrics, Steps},
     mutation::Mutation,
     population::{GeneCod, Individual},
+    rng::{Rngs, Step},
     selection::Selection,
 };
 
@@ -64,6 +65,10 @@ pub struct Evolution<T: Individual> {
     stop_condition: StopConditionFn,
     pub metrics: Metrics,
     current_population: Vec<T>,
+    /// The seed given to the builder. `None` draws a new one at every `start`.
+    pub(crate) fixed_seed: Option<u64>,
+    /// The seed of the current run, set by `start`.
+    run_seed: Option<u64>,
 }
 
 impl<T: Individual> Evolution<T> {
@@ -88,19 +93,33 @@ impl<T: Individual> Evolution<T> {
             elitism,
             stop_condition,
             metrics: Metrics::new(),
+            fixed_seed: None,
+            run_seed: None,
         }
     }
 
     /// Starts the evolution, generating the initial population and calculating the
     /// fitness of each individual.
+    ///
+    /// Without a seed (see [`EvolutionBuilder::with_seed`](crate::EvolutionBuilder::with_seed))
+    /// every call starts a different run.
     pub fn start(&mut self) {
         self.metrics = Metrics::new();
 
         self.metrics.start_clock();
 
-        self.current_population = (0..self.config.population_size)
+        self.run_seed = Some(self.fixed_seed.unwrap_or_else(rand::random));
+
+        let rngs = self.rngs(Step::Initialization);
+        self.current_population = (0..self.config.population_size as usize)
             .into_par_iter()
-            .map(|_| T::generate_member(self.config.dimension, &self.config.range))
+            .map(|index| {
+                T::generate_member(
+                    self.config.dimension,
+                    &self.config.range,
+                    &mut rngs.rng(index),
+                )
+            })
             .collect();
 
         self.process_fitness();
@@ -117,15 +136,19 @@ impl<T: Individual> Evolution<T> {
         self.metrics.step_end(Steps::Elitism);
 
         self.metrics.step_start(Steps::Selection);
-        let mut mating_pool = self.selection.get_mating_pool(&self.current_population);
+        let mut mating_pool = self
+            .selection
+            .get_mating_pool(&self.current_population, &self.rngs(Step::Selection));
         self.metrics.step_end(Steps::Selection);
 
         self.metrics.step_start(Steps::Crossover);
-        self.crossover.crossover(&mut mating_pool);
+        self.crossover
+            .crossover(&mut mating_pool, &self.rngs(Step::Crossover));
         self.metrics.step_end(Steps::Crossover);
 
         self.metrics.step_start(Steps::Mutation);
-        self.mutation.mutate(&mut mating_pool);
+        self.mutation
+            .mutate(&mut mating_pool, &self.rngs(Step::Mutation));
         self.metrics.step_end(Steps::Mutation);
 
         self.current_population = mating_pool;
@@ -149,6 +172,14 @@ impl<T: Individual> Evolution<T> {
         }
 
         self.metrics.end_clock();
+    }
+
+    /// The seed of the current run: the one given to
+    /// [`EvolutionBuilder::with_seed`](crate::EvolutionBuilder::with_seed), or the one drawn by
+    /// [`start`](Self::start) when none was given. Pass it to `with_seed` to replay the run.
+    /// `None` until the evolution is started.
+    pub fn seed(&self) -> Option<u64> {
+        self.run_seed
     }
 
     pub fn population_digest(&self) {
@@ -260,13 +291,14 @@ impl<T: Individual> Evolution<T> {
     /// Average fitness of the current population, ignoring individuals with a `NaN` fitness so a
     /// single one doesn't hide the average of the others. Returns `NaN` if no fitness is a number.
     pub fn current_fitness_average(&self) -> f64 {
+        // Summed in order: a parallel sum adds in an order that depends on thread scheduling,
+        // which changes the last bits of the average and so the history of a seeded run.
         let (sum, count) = self
             .current_population
-            .par_iter()
+            .iter()
             .map(|individual| individual.get_fitness())
             .filter(|fitness| !fitness.is_nan())
-            .map(|fitness| (fitness, 1usize))
-            .reduce(|| (0.0, 0), |(s1, c1), (s2, c2)| (s1 + s2, c1 + c2));
+            .fold((0.0, 0usize), |(sum, count), fitness| (sum + fitness, count + 1));
 
         sum / count as f64
     }
@@ -277,6 +309,15 @@ impl<T: Individual> Evolution<T> {
         test_name: impl Into<String>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.metrics.plot_chart(&path.into(), &test_name.into())
+    }
+
+    /// The generators of `step` in the current generation.
+    fn rngs(&self, step: Step) -> Rngs {
+        let seed = self
+            .run_seed
+            .expect("the evolution is not started, call `start` or `run` first");
+
+        Rngs::for_step(seed, self.metrics.iterations, step)
     }
 
     /// Clones of the `elitism` best individuals of the current population.

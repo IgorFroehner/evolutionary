@@ -59,6 +59,10 @@ fn main() {
 }
 ```
 
+To make a run reproducible, seed it with `.with_seed(42)`: two runs with the same seed give the
+same result, however many threads they use. Without a seed, `evolution.seed()` tells you the one
+a run drew, so you can replay it.
+
 There is an extended getting started [here](./docs/getting_started.md).
 
 ## Examples and Projects:

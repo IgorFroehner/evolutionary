@@ -1,4 +1,4 @@
-use rand::{seq::SliceRandom, thread_rng};
+use rand::{seq::SliceRandom, Rng};
 
 use super::Individual;
 
@@ -12,11 +12,9 @@ impl Individual for IntPerm {
     type Gene = i64;
     type RangeType = ();
 
-    fn generate_member(dimension: u32, _: &Self::RangeType) -> Self {
-        let mut rng = thread_rng();
-
+    fn generate_member<R: Rng + ?Sized>(dimension: u32, _: &Self::RangeType, rng: &mut R) -> Self {
         let mut member = (1..=dimension as i64).collect::<Vec<i64>>();
-        member.shuffle(&mut rng);
+        member.shuffle(rng);
 
         Self {
             chromosome: member,

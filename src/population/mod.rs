@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 
+use rand::Rng;
 use serde_derive::Deserialize;
 
 mod bin;
@@ -22,6 +23,9 @@ pub enum GeneCod {
 
 /// Trait that must be implemented by a struct to be considered a individual.
 ///
+/// [`generate_member`](Self::generate_member) draws the random genes of a new individual from
+/// `rng`, so that a seeded run starts from the same population every time.
+///
 /// # Example
 ///
 /// ```
@@ -37,9 +41,9 @@ pub enum GeneCod {
 ///     type Gene = u64;
 ///     type RangeType = ();
 ///
-///     fn generate_member(dimension: u32, _: &Self::RangeType) -> Self {
+///     fn generate_member<R: Rng + ?Sized>(dimension: u32, _: &Self::RangeType, rng: &mut R) -> Self {
 ///         Self {
-///             chromosome: vec![0; dimension as usize],
+///             chromosome: (0..dimension).map(|_| rng.random()).collect(),
 ///             fitness: 0.0,
 ///         }
 ///     }
@@ -73,7 +77,9 @@ pub trait Individual: 'static + Clone + Send + Sync {
     type Gene: Debug + Send + Sync + Copy;
     type RangeType: Send + Sync + Clone;
 
-    fn generate_member(dimension: u32, b: &Self::RangeType) -> Self;
+    /// Creates a random individual of `dimension` genes within `range`, drawing from `rng`.
+    fn generate_member<R: Rng + ?Sized>(dimension: u32, range: &Self::RangeType, rng: &mut R)
+        -> Self;
     fn get_chromosome(&self) -> &Vec<Self::Gene>;
     fn get_mut_chromosome(&mut self) -> &mut Vec<Self::Gene>;
     fn set_gene(&mut self, index: usize, value: Self::Gene);

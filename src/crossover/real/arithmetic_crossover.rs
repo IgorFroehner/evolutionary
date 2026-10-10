@@ -1,7 +1,7 @@
 use crate::population::Real;
-use crate::{Crossover, Individual};
-use rand::{thread_rng, Rng};
-use rayon::iter::ParallelIterator;
+use crate::{Crossover, Individual, Rngs};
+use rand::Rng;
+use rayon::iter::{IndexedParallelIterator, ParallelIterator};
 use rayon::prelude::ParallelSliceMut;
 
 /// # Arithmetic Crossover
@@ -36,11 +36,13 @@ impl ArithmeticCrossover {
 }
 
 impl Crossover<Real> for ArithmeticCrossover {
-    fn crossover(&self, population: &mut Vec<Real>) {
-        population.par_chunks_mut(2).for_each_init(
-            || thread_rng(),
-            |rng, chunk| {
-                if rng.gen_bool(self.crossover_rate) {
+    fn crossover(&self, population: &mut Vec<Real>, rngs: &Rngs) {
+        population
+            .par_chunks_mut(2)
+            .enumerate()
+            .for_each(|(pair, chunk)| {
+                let mut rng = rngs.rng(pair);
+                if rng.random_bool(self.crossover_rate) {
                     let parent1 = chunk[0].clone();
                     let parent2 = chunk[1].clone();
 
@@ -49,8 +51,7 @@ impl Crossover<Real> for ArithmeticCrossover {
                     chunk[1].chromosome =
                         self.get_offspring(parent2.get_chromosome(), parent1.get_chromosome());
                 }
-            },
-        );
+            });
     }
 }
 

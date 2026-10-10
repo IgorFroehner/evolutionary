@@ -1,8 +1,8 @@
 use crate::prelude::Real;
-use crate::{Individual, Mutation};
-use rand::{thread_rng, Rng};
+use crate::{Individual, Mutation, Rngs};
+use rand::Rng;
 use rand_distr::Normal;
-use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 
 /// # Gaussian Mutation
 ///
@@ -25,21 +25,22 @@ impl Default for GaussianMutation {
 }
 
 impl Mutation<Real> for GaussianMutation {
-    fn mutate(&self, population: &mut Vec<Real>) {
+    fn mutate(&self, population: &mut Vec<Real>, rngs: &Rngs) {
         let gaussian_distribution = Normal::new(0.0, self.sigma).unwrap();
 
-        population.par_iter_mut().for_each_init(
-            || thread_rng(),
-            |rng, individual| {
+        population
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(index, individual)| {
+                let mut rng = rngs.rng(index);
                 for j in 0..individual.get_chromosome().len() {
-                    if rng.gen_bool(self.mutation_rate) {
+                    if rng.random_bool(self.mutation_rate) {
                         individual.set_gene(
                             j,
                             individual.get_gene(j) + rng.sample(gaussian_distribution),
                         );
                     }
                 }
-            },
-        );
+            });
     }
 }

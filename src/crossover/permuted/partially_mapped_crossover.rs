@@ -1,11 +1,15 @@
 use std::collections::HashMap;
 
-use rand::{thread_rng, Rng};
-use rayon::{prelude::ParallelIterator, slice::ParallelSliceMut};
+use rand::Rng;
+use rayon::{
+    prelude::{IndexedParallelIterator, ParallelIterator},
+    slice::ParallelSliceMut,
+};
 
 use crate::{population::IntPerm, Individual};
 
 use super::Crossover;
+use crate::Rngs;
 
 #[derive(Clone)]
 pub struct PartiallyMappedCrossover {
@@ -57,18 +61,20 @@ impl PartiallyMappedCrossover {
 }
 
 impl Crossover<IntPerm> for PartiallyMappedCrossover {
-    fn crossover(&self, population: &mut Vec<IntPerm>) {
-        population.par_chunks_mut(2).for_each_init(
-            || thread_rng(),
-            |rng, chunk| {
-                if rng.gen_bool(self.crossover_rate) {
+    fn crossover(&self, population: &mut Vec<IntPerm>, rngs: &Rngs) {
+        population
+            .par_chunks_mut(2)
+            .enumerate()
+            .for_each(|(pair, chunk)| {
+                let mut rng = rngs.rng(pair);
+                if rng.random_bool(self.crossover_rate) {
                     let mut parent1 = chunk[0].clone();
                     let mut parent2 = chunk[1].clone();
 
                     let len = parent1.get_chromosome().len();
 
-                    let start = rng.gen_range(0..len);
-                    let end = rng.gen_range(start..len);
+                    let start = rng.random_range(0..len);
+                    let end = rng.random_range(start..len);
 
                     PartiallyMappedCrossover::pmx_matching(
                         &mut parent1.chromosome,
@@ -80,8 +86,7 @@ impl Crossover<IntPerm> for PartiallyMappedCrossover {
                     chunk[0] = parent1;
                     chunk[1] = parent2;
                 }
-            },
-        );
+            });
     }
 }
 

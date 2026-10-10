@@ -2,8 +2,10 @@ use std::fs::create_dir_all;
 use std::time::{Duration, Instant};
 
 use crate::plotting::plot_chart;
+use crate::rng::{Rngs, Step};
 use crate::{evolution_builder::EvolutionBuilder, population::Individual};
 
+use rand::Rng;
 use rayon::prelude::*;
 
 struct ExperimentMetrics {
@@ -43,8 +45,14 @@ impl<T: Individual> ExperimentRunner<T> {
 
         let results: Vec<ExperimentResult<T>> = (0..self.runs)
             .into_par_iter()
-            .map(|_| {
+            .map(|run| {
                 let mut evolution = self.evolution_builder.build().unwrap();
+                // A seeded experiment is reproducible, but its runs still differ.
+                evolution.fixed_seed = self.evolution_builder.seed.map(|seed| {
+                    Rngs::for_step(seed, 0, Step::Experiment)
+                        .rng(run as usize)
+                        .random()
+                });
 
                 let start_time = Instant::now();
 

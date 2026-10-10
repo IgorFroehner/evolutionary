@@ -1,7 +1,7 @@
-use rand::{Rng, thread_rng};
-use rayon::iter::ParallelIterator;
+use rand::Rng;
+use rayon::iter::{IndexedParallelIterator, ParallelIterator};
 use rayon::prelude::ParallelSliceMut;
-use crate::{Crossover, Individual};
+use crate::{Crossover, Individual, Rngs};
 use crate::population::Real;
 
 /// # Blend Crossover
@@ -46,11 +46,13 @@ impl BlendCrossover {
 }
 
 impl Crossover<Real> for BlendCrossover {
-    fn crossover(&self, population: &mut Vec<Real>) {
-        population.par_chunks_mut(2).for_each_init(
-            || thread_rng(),
-            |rng, chunk| {
-                if rng.gen_bool(self.crossover_rate) {
+    fn crossover(&self, population: &mut Vec<Real>, rngs: &Rngs) {
+        population
+            .par_chunks_mut(2)
+            .enumerate()
+            .for_each(|(pair, chunk)| {
+                let mut rng = rngs.rng(pair);
+                if rng.random_bool(self.crossover_rate) {
                     let (parent1, parent2) = chunk.split_at_mut(1);
                     let parent1 = &mut parent1[0];
                     let parent2 = &mut parent2[0];
@@ -60,14 +62,13 @@ impl Crossover<Real> for BlendCrossover {
                     for i in 0..len {
                         let (min, max) = self.blend_min_max(parent1.get_gene(i), parent2.get_gene(i));
 
-                        let gene = rng.gen_range(min..=max);
+                        let gene = rng.random_range(min..=max);
 
                         parent1.set_gene(i, gene);
                         parent2.set_gene(i, gene);
                     }
                 }
-            }
-        );
+            });
     }
 }
 
