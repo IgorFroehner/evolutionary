@@ -204,4 +204,4 @@ random numbers are breaking changes and are recorded in the [changelog](./CHANGE
 
 ## License
 
-MIT
+[MIT](./LICENSE)
