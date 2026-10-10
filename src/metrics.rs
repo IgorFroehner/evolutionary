@@ -113,8 +113,8 @@ impl Metrics {
     #[cfg(feature = "plot")]
     pub fn plot_chart(
         &self,
-        path: &String,
-        test_name: &String,
+        path: &str,
+        test_name: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
         plot_chart(&self.best_fitnesses, &self.avg_fitnesses, path, test_name)
     }

@@ -1,5 +1,38 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `SimulatedBinaryCrossover` and `LinearCrossover` are implemented. Both were exported but
+  panicked with `todo!()` when called. SBX follows Deb & Agrawal, with a configurable
+  distribution index `eta`; the linear crossover builds Wright's three candidates and replaces
+  the parents with two of them drawn at random.
+
+### Performance
+
+Seeded runs are unchanged: every optimization preserves the exact random streams and the
+floating-point evaluation order.
+
+- The best individual and the average fitness are computed once per generation and cached.
+  The report, the stop condition and the `on_generation` callback no longer rescan the
+  population (previously 4-6 full scans per generation).
+- `UniformCrossover` and `NPointsCrossover` swap genes in place instead of cloning both
+  parents, and `ArithmeticCrossover` computes both offspring in place instead of cloning the
+  parents and allocating new chromosomes.
+- `RouletteSelection` builds its cumulative weight table once per generation instead of once
+  per drawn slot (`O(n^2)` to `O(n log n)`).
+- `RankSelection` sorts indices instead of cloning the whole population to sort it.
+- The per-gene mutations build their Bernoulli distribution once per `mutate` call instead of
+  once per gene.
+
+### Changed
+
+- The three per-encoding copies of `UniformCrossover` and `NPointsCrossover` are replaced by
+  one generic implementation each; behavior is identical.
+- `Metrics::plot_chart` and `plotting::plot_chart` take `&str` instead of `&String` (callers
+  passing `&String` still compile).
+
 ## 0.3.0 (2026-10-10)
 
 ### Breaking

@@ -1,5 +1,5 @@
 use rayon::iter::{IntoParallelIterator, IntoParallelRefMutIterator};
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::ParallelIterator;
 use std::cmp::Ordering;
 use std::sync::Arc;
 use std::time::Duration;
@@ -17,6 +17,14 @@ use crate::{
 
 pub type StopConditionFn<T> = Arc<dyn Fn(&GenerationReport<T>) -> bool + Send + Sync>;
 pub type OnGenerationFn<T> = Arc<dyn Fn(&GenerationReport<T>) + Send + Sync>;
+
+/// What every generation hands to the reports, computed once when it ends instead of being
+/// scanned for again at every query.
+#[derive(Clone, Copy)]
+struct GenerationStats {
+    best_index: usize,
+    average_fitness: f64,
+}
 
 #[derive(Clone)]
 pub struct EvolutionConfig<T: Individual> {
@@ -71,6 +79,9 @@ pub struct Evolution<T: Individual> {
     pub(crate) on_generation: Option<OnGenerationFn<T>>,
     pub metrics: Metrics,
     current_population: Vec<T>,
+    /// Stats of the current population, valid between the end of a generation and the next
+    /// change of the population. `None` while a generation is being computed.
+    stats: Option<GenerationStats>,
     /// The best individual seen since `start`.
     best_ever: Option<T>,
     /// The individuals every run starts with, before the random ones.
@@ -97,6 +108,7 @@ impl<T: Individual> Evolution<T> {
         Self {
             _title: title,
             current_population: Vec::new(),
+            stats: None,
             config,
             fitness,
             selection,
@@ -173,6 +185,7 @@ impl<T: Individual> Evolution<T> {
         self.metrics.step_end(Steps::Mutation);
 
         self.current_population = mating_pool;
+        self.stats = None;
 
         self.process_fitness();
 
@@ -310,10 +323,12 @@ impl<T: Individual> Evolution<T> {
     ///
     /// If the evolution was not started yet, as there is no population.
     pub fn current_best(&self) -> &T {
-        self.current_population
-            .par_iter()
-            .max_by(|a, b| Self::cmp_by_fitness(a, b))
-            .expect("the population is empty, call `start` or `run` first")
+        let stats = self
+            .stats
+            .or_else(|| self.population_stats())
+            .expect("the population is empty, call `start` or `run` first");
+
+        &self.current_population[stats.best_index]
     }
 
     /// Returns a copy of the current population sorted by fitness.
@@ -341,16 +356,37 @@ impl<T: Individual> Evolution<T> {
     /// Average fitness of the current population, ignoring individuals with a `NaN` fitness so a
     /// single one doesn't hide the average of the others. Returns `NaN` if no fitness is a number.
     pub fn current_fitness_average(&self) -> f64 {
+        self.stats
+            .or_else(|| self.population_stats())
+            .map_or(f64::NAN, |stats| stats.average_fitness)
+    }
+
+    /// Best index and average fitness of the current population, in one pass. `None` when the
+    /// population is empty.
+    fn population_stats(&self) -> Option<GenerationStats> {
+        let mut best: Option<(usize, &T)> = None;
         // Summed in order: a parallel sum adds in an order that depends on thread scheduling,
         // which changes the last bits of the average and so the history of a seeded run.
-        let (sum, count) = self
-            .current_population
-            .iter()
-            .map(|individual| individual.get_fitness())
-            .filter(|fitness| !fitness.is_nan())
-            .fold((0.0, 0usize), |(sum, count), fitness| (sum + fitness, count + 1));
+        let mut sum = 0.0;
+        let mut count = 0usize;
 
-        sum / count as f64
+        for (index, individual) in self.current_population.iter().enumerate() {
+            // `is_ge`, so that the last of equally good individuals wins, as `max_by` would.
+            if best.is_none_or(|(_, best)| Self::cmp_by_fitness(individual, best).is_ge()) {
+                best = Some((index, individual));
+            }
+
+            let fitness = individual.get_fitness();
+            if !fitness.is_nan() {
+                sum += fitness;
+                count += 1;
+            }
+        }
+
+        best.map(|(best_index, _)| GenerationStats {
+            best_index,
+            average_fitness: sum / count as f64,
+        })
     }
 
     /// Saves a chart of the best and average fitness per generation to `path`. Needs the `plot`
@@ -372,6 +408,8 @@ impl<T: Individual> Evolution<T> {
     /// Bookkeeping at the end of `start` and of every `next`, so that a manual loop sees the
     /// same metrics, best ever and callbacks as `run`.
     fn finish_generation(&mut self) {
+        self.stats = self.population_stats();
+
         let best = self.current_best();
         if self
             .best_ever
@@ -423,6 +461,7 @@ impl<T: Individual> Evolution<T> {
         if count == 0 {
             return;
         }
+        self.stats = None;
 
         let population = &self.current_population;
         let mut ranked: Vec<usize> = (0..population.len()).collect();
@@ -452,6 +491,7 @@ impl<T: Individual> Evolution<T> {
     }
 
     fn process_fitness(&mut self) {
+        self.stats = None;
         self.metrics.step_start(Steps::Fitness);
 
         self.current_population

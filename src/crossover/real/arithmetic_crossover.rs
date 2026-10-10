@@ -1,5 +1,5 @@
 use crate::population::Real;
-use crate::{Crossover, Individual, Rngs};
+use crate::{Crossover, Rngs};
 use rand::Rng;
 use rayon::iter::{IndexedParallelIterator, ParallelIterator};
 use rayon::prelude::ParallelSliceMut;
@@ -25,16 +25,6 @@ impl Default for ArithmeticCrossover {
     }
 }
 
-impl ArithmeticCrossover {
-    fn get_offspring(&self, parent1: &[f64], parent2: &[f64]) -> Vec<f64> {
-        parent1
-            .iter()
-            .zip(parent2.iter())
-            .map(|(p1, p2)| self.alpha * p1 + (1.0 - self.alpha) * p2)
-            .collect()
-    }
-}
-
 impl Crossover<Real> for ArithmeticCrossover {
     fn crossover(&self, population: &mut [Real], rngs: &Rngs) {
         population
@@ -43,13 +33,17 @@ impl Crossover<Real> for ArithmeticCrossover {
             .for_each(|(pair, chunk)| {
                 let mut rng = rngs.rng(pair);
                 if rng.random_bool(self.crossover_rate) {
-                    let parent1 = chunk[0].clone();
-                    let parent2 = chunk[1].clone();
+                    let (first, second) = chunk.split_at_mut(1);
 
-                    chunk[0].chromosome =
-                        self.get_offspring(parent1.get_chromosome(), parent2.get_chromosome());
-                    chunk[1].chromosome =
-                        self.get_offspring(parent2.get_chromosome(), parent1.get_chromosome());
+                    for (gene1, gene2) in first[0]
+                        .chromosome
+                        .iter_mut()
+                        .zip(second[0].chromosome.iter_mut())
+                    {
+                        let (p1, p2) = (*gene1, *gene2);
+                        *gene1 = self.alpha * p1 + (1.0 - self.alpha) * p2;
+                        *gene2 = self.alpha * p2 + (1.0 - self.alpha) * p1;
+                    }
                 }
             });
     }
@@ -57,22 +51,24 @@ impl Crossover<Real> for ArithmeticCrossover {
 
 #[cfg(test)]
 mod tests {
-    use super::ArithmeticCrossover;
+    use super::*;
+    use crate::Individual;
 
     #[test]
-    fn test_get_offspring() {
-
-        let parent1 = vec![1.0, 2.0, 3.0, 4.0];
-        let parent2 = vec![5.0, 6.0, 7.0, 8.0];
+    fn offsprings_are_the_weighted_averages_of_the_parents() {
+        let mut population = vec![
+            Real::new(vec![1.0, 2.0, 3.0, 4.0], (0.0, 10.0)),
+            Real::new(vec![5.0, 6.0, 7.0, 8.0], (0.0, 10.0)),
+        ];
 
         let crossover = ArithmeticCrossover {
             crossover_rate: 1.0,
-            alpha: 0.5,
+            alpha: 0.25,
         };
+        crossover.crossover(&mut population, &Rngs::new(0));
 
-        let offspring = crossover.get_offspring(&parent1, &parent2);
-
-        assert_eq!(offspring, vec![3.0, 4.0, 5.0, 6.0]);
+        assert_eq!(*population[0].get_chromosome(), vec![4.0, 5.0, 6.0, 7.0]);
+        assert_eq!(*population[1].get_chromosome(), vec![2.0, 3.0, 4.0, 5.0]);
     }
 }
 

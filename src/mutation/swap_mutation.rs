@@ -1,3 +1,4 @@
+use rand::distr::{Bernoulli, Distribution};
 use rand::Rng;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 
@@ -24,13 +25,16 @@ impl Default for SwapMutation {
 
 impl<T: Individual> Mutation<T> for SwapMutation {
     fn mutate(&self, population: &mut [T], rngs: &Rngs) {
+        // Built once: `Rng::random_bool` builds the same distribution again at every call.
+        let mutates = Bernoulli::new(self.mutation_rate).unwrap();
+
         population
             .par_iter_mut()
             .enumerate()
             .for_each(|(index, individual)| {
                 let mut rng = rngs.rng(index);
                 for j in 0..individual.get_chromosome().len() {
-                    if rng.random_bool(self.mutation_rate) {
+                    if mutates.sample(&mut rng) {
                         let swap_with = rng.random_range(0..individual.get_chromosome().len());
 
                         let temp = individual.get_gene(j);

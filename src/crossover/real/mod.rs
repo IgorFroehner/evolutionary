@@ -1,6 +1,4 @@
 
-mod uniform_crossover;
-mod n_points_crossover;
 mod blend_crossover;
 mod linear_crossover;
 mod arithmetic_crossover;
