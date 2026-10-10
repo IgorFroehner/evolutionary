@@ -38,7 +38,7 @@
 //!     }
 //! }
 //!
-//! // Then you will be able to build a evolution object using the `EvolutionBuiler`
+//! // Then you will be able to build a evolution object using the `EvolutionBuilder`
 //! // and setting all the required parameters:
 //! fn main() {
 //!     let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())

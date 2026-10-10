@@ -40,7 +40,7 @@ impl Fitness<Bin> for MaxFitness {
 }
 ```
 
-Then you will be able to build an evolution object using the `EvolutionBuiler` and setting all the required parameters:
+Then you will be able to build an evolution object using the `EvolutionBuilder` and setting all the required parameters:
 
 ```rust
 fn main() {
@@ -48,7 +48,7 @@ fn main() {
         .with_fitness(MaxFitness)
         .with_selection(TournamentSelection::default())
         .with_crossover(NPointsCrossover::default())
-        .with_mutation(BitSwapMutation::default())
+        .with_mutation(BitFlipMutation::default())
         .with_stop_condition(move |_, iterations, _| iterations >= 1000)
         .build().unwrap();
 
