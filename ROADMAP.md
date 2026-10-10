@@ -7,7 +7,7 @@ generic genetic algorithm library. Nothing here should know about networks or ra
 every item below is useful for any problem encoded as `Real`, `Bin`, `Int` or
 `IntPerm`.
 
-Step 1 shipped in 0.2.0. Steps 2 to 7 make up 0.3.0.
+Step 1 shipped in 0.2.0, and steps 2 to 7 in 0.3.0.
 
 ## 1. Bug fixes (0.2.0)
 
@@ -97,7 +97,7 @@ change. Breaking changes are recorded in `CHANGELOG.md` as they land.
 - [x] Remove the unused-import warnings in `crossover` and `mutation`.
 - [x] CI: also run `cargo clippy` and `cargo test --all-features`. Clippy runs with
   `-D warnings`, after clearing the existing warnings in the library and the examples.
-- [ ] Release 0.3.0: bump the version and date the `CHANGELOG.md` entry.
+- [x] Release 0.3.0: bump the version and date the `CHANGELOG.md` entry.
 
 ## 7. Neuroevolution "hello world": XOR
 
