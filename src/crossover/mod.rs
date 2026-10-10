@@ -26,6 +26,9 @@ pub use n_points_crossover::*;
 /// (`rngs.rng(pair)`), so that a seeded run is reproducible even when the crossover runs in
 /// parallel. See [`Rngs`].
 ///
+/// The built-in crossovers pair the population two by two. When its size is odd, the last
+/// individual has no partner and is left unchanged.
+///
 /// # Example
 ///
 /// ```

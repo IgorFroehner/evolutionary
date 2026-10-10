@@ -48,7 +48,7 @@ impl BlendCrossover {
 impl Crossover<Real> for BlendCrossover {
     fn crossover(&self, population: &mut Vec<Real>, rngs: &Rngs) {
         population
-            .par_chunks_mut(2)
+            .par_chunks_exact_mut(2)
             .enumerate()
             .for_each(|(pair, chunk)| {
                 let mut rng = rngs.rng(pair);

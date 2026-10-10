@@ -9,7 +9,7 @@ use crate::population::Int;
 impl Crossover<Int> for NPointsCrossover {
     fn crossover(&self, population: &mut Vec<Int>, rngs: &Rngs) {
         population
-            .par_chunks_mut(2)
+            .par_chunks_exact_mut(2)
             .enumerate()
             .for_each(|(pair, chunk)| {
                 let mut rng = rngs.rng(pair);

@@ -23,6 +23,11 @@
   test an operator on its own.
 - A seeded `ExperimentRunner` is reproducible, and each of its runs gets its own seed.
 
+### Fixed
+
+- Every crossover that pairs parents panicked on a population of odd size, as soon as the
+  unpaired last individual was picked for crossover. It now passes through unchanged.
+
 ### Changed
 
 - Operators no longer use the thread-local generator. Each individual, pair of parents or
