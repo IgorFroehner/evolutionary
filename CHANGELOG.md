@@ -67,6 +67,8 @@
 - A `cargo bench` benchmark of `Real` at 300 individuals of 300 genes, and tests at that scale
   of Gaussian mutation, elitism above 1 and tournaments above 2.
 - `ExperimentResult::average_fitnesses` and `best_fitnesses` are public.
+- `examples/xor`: evolves the weights of an only-brain network until it computes XOR. only-brain
+  is a dev-dependency, so library users never pull it in.
 - A seeded `ExperimentRunner` is reproducible, and each of its runs gets its own seed.
 
 ### Fixed

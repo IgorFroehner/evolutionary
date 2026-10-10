@@ -97,6 +97,7 @@ There are some examples in the [examples folder](./examples):
 * [Maximize Radios Factory Profit](./examples/radios)
 * [Maze](./examples/maze)
 * [Subway](./examples/subway)
+* [XOR](./examples/xor) - neuroevolution: the weights of an [only-brain](https://github.com/IgorFroehner/only-brain) network
 
 ## TODO:
 
