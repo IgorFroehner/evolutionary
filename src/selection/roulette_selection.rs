@@ -1,6 +1,7 @@
 use rand::{seq::SliceRandom, thread_rng};
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 
+use crate::fitness::selection_weight;
 use crate::population::Individual;
 
 use super::Selection;
@@ -16,7 +17,9 @@ impl<T: Individual> Selection<T> for RouletteSelection {
                 || thread_rng(),
                 |mut rng, _| {
                     initial_population
-                        .choose_weighted(&mut rng, |individual| individual.get_fitness())
+                        .choose_weighted(&mut rng, |individual| {
+                            selection_weight(individual.get_fitness())
+                        })
                         .unwrap()
                         .clone()
                 },

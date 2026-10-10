@@ -18,7 +18,7 @@ pub fn plot_chart(
     let max = *average_fitness
         .iter()
         .chain(best_fitness)
-        .max_by(|a, b| a.partial_cmp(b).unwrap())
+        .max_by(|a, b| a.total_cmp(b))
         .unwrap_or(&1.0);
 
     let normalized_avg = normalize(&average_fitness, max);
@@ -27,7 +27,7 @@ pub fn plot_chart(
     let min = normalized_avg
         .iter()
         .chain(&normalized_best)
-        .min_by(|a, b| a.partial_cmp(b).unwrap())
+        .min_by(|a, b| a.total_cmp(b))
         .unwrap_or(&0.0);
 
     let y_axis_start = if *min > 0.5 { min } else { min };
@@ -87,12 +87,12 @@ pub fn plot_boxplot(
     let min = quartiles
         .iter()
         .map(|q| q.values()[0])
-        .min_by(|a, b| a.partial_cmp(b).unwrap())
+        .min_by(|a, b| a.total_cmp(b))
         .unwrap();
     let max = quartiles
         .iter()
         .map(|q| q.values()[4])
-        .max_by(|a, b| a.partial_cmp(b).unwrap())
+        .max_by(|a, b| a.total_cmp(b))
         .unwrap();
 
     let mut chart = ChartBuilder::on(&root)

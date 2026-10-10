@@ -1,8 +1,8 @@
+use crate::fitness::fitness_cmp;
 use crate::{Individual, Selection};
+use rand::distributions::{Distribution, WeightedIndex};
 use rand::thread_rng;
 use rayon::prelude::*;
-use std::cmp::Ordering;
-use rand::distributions::{Distribution, WeightedIndex};
 
 /// # Rank Selection
 ///
@@ -15,11 +15,7 @@ pub struct RankSelection;
 impl<T: Individual> Selection<T> for RankSelection {
     fn get_mating_pool(&self, initial_population: &Vec<T>) -> Vec<T> {
         let mut sorted_population = initial_population.clone();
-        sorted_population.par_sort_by(|a, b| {
-            a.get_fitness()
-                .partial_cmp(&b.get_fitness())
-                .unwrap_or(Ordering::Equal)
-        });
+        sorted_population.par_sort_by(|a, b| fitness_cmp(a.get_fitness(), b.get_fitness()));
 
         let population_size = sorted_population.len();
         let weights: Vec<_> = (1..=population_size).map(|rank| rank).collect();
@@ -31,9 +27,10 @@ impl<T: Individual> Selection<T> for RankSelection {
             .map_init(
                 || thread_rng(),
                 |mut rng, _| {
-                let index = dist.sample(&mut rng);
-                sorted_population[index].clone()
-            })
+                    let index = dist.sample(&mut rng);
+                    sorted_population[index].clone()
+                },
+            )
             .collect()
     }
 }

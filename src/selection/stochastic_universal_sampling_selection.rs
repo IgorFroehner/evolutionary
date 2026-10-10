@@ -1,3 +1,4 @@
+use crate::fitness::selection_weight;
 use crate::{Individual, Selection};
 use rand::{thread_rng, Rng};
 use rayon::iter::ParallelIterator;
@@ -8,7 +9,10 @@ pub struct StochasticUniversalSamplingSelection;
 
 impl<T: Individual> Selection<T> for StochasticUniversalSamplingSelection {
     fn get_mating_pool(&self, initial_population: &Vec<T>) -> Vec<T> {
-        let total_fitness: f64 = initial_population.iter().map(|ind| ind.get_fitness()).sum();
+        let total_fitness: f64 = initial_population
+            .iter()
+            .map(|ind| selection_weight(ind.get_fitness()))
+            .sum();
         let population_size = initial_population.len();
         let pointer_spacing = total_fitness / population_size as f64;
 
@@ -26,7 +30,8 @@ impl<T: Individual> Selection<T> for StochasticUniversalSamplingSelection {
         // TODO: find a way to parallelize this part
         for pointer in pointers {
             while cumulative_fitness < pointer && individual_idx < population_size {
-                cumulative_fitness += initial_population[individual_idx].get_fitness();
+                cumulative_fitness +=
+                    selection_weight(initial_population[individual_idx].get_fitness());
                 individual_idx += 1;
             }
             selected_individuals.push(initial_population[individual_idx - 1].clone());

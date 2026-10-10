@@ -6,7 +6,55 @@ use crate::{
     population::{GeneCod, Individual},
     selection::Selection,
 };
-use std::sync::Arc;
+use std::{error::Error, fmt, sync::Arc};
+
+/// Why [`EvolutionBuilder::build`] could not build an [`Evolution`].
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum BuildError {
+    MissingConfig,
+    MissingFitness,
+    MissingSelection,
+    MissingCrossover,
+    MissingMutation,
+    MissingStopCondition,
+    /// The population size is zero, so there is nothing to evolve.
+    EmptyPopulation,
+    /// More elitists were asked for than there are individuals in the population.
+    ElitismExceedsPopulation {
+        elitism: u32,
+        population_size: u32,
+    },
+}
+
+impl fmt::Display for BuildError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::MissingConfig => f.write_str("no evolution config was provided"),
+            Self::MissingFitness => f.write_str("no fitness was provided, use `with_fitness`"),
+            Self::MissingSelection => {
+                f.write_str("no selection was provided, use `with_selection`")
+            }
+            Self::MissingCrossover => {
+                f.write_str("no crossover was provided, use `with_crossover`")
+            }
+            Self::MissingMutation => f.write_str("no mutation was provided, use `with_mutation`"),
+            Self::MissingStopCondition => {
+                f.write_str("no stop condition was provided, use `with_stop_condition`")
+            }
+            Self::EmptyPopulation => f.write_str("the population size must be at least 1"),
+            Self::ElitismExceedsPopulation {
+                elitism,
+                population_size,
+            } => write!(
+                f,
+                "elitism ({elitism}) is bigger than the population size ({population_size})"
+            ),
+        }
+    }
+}
+
+impl Error for BuildError {}
 
 /// This is the helper struct to create a new Evolution object. The `fitness`, `selection`,
 /// `crossover`, `mutation` and `stop_condition` are required.
@@ -137,33 +185,132 @@ impl<T: Individual> EvolutionBuilder<T> {
         self
     }
 
-    pub fn build(&self) -> Result<Evolution<T>, String> {
-        let title = self.title.clone().unwrap_or("".to_string());
+    /// Builds the [`Evolution`], checking that every required part was set and that the
+    /// parameters are consistent.
+    pub fn build(&self) -> Result<Evolution<T>, BuildError> {
+        let evolution_config = self
+            .evolution_config
+            .clone()
+            .ok_or(BuildError::MissingConfig)?;
 
-        let evolution_config = self.evolution_config.clone().ok_or("No config provided")?;
-
-        if self.elitism.unwrap_or(1) > self.evolution_config.as_ref().unwrap().dimension {
-            return Err("Number of elitist bigger then the population size".to_string());
+        if evolution_config.population_size == 0 {
+            return Err(BuildError::EmptyPopulation);
         }
 
-        if let (Some(f), Some(s), Some(x), Some(m)) = (
-            self.fitness.as_ref().map(|f| f.as_ref()),
-            self.selection.as_ref().map(|s| s.as_ref()),
-            self.crossover.as_ref().map(|c| c.as_ref()),
-            self.mutation.as_ref().map(|m| m.as_ref()),
-        ) {
-            Ok(Evolution::new(
-                title.clone(),
-                evolution_config,
-                dyn_clone::clone_box(&*f),
-                dyn_clone::clone_box(&*s),
-                dyn_clone::clone_box(&*x),
-                dyn_clone::clone_box(&*m),
-                self.elitism.unwrap_or(1),
-                Arc::clone(self.stop_condition.as_ref().unwrap()),
-            ))
-        } else {
-            Err("Missing required parameters".to_string())
+        let elitism = self.elitism.unwrap_or(1);
+        if elitism > evolution_config.population_size {
+            return Err(BuildError::ElitismExceedsPopulation {
+                elitism,
+                population_size: evolution_config.population_size,
+            });
         }
+
+        let fitness = self.fitness.as_deref().ok_or(BuildError::MissingFitness)?;
+        let selection = self
+            .selection
+            .as_deref()
+            .ok_or(BuildError::MissingSelection)?;
+        let crossover = self
+            .crossover
+            .as_deref()
+            .ok_or(BuildError::MissingCrossover)?;
+        let mutation = self
+            .mutation
+            .as_deref()
+            .ok_or(BuildError::MissingMutation)?;
+        let stop_condition = self
+            .stop_condition
+            .as_ref()
+            .ok_or(BuildError::MissingStopCondition)?;
+
+        Ok(Evolution::new(
+            self.title.clone().unwrap_or_default(),
+            evolution_config,
+            dyn_clone::clone_box(fitness),
+            dyn_clone::clone_box(selection),
+            dyn_clone::clone_box(crossover),
+            dyn_clone::clone_box(mutation),
+            elitism,
+            Arc::clone(stop_condition),
+        ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::prelude::*;
+
+    #[derive(Clone)]
+    struct ZeroFitness;
+
+    impl Fitness<Bin> for ZeroFitness {
+        fn calculate_fitness(&self, _: &Bin) -> f64 {
+            0.0
+        }
+    }
+
+    fn complete(population_size: u32, dimension: u32) -> EvolutionBuilder<Bin> {
+        EvolutionBuilder::new(population_size, dimension, GeneCod::Bin, ())
+            .with_fitness(ZeroFitness)
+            .with_selection(TournamentSelection::default())
+            .with_crossover(NPointsCrossover::default())
+            .with_mutation(BitFlipMutation::default())
+            .with_stop_condition(|_, iterations, _| iterations >= 1)
+    }
+
+    #[test]
+    fn builds_when_complete() {
+        assert!(complete(10, 4).build().is_ok());
+    }
+
+    #[test]
+    fn elitism_is_checked_against_the_population_size() {
+        // Larger than the dimension, but fits in the population: valid.
+        assert!(complete(10, 2).with_elitism(5).build().is_ok());
+
+        assert_eq!(
+            complete(10, 50).with_elitism(11).build().err(),
+            Some(BuildError::ElitismExceedsPopulation {
+                elitism: 11,
+                population_size: 10
+            })
+        );
+    }
+
+    #[test]
+    fn empty_population_is_an_error() {
+        assert_eq!(
+            complete(0, 4).with_elitism(0).build().err(),
+            Some(BuildError::EmptyPopulation)
+        );
+    }
+
+    #[test]
+    fn missing_stop_condition_is_an_error() {
+        let builder = EvolutionBuilder::<Bin>::new(10, 4, GeneCod::Bin, ())
+            .with_fitness(ZeroFitness)
+            .with_selection(TournamentSelection::default())
+            .with_crossover(NPointsCrossover::default())
+            .with_mutation(BitFlipMutation::default());
+
+        assert_eq!(
+            builder.build().err(),
+            Some(BuildError::MissingStopCondition)
+        );
+    }
+
+    #[test]
+    fn missing_operator_is_named_in_the_error() {
+        let builder = EvolutionBuilder::<Bin>::new(10, 4, GeneCod::Bin, ())
+            .with_fitness(ZeroFitness)
+            .with_crossover(NPointsCrossover::default())
+            .with_mutation(BitFlipMutation::default())
+            .with_stop_condition(|_, iterations, _| iterations >= 1);
+
+        let error = builder.build().err().unwrap();
+
+        assert_eq!(error, BuildError::MissingSelection);
+        assert!(error.to_string().contains("with_selection"));
     }
 }

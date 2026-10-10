@@ -1,14 +1,12 @@
-use ordered_float::OrderedFloat;
 use rayon::iter::{IntoParallelIterator, IntoParallelRefMutIterator};
-use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
-use std::cmp::Reverse;
-use std::collections::BinaryHeap;
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+use std::cmp::Ordering;
 use std::sync::Arc;
 use std::time::Duration;
 
 use crate::{
     crossover::Crossover,
-    fitness::Fitness,
+    fitness::{fitness_cmp, Fitness},
     metrics::{Metrics, Steps},
     mutation::Mutation,
     population::{GeneCod, Individual},
@@ -100,19 +98,10 @@ impl<T: Individual> Evolution<T> {
 
         self.metrics.start_clock();
 
-        let _ = &self.current_population.clear();
-
         self.current_population = (0..self.config.population_size)
             .into_par_iter()
             .map(|_| T::generate_member(self.config.dimension, &self.config.range))
             .collect();
-
-        for _ in 0..self.config.population_size {
-            let _ = &self.current_population.push(T::generate_member(
-                self.config.dimension,
-                &self.config.range,
-            ));
-        }
 
         self.process_fitness();
 
@@ -144,9 +133,7 @@ impl<T: Individual> Evolution<T> {
         self.process_fitness();
 
         self.metrics.step_start(Steps::Elitism);
-        if self.elitism != 0 && !elitists.is_empty() {
-            self.replace_worsts_with_elitists(elitists);
-        }
+        self.replace_worsts_with_elitists(elitists);
         self.metrics.step_end(Steps::Elitism);
 
         self.metrics
@@ -235,12 +222,17 @@ impl<T: Individual> Evolution<T> {
         println!("---------------------------------------");
     }
 
-    /// Returns the best individual of the current population.
+    /// Returns the best individual of the current population. An individual with a `NaN` fitness
+    /// is only returned if every fitness is `NaN`.
+    ///
+    /// # Panics
+    ///
+    /// If the evolution was not started yet, as there is no population.
     pub fn current_best(&self) -> &T {
         self.current_population
             .par_iter()
             .max_by(|a, b| Self::cmp_by_fitness(a, b))
-            .unwrap()
+            .expect("the population is empty, call `start` or `run` first")
     }
 
     /// Returns a copy of the current population sorted by fitness.
@@ -265,14 +257,18 @@ impl<T: Individual> Evolution<T> {
         self.current_best().get_fitness()
     }
 
+    /// Average fitness of the current population, ignoring individuals with a `NaN` fitness so a
+    /// single one doesn't hide the average of the others. Returns `NaN` if no fitness is a number.
     pub fn current_fitness_average(&self) -> f64 {
-        let sum: f64 = self
+        let (sum, count) = self
             .current_population
             .par_iter()
             .map(|individual| individual.get_fitness())
-            .sum();
+            .filter(|fitness| !fitness.is_nan())
+            .map(|fitness| (fitness, 1usize))
+            .reduce(|| (0.0, 0), |(s1, c1), (s2, c2)| (s1 + s2, c1 + c2));
 
-        sum / self.config.population_size as f64
+        sum / count as f64
     }
 
     pub fn plot_chart(
@@ -283,37 +279,46 @@ impl<T: Individual> Evolution<T> {
         self.metrics.plot_chart(&path.into(), &test_name.into())
     }
 
+    /// Clones of the `elitism` best individuals of the current population.
     fn find_elitists(&self) -> Vec<T> {
-        if self.elitism == 1 {
-            vec![self.current_best().clone()]
-        } else if self.elitism > 1 {
-            let mut better_heap: BinaryHeap<(OrderedFloat<f64>, usize)> =
-                self.current_population.par_iter().enumerate()
-                    .map(|(index, individual)| (OrderedFloat(individual.get_fitness()), index))
-                    .collect();
+        let elitism = self.elitism_count();
+        if elitism == 0 {
+            return Vec::new();
+        }
 
-            (0..self.elitism).into_iter().map(|_| {
-                let (_, idx) = better_heap.pop().unwrap();
+        let mut ranked: Vec<&T> = self.current_population.iter().collect();
+        // Partitions so the `elitism` best come first, without sorting the whole population.
+        ranked.select_nth_unstable_by(elitism - 1, |a, b| Self::cmp_by_fitness(b, a));
 
-                self.current_population[idx].clone()
-            }).collect()
-        } else {
-            vec![]
+        ranked[..elitism]
+            .iter()
+            .map(|&elitist| elitist.clone())
+            .collect()
+    }
+
+    /// Puts the elitists in the place of the worst individuals of the current population.
+    fn replace_worsts_with_elitists(&mut self, elitists: Vec<T>) {
+        // A custom selection may hand back a smaller pool than the previous population.
+        let count = elitists.len().min(self.current_population.len());
+        if count == 0 {
+            return;
+        }
+
+        let population = &self.current_population;
+        let mut ranked: Vec<usize> = (0..population.len()).collect();
+        // Partitions so the `count` worst come first.
+        ranked.select_nth_unstable_by(count - 1, |&a, &b| {
+            Self::cmp_by_fitness(&population[a], &population[b])
+        });
+
+        for (index, elitist) in ranked.into_iter().zip(elitists) {
+            self.current_population[index] = elitist;
         }
     }
 
-    fn replace_worsts_with_elitists(&mut self, elitists: Vec<T>) {
-        // Builds a MinHeap with (fitness, idx) of the population
-        let mut worst_heap: BinaryHeap<(Reverse<OrderedFloat<f64>>, usize)> =
-            self.current_population.par_iter().enumerate()
-                .map(|(index, individual)| (Reverse(OrderedFloat(individual.get_fitness())), index))
-                .collect();
-
-        for elitist in elitists {
-            let (_, idx) = worst_heap.pop().unwrap();
-
-            self.current_population[idx] = elitist.clone();
-        }
+    /// Number of elitists that fit in the current population.
+    fn elitism_count(&self) -> usize {
+        (self.elitism as usize).min(self.current_population.len())
     }
 
     fn calculate_individual_fitness(fitness: &dyn Fitness<T>, individual: &mut T) -> f64 {
@@ -322,8 +327,8 @@ impl<T: Individual> Evolution<T> {
         fitness_value
     }
 
-    fn cmp_by_fitness(a: &T, b: &T) -> std::cmp::Ordering {
-        a.get_fitness().partial_cmp(&b.get_fitness()).unwrap()
+    fn cmp_by_fitness(a: &T, b: &T) -> Ordering {
+        fitness_cmp(a.get_fitness(), b.get_fitness())
     }
 
     fn process_fitness(&mut self) {
@@ -336,5 +341,112 @@ impl<T: Individual> Evolution<T> {
             });
 
         self.metrics.step_end(Steps::Fitness);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::prelude::*;
+
+    #[derive(Clone)]
+    struct SumFitness;
+
+    impl Fitness<Real> for SumFitness {
+        fn calculate_fitness(&self, individual: &Real) -> f64 {
+            individual.get_chromosome().iter().sum()
+        }
+    }
+
+    /// Scores every individual whose first gene is negative as `NaN`.
+    #[derive(Clone)]
+    struct SometimesNanFitness;
+
+    impl Fitness<Real> for SometimesNanFitness {
+        fn calculate_fitness(&self, individual: &Real) -> f64 {
+            match individual.get_gene(0) {
+                gene if gene < 0.0 => f64::NAN,
+                gene => gene,
+            }
+        }
+    }
+
+    fn builder<F: Fitness<Real>>(population_size: u32, fitness: F) -> EvolutionBuilder<Real> {
+        EvolutionBuilder::new(population_size, 3, GeneCod::Real, (-1.0, 1.0))
+            .with_fitness(fitness)
+            .with_selection(TournamentSelection::default())
+            .with_crossover(DoNothingCrossover)
+            .with_mutation(GaussianMutation::default())
+            .with_stop_condition(|_, iterations, _| iterations >= 20)
+    }
+
+    #[test]
+    fn population_keeps_its_configured_size() {
+        let mut evolution = builder(30, SumFitness).build().unwrap();
+
+        evolution.start();
+        assert_eq!(evolution.current_population().len(), 30);
+
+        for _ in 0..5 {
+            evolution.next();
+            assert_eq!(evolution.current_population().len(), 30);
+        }
+    }
+
+    #[test]
+    fn elitism_never_loses_the_best() {
+        let mut evolution = builder(20, SumFitness).with_elitism(3).build().unwrap();
+
+        evolution.start();
+        let mut best = evolution.current_best_fitness();
+
+        for _ in 0..20 {
+            evolution.next();
+            assert!(evolution.current_best_fitness() >= best);
+            best = evolution.current_best_fitness();
+        }
+    }
+
+    #[test]
+    fn elitism_as_big_as_the_population() {
+        let mut evolution = builder(5, SumFitness).with_elitism(5).build().unwrap();
+
+        evolution.run();
+
+        assert_eq!(evolution.current_population().len(), 5);
+    }
+
+    #[test]
+    fn nan_fitness_does_not_panic_and_ranks_last() {
+        let mut evolution = builder(50, SometimesNanFitness)
+            .with_elitism(2)
+            .build()
+            .unwrap();
+
+        evolution.run();
+
+        assert!(!evolution.current_best_fitness().is_nan());
+        assert!(!evolution.current_fitness_average().is_nan());
+    }
+
+    #[test]
+    fn average_ignores_nan_fitnesses() {
+        let mut evolution = builder(2, SometimesNanFitness).build().unwrap();
+        evolution.current_population = vec![
+            Real::new(vec![-1.0, 0.0, 0.0], (-1.0, 1.0)),
+            Real::new(vec![0.5, 0.0, 0.0], (-1.0, 1.0)),
+        ];
+
+        evolution.process_fitness();
+
+        assert_eq!(evolution.current_fitness_average(), 0.5);
+        assert_eq!(evolution.current_best_fitness(), 0.5);
+    }
+
+    #[test]
+    #[should_panic(expected = "call `start` or `run` first")]
+    fn current_best_before_start_panics_with_a_clear_message() {
+        let evolution = builder(10, SumFitness).build().unwrap();
+
+        evolution.current_best();
     }
 }

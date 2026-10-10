@@ -9,6 +9,18 @@ pub struct Real {
     pub range: <Real as Individual>::RangeType,
 }
 
+impl Real {
+    /// Creates an individual from a known chromosome, for example to seed a population with
+    /// saved solutions. `range` is the range the genes were generated in.
+    pub fn new(chromosome: Vec<f64>, range: <Real as Individual>::RangeType) -> Self {
+        Self {
+            chromosome,
+            fitness: 0.0,
+            range,
+        }
+    }
+}
+
 impl Individual for Real {
     type Gene = f64;
     type RangeType = (f64, f64);

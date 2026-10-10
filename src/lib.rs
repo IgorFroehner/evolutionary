@@ -75,7 +75,7 @@ pub mod plotting;
 
 pub use crossover::Crossover;
 pub use evolution::Evolution;
-pub use evolution_builder::EvolutionBuilder;
+pub use evolution_builder::{BuildError, EvolutionBuilder};
 pub use fitness::Fitness;
 pub use mutation::Mutation;
 pub use population::Individual;
@@ -92,5 +92,6 @@ pub mod prelude {
     pub use crate::utils::{convert_bin, within_range};
     pub use crate::Evolution;
     pub use crate::EvolutionBuilder;
+    pub use crate::BuildError;
     pub use crate::Individual;
 }
