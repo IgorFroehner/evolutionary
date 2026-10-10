@@ -49,7 +49,7 @@ fn main() {
         .with_selection(TournamentSelection::default())
         .with_crossover(NPointsCrossover::default())
         .with_mutation(BitFlipMutation::default())
-        .with_stop_condition(move |_, iterations, _| iterations >= 1000)
+        .with_stop_condition(|report| report.generation >= 1000)
         .build().unwrap();
 
     evolution.run();

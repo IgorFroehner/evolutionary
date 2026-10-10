@@ -52,8 +52,8 @@ const POPULATION: u32 = 64;
 const DIMENSION: u32 = 16;
 const GENERATIONS: u32 = 25;
 
-fn stop(_: f64, iterations: u32, _: u32) -> bool {
-    iterations >= GENERATIONS
+fn stop<T: Individual>(report: &GenerationReport<T>) -> bool {
+    report.generation >= GENERATIONS
 }
 
 #[derive(Clone)]

@@ -77,8 +77,8 @@ fn main() {
         .with_crossover(NPointsCrossover::default())
         // Use the Binary Mutation with a mutation rate of 0.05 (which is the default)
         .with_mutation(BitFlipMutation { mutation_rate: 0.05 })
-        // Set the stop condition based on the number of iterations
-        .with_stop_condition(move |_, iterations, _| iterations >= 1000)
+        // Set the stop condition based on the number of generations
+        .with_stop_condition(|report| report.generation >= 1000)
         .build().unwrap();
 
     // The run method of the Evolution will run the evolution until the stop condition is met
@@ -89,16 +89,43 @@ fn main() {
 
     println!("Best individual: {:?}", best);
     println!("Best fitness: {}", evolution.current_best_fitness());
-    
-
-    evolution.plot_fitness();
 }
 ```
 
 In this example we used the `TournamentSelection`, the `NPointsCrossover` and the `BitFlipMutation`, which are the 
 already implemented in the framework. Please try to play and change these parameters, this is the core of the modular 
-and extensibility of the framework We also set a stop condition to stop the evolution after 1000 iterations, 
-we could also use a fitness threshold or the number of generations without improvement.
+and extensibility of the framework We also set a stop condition to stop the evolution after 1000 generations. The
+stop condition receives a `GenerationReport`, so it could also use a fitness threshold or the number of generations
+without improvement:
+
+```rust
+        .with_stop_condition(|report| {
+            report.best_fitness == 5.0 || report.generations_without_improvement >= 100
+        })
+```
+
+### Following a run
+
+`with_on_generation` is called after every generation, the initial one included, with the same report. Use it to log
+the progress or to save the champion of each generation:
+
+```rust
+        .with_on_generation(|report| {
+            println!("generation {}: best {}", report.generation, report.best_fitness);
+        })
+```
+
+Without elitism the best individual of a generation can be lost. `evolution.best_ever()` (and `report.best_ever`) keeps
+the best one seen in the whole run.
+
+You can also drive the evolution yourself instead of calling `run`, and look at `evolution.report()` in between:
+
+```rust
+    evolution.start();
+    while !evolution.reached_stop_condition() {
+        evolution.next();
+    }
+```
 
 ### Results
 

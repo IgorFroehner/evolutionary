@@ -10,11 +10,13 @@ use crate::{
     metrics::{Metrics, Steps},
     mutation::Mutation,
     population::{GeneCod, Individual},
+    report::GenerationReport,
     rng::{Rngs, Step},
     selection::Selection,
 };
 
-pub type StopConditionFn = Arc<dyn Fn(f64, u32, u32) -> bool + Send + Sync>;
+pub type StopConditionFn<T> = Arc<dyn Fn(&GenerationReport<T>) -> bool + Send + Sync>;
+pub type OnGenerationFn<T> = Arc<dyn Fn(&GenerationReport<T>) + Send + Sync>;
 
 #[derive(Clone)]
 pub struct EvolutionConfig<T: Individual> {
@@ -42,14 +44,17 @@ pub struct EvolutionConfig<T: Individual> {
 /// #     .with_crossover(NPointsCrossover::default())
 /// #     .with_mutation(BitFlipMutation::default())
 /// #     .with_title("Max".to_string())
-/// #     .with_stop_condition(move |_, iterations, _| iterations >= 1000)
+/// #     .with_stop_condition(|report| report.generation >= 1000)
 /// #     .build().unwrap();
 /// #
 /// // You can start the evolution with the `start` method:
 /// evolution.start();
 ///
 /// // and iterate through the evolution with the `next` method:
-/// evolution.next();
+/// while !evolution.reached_stop_condition() {
+///     evolution.next();
+///     let _best_so_far = evolution.report().best_ever;
+/// }
 ///
 /// // or you can run it until the stop condition is met with the `run` method:
 /// evolution.run();
@@ -62,9 +67,12 @@ pub struct Evolution<T: Individual> {
     crossover: Box<dyn Crossover<T>>,
     mutation: Box<dyn Mutation<T>>,
     elitism: u32,
-    stop_condition: StopConditionFn,
+    stop_condition: StopConditionFn<T>,
+    pub(crate) on_generation: Option<OnGenerationFn<T>>,
     pub metrics: Metrics,
     current_population: Vec<T>,
+    /// The best individual seen since `start`.
+    best_ever: Option<T>,
     /// The seed given to the builder. `None` draws a new one at every `start`.
     pub(crate) fixed_seed: Option<u64>,
     /// The seed of the current run, set by `start`.
@@ -80,7 +88,7 @@ impl<T: Individual> Evolution<T> {
         crossover: Box<dyn Crossover<T>>,
         mutation: Box<dyn Mutation<T>>,
         elitism: u32,
-        stop_condition: StopConditionFn,
+        stop_condition: StopConditionFn<T>,
     ) -> Self {
         Self {
             _title: title,
@@ -92,7 +100,9 @@ impl<T: Individual> Evolution<T> {
             mutation,
             elitism,
             stop_condition,
+            on_generation: None,
             metrics: Metrics::new(),
+            best_ever: None,
             fixed_seed: None,
             run_seed: None,
         }
@@ -105,6 +115,7 @@ impl<T: Individual> Evolution<T> {
     /// every call starts a different run.
     pub fn start(&mut self) {
         self.metrics = Metrics::new();
+        self.best_ever = None;
 
         self.metrics.start_clock();
 
@@ -124,8 +135,7 @@ impl<T: Individual> Evolution<T> {
 
         self.process_fitness();
 
-        self.metrics
-            .record(self.current_best_fitness(), self.current_fitness_average());
+        self.finish_generation();
     }
 
     /// This method runs one generation of the evolution.
@@ -159,19 +169,48 @@ impl<T: Individual> Evolution<T> {
         self.replace_worsts_with_elitists(elitists);
         self.metrics.step_end(Steps::Elitism);
 
-        self.metrics
-            .record(self.current_best_fitness(), self.current_fitness_average());
+        self.finish_generation();
     }
 
     /// This method runs the evolution, generation over generation, until the stop condition is met.
+    /// It is the same as calling [`start`](Self::start), then [`next`](Self::next) until
+    /// [`reached_stop_condition`](Self::reached_stop_condition).
     pub fn run(&mut self) {
         self.start();
 
         while !self.reached_stop_condition() {
             self.next();
         }
+    }
 
-        self.metrics.end_clock();
+    /// The state of the evolution after the last generation.
+    ///
+    /// # Panics
+    ///
+    /// If the evolution was not started yet, as there is no population.
+    pub fn report(&self) -> GenerationReport<'_, T> {
+        let best = self.current_best();
+
+        GenerationReport {
+            generation: self.generation(),
+            best,
+            best_fitness: best.get_fitness(),
+            average_fitness: self.current_fitness_average(),
+            best_ever: self.best_ever(),
+            generations_without_improvement: self.metrics.gens_without_improvement,
+        }
+    }
+
+    /// The best individual seen since the run started, which without elitism can be better
+    /// than [`current_best`](Self::current_best).
+    ///
+    /// # Panics
+    ///
+    /// If the evolution was not started yet.
+    pub fn best_ever(&self) -> &T {
+        self.best_ever
+            .as_ref()
+            .expect("the population is empty, call `start` or `run` first")
     }
 
     /// The seed of the current run: the one given to
@@ -276,12 +315,12 @@ impl<T: Individual> Evolution<T> {
     }
 
     /// Returns if the stop condition was already met for this evolution object.
+    ///
+    /// # Panics
+    ///
+    /// If the evolution was not started yet.
     pub fn reached_stop_condition(&self) -> bool {
-        (self.stop_condition)(
-            self.current_best_fitness(),
-            self.metrics.iterations,
-            self.metrics.gens_without_improvement,
-        )
+        (self.stop_condition)(&self.report())
     }
 
     pub fn current_best_fitness(&self) -> f64 {
@@ -309,6 +348,32 @@ impl<T: Individual> Evolution<T> {
         test_name: impl Into<String>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.metrics.plot_chart(&path.into(), &test_name.into())
+    }
+
+    /// The current generation, 0 for the initial population.
+    fn generation(&self) -> u32 {
+        self.metrics.iterations.saturating_sub(1)
+    }
+
+    /// Bookkeeping at the end of `start` and of every `next`, so that a manual loop sees the
+    /// same metrics, best ever and callbacks as `run`.
+    fn finish_generation(&mut self) {
+        let best = self.current_best();
+        if self
+            .best_ever
+            .as_ref()
+            .is_none_or(|best_ever| Self::cmp_by_fitness(best, best_ever).is_gt())
+        {
+            self.best_ever = Some(best.clone());
+        }
+
+        self.metrics
+            .record(self.current_best_fitness(), self.current_fitness_average());
+        self.metrics.end_clock();
+
+        if let Some(on_generation) = &self.on_generation {
+            on_generation(&self.report());
+        }
     }
 
     /// The generators of `step` in the current generation.
@@ -388,6 +453,7 @@ impl<T: Individual> Evolution<T> {
 #[cfg(test)]
 mod tests {
     use crate::prelude::*;
+    use std::sync::{Arc, Mutex};
 
     #[derive(Clone)]
     struct SumFitness;
@@ -417,7 +483,7 @@ mod tests {
             .with_selection(TournamentSelection::default())
             .with_crossover(DoNothingCrossover)
             .with_mutation(GaussianMutation::default())
-            .with_stop_condition(|_, iterations, _| iterations >= 20)
+            .with_stop_condition(|report| report.generation >= 20)
     }
 
     #[test]
@@ -489,5 +555,119 @@ mod tests {
         let evolution = builder(10, SumFitness).build().unwrap();
 
         evolution.current_best();
+    }
+
+    #[test]
+    fn on_generation_sees_every_generation_in_order() {
+        let seen = Arc::new(Mutex::new(Vec::new()));
+        let recorder = Arc::clone(&seen);
+
+        let mut evolution = builder(20, SumFitness)
+            .with_on_generation(move |report| {
+                recorder
+                    .lock()
+                    .unwrap()
+                    .push((report.generation, report.best_fitness, report.average_fitness))
+            })
+            .build()
+            .unwrap();
+
+        evolution.run();
+
+        let seen = seen.lock().unwrap();
+        let generations: Vec<u32> = seen.iter().map(|&(generation, _, _)| generation).collect();
+        assert_eq!(generations, (0..=20).collect::<Vec<u32>>());
+
+        let best: Vec<f64> = seen.iter().map(|&(_, best, _)| best).collect();
+        let average: Vec<f64> = seen.iter().map(|&(_, _, average)| average).collect();
+        assert_eq!(best, evolution.metrics.best_fitnesses);
+        assert_eq!(average, evolution.metrics.avg_fitnesses);
+    }
+
+    #[test]
+    fn stop_condition_sees_the_report() {
+        let mut evolution = builder(20, SumFitness)
+            .with_stop_condition(|report| report.generation >= 7)
+            .build()
+            .unwrap();
+
+        evolution.run();
+
+        assert_eq!(evolution.report().generation, 7);
+        // The initial population plus one per generation.
+        assert_eq!(evolution.metrics.best_fitnesses.len(), 8);
+    }
+
+    /// Best at the origin, so a strong mutation easily throws the best individual away.
+    #[derive(Clone)]
+    struct NearOrigin;
+
+    impl Fitness<Real> for NearOrigin {
+        fn calculate_fitness(&self, individual: &Real) -> f64 {
+            -individual.get_chromosome().iter().map(|x| x * x).sum::<f64>()
+        }
+    }
+
+    #[test]
+    fn best_ever_survives_without_elitism() {
+        let mut evolution = builder(10, NearOrigin)
+            .with_elitism(0)
+            .with_mutation(GaussianMutation {
+                mutation_rate: 1.0,
+                sigma: 1.0,
+            })
+            .with_seed(1)
+            .with_stop_condition(|report| report.generation >= 50)
+            .build()
+            .unwrap();
+
+        evolution.run();
+
+        let bests = &evolution.metrics.best_fitnesses;
+        let best_seen = bests.iter().copied().fold(f64::MIN, f64::max);
+        let lost = bests.windows(2).any(|pair| pair[1] < pair[0]);
+        let best_ever = evolution.best_ever();
+
+        assert!(lost, "the best was never lost, the test proves nothing");
+        assert_eq!(best_ever.get_fitness(), best_seen);
+        assert_eq!(NearOrigin.calculate_fitness(best_ever), best_seen);
+        assert_eq!(evolution.report().best_ever.get_chromosome(), best_ever.get_chromosome());
+    }
+
+    #[test]
+    fn manual_loop_is_a_full_alternative_to_run() {
+        let mut evolution = builder(20, SumFitness).with_seed(4).build().unwrap();
+        evolution.start();
+        while !evolution.reached_stop_condition() {
+            evolution.next();
+        }
+
+        let mut by_run = builder(20, SumFitness).with_seed(4).build().unwrap();
+        by_run.run();
+
+        assert!(evolution.metrics.total_time() > 0);
+        assert_eq!(evolution.report().generation, by_run.report().generation);
+        assert_eq!(evolution.metrics.best_fitnesses, by_run.metrics.best_fitnesses);
+        assert_eq!(
+            evolution.best_ever().get_chromosome(),
+            by_run.best_ever().get_chromosome()
+        );
+    }
+
+    #[test]
+    fn start_forgets_the_previous_run() {
+        let mut evolution = builder(20, SumFitness)
+            .with_stop_condition(|report| report.generation >= 30)
+            .build()
+            .unwrap();
+        evolution.run();
+
+        evolution.start();
+
+        assert_eq!(evolution.report().generation, 0);
+        assert_eq!(
+            evolution.best_ever().get_chromosome(),
+            evolution.current_best().get_chromosome()
+        );
     }
 }

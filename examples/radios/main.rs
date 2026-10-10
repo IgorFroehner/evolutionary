@@ -37,7 +37,7 @@ fn main() {
             .with_crossover(crossover)
             .with_mutation(mutation)
             .with_title("Radios".to_string())
-            .with_stop_condition(move |_, iterations, _| iterations > max_runs as u32);
+            .with_stop_condition(move |report| report.generation > max_runs as u32);
 
         let mut experiment = ExperimentRunner::new("radios".to_string(), 10, evolution_builder);
 

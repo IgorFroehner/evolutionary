@@ -34,7 +34,7 @@ fn main() {
             .with_crossover(NPointsCrossover::default())
             .with_mutation(BitFlipMutation::default())
             .with_title("Math Function".to_string())
-            .with_stop_condition(move |_, iterations, _| iterations >= runs as u32)
+            .with_stop_condition(move |report| report.generation >= runs as u32)
             .build()
             .unwrap();
 

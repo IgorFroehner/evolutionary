@@ -97,7 +97,7 @@ fn odd_population_evolves() {
         .with_selection(TournamentSelection::default())
         .with_crossover(n_points())
         .with_mutation(BitFlipMutation::default())
-        .with_stop_condition(|_, iterations, _| iterations >= 10)
+        .with_stop_condition(|report| report.generation >= 10)
         .with_seed(3)
         .build()
         .unwrap();

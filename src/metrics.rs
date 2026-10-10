@@ -1,6 +1,7 @@
 use std::time::Duration;
 use std::{collections::HashMap, time::Instant};
 
+use crate::fitness::fitness_cmp;
 use crate::plotting::plot_chart;
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
@@ -16,7 +17,9 @@ pub struct Metrics {
     pub best_fitnesses: Vec<f64>,
     pub avg_fitnesses: Vec<f64>,
     pub iterations: u32,
+    /// Generations since the best fitness seen in the run last improved.
     pub gens_without_improvement: u32,
+    best_ever_fitness: Option<f64>,
     start_time: Instant,
     end_time: Instant,
     pub step_times: HashMap<Steps, (bool, Instant, u128)>,
@@ -36,6 +39,7 @@ impl Metrics {
             avg_fitnesses: Vec::new(),
             iterations: 0,
             gens_without_improvement: 0,
+            best_ever_fitness: None,
             start_time: Instant::now(),
             end_time: Instant::now(),
             step_times,
@@ -43,12 +47,15 @@ impl Metrics {
     }
 
     pub fn record(&mut self, best_fitness: f64, avg_fitness: f64) {
-        if self.best_fitnesses.len() > 0
-            && self.best_fitnesses[self.best_fitnesses.len() - 1] == best_fitness
-        {
-            self.gens_without_improvement += 1;
-        } else {
+        let improved = self
+            .best_ever_fitness
+            .is_none_or(|best_ever| fitness_cmp(best_fitness, best_ever).is_gt());
+
+        if improved {
+            self.best_ever_fitness = Some(best_fitness);
             self.gens_without_improvement = 0;
+        } else {
+            self.gens_without_improvement += 1;
         }
 
         self.best_fitnesses.push(best_fitness);
@@ -101,5 +108,24 @@ impl Metrics {
         test_name: &String,
     ) -> Result<(), Box<dyn std::error::Error>> {
         plot_chart(&self.best_fitnesses, &self.avg_fitnesses, path, test_name)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generations_without_improvement_counts_from_the_best_ever() {
+        let mut metrics = Metrics::new();
+        let mut counters = Vec::new();
+
+        for best in [1.0, 3.0, 2.0, 3.0, 4.0, f64::NAN, 4.0] {
+            metrics.record(best, 0.0);
+            counters.push(metrics.gens_without_improvement);
+        }
+
+        // Falling back to 2.0 and climbing back to 3.0 is not an improvement.
+        assert_eq!(counters, vec![0, 0, 1, 2, 0, 1, 2]);
     }
 }

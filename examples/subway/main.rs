@@ -163,7 +163,7 @@ fn main() {
         .with_crossover(UniformCrossover::default())
         .with_mutation(RandomResettingMutation::default())
         .with_title("Metro".to_string())
-        .with_stop_condition(move |_, iterations, _| iterations >= 100)
+        .with_stop_condition(move |report| report.generation >= 100)
         // .build()
         // .unwrap()
         ;

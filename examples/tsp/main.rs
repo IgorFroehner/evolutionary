@@ -56,7 +56,7 @@ fn main() {
         .with_crossover(OrderedCrossover::default())
         .with_mutation(SwapMutation::default())
         .with_title("TSP".to_string())
-        .with_stop_condition(move |best_fitness, _, _| best_fitness >= best_fitness_possible)
+        .with_stop_condition(move |report| report.best_fitness >= best_fitness_possible)
         .with_elitism(3)
         .build()
         .unwrap();

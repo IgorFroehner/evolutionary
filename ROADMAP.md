@@ -50,14 +50,15 @@ change. Breaking changes are recorded in `CHANGELOG.md` as they land.
 
 ## 3. Observing a run
 
-- [ ] `EvolutionBuilder::with_on_generation(|report| ..)`: a callback called after
+- [x] `EvolutionBuilder::with_on_generation(|report| ..)`: a callback called after
   every generation with the generation number, the best individual, and the best and
   average fitness. This is how a caller saves the champion of each generation.
-- [ ] **Best ever / hall of fame**: keep the best individual seen in the whole run,
-  since without elitism the current best can be lost.
-- [ ] Consider passing the same report to the stop condition instead of
-  `(f64, u32, u32)`.
-- [ ] Make a manual `start()` / `next()` loop end the clock too, so it is a full
+- [x] **Best ever / hall of fame**: keep the best individual seen in the whole run,
+  since without elitism the current best can be lost. `Evolution::best_ever()`, also in
+  the report.
+- [x] Consider passing the same report to the stop condition instead of
+  `(f64, u32, u32)`. Done: both get a `GenerationReport`.
+- [x] Make a manual `start()` / `next()` loop end the clock too, so it is a full
   alternative to `run()`.
 
 ## 4. Starting and saving populations

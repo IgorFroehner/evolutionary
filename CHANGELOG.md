@@ -12,6 +12,13 @@
 - The operator traits take slices: `get_mating_pool(&self, population: &[T], rngs)`,
   `crossover(&self, population: &mut [T], rngs)` and `mutate(&self, population: &mut [T], rngs)`.
   Calling them with a `&Vec` or `&mut Vec` still works.
+- The stop condition receives a `&GenerationReport` instead of `(best_fitness, iterations,
+  generations_without_improvement)`: write `|report| report.generation >= 100` instead of
+  `|_, iterations, _| iterations >= 100`. `report.generation` is 0 for the initial population,
+  where `iterations` counted it as 1, so a ported condition runs one more generation.
+- `generations_without_improvement` (in the report and in `Metrics`) counts the generations since
+  the best fitness of the whole run improved. It used to count the generations whose best was
+  equal to the previous one, so a best that dropped and came back counted as improving.
 - `Individual::generate_member` takes the generator to draw the genes from:
   `generate_member<R: Rng + ?Sized>(dimension, range, rng)`.
 
@@ -24,10 +31,19 @@
   replay it.
 - `Rngs` and `TaskRng`, the generators handed to operators. `Rngs::new(seed)` builds them to
   test an operator on its own.
+- `GenerationReport`, with the generation, the best individual and its fitness, the average
+  fitness, the best individual of the whole run and the generations without improvement.
+- `EvolutionBuilder::with_on_generation(|report| ..)`, called after every generation, the
+  initial population included.
+- `Evolution::best_ever()`, the best individual seen since the run started, which without
+  elitism can be better than `current_best()`.
+- `Evolution::report()`, the report of the last generation.
 - A seeded `ExperimentRunner` is reproducible, and each of its runs gets its own seed.
 
 ### Fixed
 
+- A manual `start()` / `next()` loop left the clock stopped at its creation, so `total_time` and
+  `time_digest` reported 0. Every generation now updates it, as `run()` does.
 - Every crossover that pairs parents panicked on a population of odd size, as soon as the
   unpaired last individual was picked for crossover. It now passes through unchanged.
 

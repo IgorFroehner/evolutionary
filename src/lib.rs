@@ -47,7 +47,7 @@
 //!         .with_crossover(NPointsCrossover::default())
 //!         .with_mutation(BitFlipMutation::default())
 //!         .with_title("Max".to_string())
-//!         .with_stop_condition(move |_, iterations, _| iterations >= 100)
+//!         .with_stop_condition(|report| report.generation >= 100)
 //!         .build().unwrap();
 //!
 //!     evolution.run();
@@ -69,6 +69,7 @@ mod evolution_builder;
 mod fitness;
 mod mutation;
 mod population;
+mod report;
 mod rng;
 mod selection;
 pub mod utils;
@@ -80,6 +81,7 @@ pub use evolution_builder::{BuildError, EvolutionBuilder};
 pub use fitness::Fitness;
 pub use mutation::Mutation;
 pub use population::Individual;
+pub use report::GenerationReport;
 pub use rng::{Rngs, TaskRng};
 pub use selection::Selection;
 
@@ -100,6 +102,7 @@ pub mod prelude {
     pub use crate::EvolutionBuilder;
     pub use crate::BuildError;
     pub use crate::Individual;
+    pub use crate::GenerationReport;
     pub use crate::{Rngs, TaskRng};
     pub use rand::Rng;
 }

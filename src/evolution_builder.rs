@@ -1,9 +1,10 @@
 use crate::{
     crossover::Crossover,
-    evolution::{Evolution, EvolutionConfig, StopConditionFn},
+    evolution::{Evolution, EvolutionConfig, OnGenerationFn, StopConditionFn},
     fitness::Fitness,
     mutation::Mutation,
     population::{GeneCod, Individual},
+    report::GenerationReport,
     selection::Selection,
 };
 use std::{error::Error, fmt, sync::Arc};
@@ -77,7 +78,7 @@ impl Error for BuildError {}
 ///         .with_crossover(NPointsCrossover::default())
 ///         .with_mutation(BitFlipMutation::default())
 ///         .with_title("Max".to_string())
-///         .with_stop_condition(move |_, iterations, _| iterations >= 1000)
+///         .with_stop_condition(|report| report.generation >= 1000)
 ///         .build().unwrap();
 /// }
 /// ```
@@ -89,7 +90,8 @@ pub struct EvolutionBuilder<T: Individual> {
     crossover: Option<Box<dyn Crossover<T>>>,
     mutation: Option<Box<dyn Mutation<T>>>,
     elitism: Option<u32>,
-    stop_condition: Option<StopConditionFn>,
+    stop_condition: Option<StopConditionFn<T>>,
+    on_generation: Option<OnGenerationFn<T>>,
     pub(crate) seed: Option<u64>,
 }
 
@@ -115,6 +117,7 @@ impl<T: Individual> EvolutionBuilder<T> {
             crossover: None,
             mutation: None,
             stop_condition: None,
+            on_generation: None,
             elitism: None,
             seed: None,
         }
@@ -129,6 +132,7 @@ impl<T: Individual> EvolutionBuilder<T> {
             crossover: None,
             mutation: None,
             stop_condition: None,
+            on_generation: None,
             evolution_config: Some(config.clone()),
             elitism: None,
             seed: None,
@@ -159,20 +163,35 @@ impl<T: Individual> EvolutionBuilder<T> {
         self
     }
 
-    /// Sets the stop condition. Receives a closure that receives the best fitness, the current
-    /// iteration and the number of generations without improvement and returns a boolean.
+    /// Sets the stop condition, checked after every generation with its
+    /// [`GenerationReport`]: the run stops as soon as it returns `true`.
     ///
     /// # Example
     ///
     /// ```text
-    /// evolution_builder.with_stop_condition(|_, iterations, _| iterations >= 1000)
+    /// evolution_builder.with_stop_condition(|report| {
+    ///     report.generation >= 1000 || report.generations_without_improvement >= 100
+    /// })
     /// ```
-    ///
-    pub fn with_stop_condition<F: Fn(f64, u32, u32) -> bool + 'static + Send + Sync>(
-        mut self,
-        f: F,
-    ) -> Self {
+    pub fn with_stop_condition<F>(mut self, f: F) -> Self
+    where
+        F: Fn(&GenerationReport<T>) -> bool + 'static + Send + Sync,
+    {
         self.stop_condition = Some(Arc::new(f));
+        self
+    }
+
+    /// Calls `f` after every generation, the initial population included, with its
+    /// [`GenerationReport`]. For example to log the progress, or to save the champion of each
+    /// generation.
+    ///
+    /// It is called from the thread that runs the evolution, and shared by every evolution
+    /// built from this builder: use a `Mutex` or a channel to collect results.
+    pub fn with_on_generation<F>(mut self, f: F) -> Self
+    where
+        F: Fn(&GenerationReport<T>) + 'static + Send + Sync,
+    {
+        self.on_generation = Some(Arc::new(f));
         self
     }
 
@@ -248,6 +267,7 @@ impl<T: Individual> EvolutionBuilder<T> {
             Arc::clone(stop_condition),
         );
         evolution.fixed_seed = self.seed;
+        evolution.on_generation = self.on_generation.clone();
 
         Ok(evolution)
     }
@@ -273,7 +293,7 @@ mod tests {
             .with_selection(TournamentSelection::default())
             .with_crossover(NPointsCrossover::default())
             .with_mutation(BitFlipMutation::default())
-            .with_stop_condition(|_, iterations, _| iterations >= 1)
+            .with_stop_condition(|report| report.generation >= 1)
     }
 
     #[test]
@@ -323,7 +343,7 @@ mod tests {
             .with_fitness(ZeroFitness)
             .with_crossover(NPointsCrossover::default())
             .with_mutation(BitFlipMutation::default())
-            .with_stop_condition(|_, iterations, _| iterations >= 1);
+            .with_stop_condition(|report| report.generation >= 1);
 
         let error = builder.build().err().unwrap();
 
