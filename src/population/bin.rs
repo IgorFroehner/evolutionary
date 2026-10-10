@@ -3,6 +3,10 @@ use rand::Rng;
 use super::Individual;
 
 #[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_derive::Serialize, serde_derive::Deserialize)
+)]
 pub struct Bin {
     chromosome: Vec<bool>,
     fitness: f64,

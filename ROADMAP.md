@@ -63,11 +63,14 @@ change. Breaking changes are recorded in `CHANGELOG.md` as they land.
 
 ## 4. Starting and saving populations
 
-- [ ] `EvolutionBuilder::with_initial_population(Vec<T>)`, to resume a run or seed it
+- [x] `EvolutionBuilder::with_initial_population(Vec<T>)`, to resume a run or seed it
   with known-good individuals (for example saved pilots, or weights drawn from a
-  custom initialisation).
-- [ ] Optional `serde` feature: `Serialize` / `Deserialize` for the built-in
-  individuals, so populations and champions can be saved and loaded.
+  custom initialisation). Random individuals fill the rest, and `IntPerm::new` lets
+  permutations be seeded too.
+- [x] Optional `serde` feature: `Serialize` / `Deserialize` for the built-in
+  individuals, so populations and champions can be saved and loaded. Making `serde`
+  optional meant putting the TOML config reader behind a `config` feature (on by default)
+  already.
 
 ## 5. `Real` at neuroevolution scale
 
@@ -83,12 +86,14 @@ change. Breaking changes are recorded in `CHANGELOG.md` as they land.
 ## 6. Lean and tidy
 
 - [ ] Put `plotters` and the `toml` config reader behind cargo features, so projects
-  embedding the GA don't compile a charting stack.
+  embedding the GA don't compile a charting stack. `toml` is done (`config`, step 4);
+  `plotters` is left, and whether these features stay on by default.
 - [ ] Fix crate metadata: `homepage` and `repository` point to
   `evolutionary-computing`, and the description says "paralyzed" instead of
   "parallelized".
 - [x] Remove the unused-import warnings in `crossover` and `mutation`.
-- [ ] CI: also run `cargo clippy` and `cargo test --all-features`.
+- [ ] CI: also run `cargo clippy` and `cargo test --all-features`. The `--all-features`
+  and `--no-default-features` test runs are in (step 4); clippy is left.
 - [ ] Release 0.3.0: bump the version and date the `CHANGELOG.md` entry.
 
 ## 7. Neuroevolution "hello world": XOR

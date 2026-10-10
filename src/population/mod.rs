@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 
 use rand::Rng;
-use serde_derive::Deserialize;
 
 mod bin;
 mod int;
@@ -13,7 +12,11 @@ pub use int::*;
 pub use perm::*;
 pub use real::*;
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_derive::Serialize, serde_derive::Deserialize)
+)]
 pub enum GeneCod {
     Int,
     IntPerm,

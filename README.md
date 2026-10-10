@@ -63,6 +63,11 @@ To make a run reproducible, seed it with `.with_seed(42)`: two runs with the sam
 same result, however many threads they use. Without a seed, `evolution.seed()` tells you the one
 a run drew, so you can replay it.
 
+`.with_on_generation(|report| ..)` follows a run generation by generation, and
+`.with_initial_population(saved)` starts one from known individuals, for example a population
+saved with the `serde` feature, which implements `Serialize` and `Deserialize` for the built-in
+individuals.
+
 There is an extended getting started [here](./docs/getting_started.md).
 
 ## Examples and Projects:

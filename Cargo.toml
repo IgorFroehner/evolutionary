@@ -16,10 +16,43 @@ license = "MIT"
 [dependencies]
 rand = "0.9.2"
 rand_chacha = "0.9"
-toml = "0.8.2"
-serde = "1.0.136"
-serde_derive = "1.0.183"
+toml = { version = "0.8.2", optional = true }
+serde = { version = "1.0.136", optional = true }
+serde_derive = { version = "1.0.183", optional = true }
 rayon = "1.7"
 dyn-clone = "1.0.13"
 plotters = "0.3.5"
 rand_distr = "0.5"
+
+[dev-dependencies]
+serde_json = "1.0"
+
+[features]
+default = ["config"]
+# Reads evolution parameters from a TOML file: `config_read`.
+config = ["dep:toml", "serde"]
+# `Serialize` and `Deserialize` for the built-in individuals and `GeneCod`.
+serde = ["dep:serde", "dep:serde_derive"]
+
+[package.metadata.docs.rs]
+all-features = true
+
+[[example]]
+name = "math_func"
+path = "examples/math_func/main.rs"
+required-features = ["config"]
+
+[[example]]
+name = "nqueens"
+path = "examples/nqueens/main.rs"
+required-features = ["config"]
+
+[[example]]
+name = "nqueens_valued"
+path = "examples/nqueens_valued/main.rs"
+required-features = ["config"]
+
+[[example]]
+name = "radios"
+path = "examples/radios/main.rs"
+required-features = ["config"]

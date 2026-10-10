@@ -59,6 +59,7 @@
 //!
 //! Find this and other examples in the [examples folder](./examples).
 
+#[cfg(feature = "config")]
 pub mod config_read;
 pub mod experiment_runner;
 pub mod metrics;
@@ -90,6 +91,7 @@ pub use selection::Selection;
 pub use rand;
 
 pub mod prelude {
+    #[cfg(feature = "config")]
     pub use crate::config_read::{read_config, RawConfig};
     pub use crate::crossover::*;
     pub use crate::experiment_runner::ExperimentRunner;

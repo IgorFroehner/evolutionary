@@ -3,9 +3,37 @@ use rand::{seq::SliceRandom, Rng};
 use super::Individual;
 
 #[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde_derive::Serialize, serde_derive::Deserialize)
+)]
 pub struct IntPerm {
     pub chromosome: Vec<i64>,
     fitness: f64,
+}
+
+impl IntPerm {
+    /// Creates an individual from a known chromosome, for example to seed a population with
+    /// saved solutions.
+    ///
+    /// # Panics
+    ///
+    /// If `chromosome` is not a permutation of `1..=chromosome.len()`, which every permutation
+    /// operator relies on.
+    pub fn new(chromosome: Vec<i64>) -> Self {
+        let mut sorted = chromosome.clone();
+        sorted.sort_unstable();
+        assert!(
+            sorted.iter().copied().eq(1..=chromosome.len() as i64),
+            "the chromosome must be a permutation of 1..={}, got {chromosome:?}",
+            chromosome.len()
+        );
+
+        Self {
+            chromosome,
+            fitness: 0.0,
+        }
+    }
 }
 
 impl Individual for IntPerm {

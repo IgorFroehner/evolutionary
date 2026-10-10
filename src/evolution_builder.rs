@@ -26,6 +26,14 @@ pub enum BuildError {
         elitism: u32,
         population_size: u32,
     },
+    /// More initial individuals were given than the population size.
+    InitialPopulationTooLarge { given: usize, population_size: u32 },
+    /// The initial individual at `index` doesn't have `dimension` genes.
+    InitialIndividualDimension {
+        index: usize,
+        genes: usize,
+        dimension: u32,
+    },
 }
 
 impl fmt::Display for BuildError {
@@ -50,6 +58,22 @@ impl fmt::Display for BuildError {
             } => write!(
                 f,
                 "elitism ({elitism}) is bigger than the population size ({population_size})"
+            ),
+            Self::InitialPopulationTooLarge {
+                given,
+                population_size,
+            } => write!(
+                f,
+                "{given} initial individuals were given, more than the population size \
+                 ({population_size})"
+            ),
+            Self::InitialIndividualDimension {
+                index,
+                genes,
+                dimension,
+            } => write!(
+                f,
+                "the initial individual {index} has {genes} genes instead of {dimension}"
             ),
         }
     }
@@ -93,6 +117,7 @@ pub struct EvolutionBuilder<T: Individual> {
     stop_condition: Option<StopConditionFn<T>>,
     on_generation: Option<OnGenerationFn<T>>,
     pub(crate) seed: Option<u64>,
+    initial_population: Vec<T>,
 }
 
 impl<T: Individual> EvolutionBuilder<T> {
@@ -120,6 +145,7 @@ impl<T: Individual> EvolutionBuilder<T> {
             on_generation: None,
             elitism: None,
             seed: None,
+            initial_population: Vec::new(),
         }
     }
 
@@ -136,6 +162,7 @@ impl<T: Individual> EvolutionBuilder<T> {
             evolution_config: Some(config.clone()),
             elitism: None,
             seed: None,
+            initial_population: Vec::new(),
         }
     }
 
@@ -201,6 +228,18 @@ impl<T: Individual> EvolutionBuilder<T> {
         self
     }
 
+    /// Starts every run from `population` instead of from random individuals: to resume a run
+    /// from a saved population, or to seed it with known good individuals. When it has fewer
+    /// individuals than the population size, random ones fill the rest.
+    ///
+    /// Their fitness is calculated again when the run starts. [`build`](Self::build) fails if
+    /// there are more individuals than the population size, or if one doesn't have `dimension`
+    /// genes.
+    pub fn with_initial_population(mut self, population: Vec<T>) -> Self {
+        self.initial_population = population;
+        self
+    }
+
     /// Seeds every random choice of the evolution, so that two runs with the same seed and the
     /// same parameters produce the same populations, however many threads they run on. Without
     /// a seed every run is different; [`Evolution::seed`] tells the seed a run used.
@@ -238,6 +277,27 @@ impl<T: Individual> EvolutionBuilder<T> {
             });
         }
 
+        if self.initial_population.len() > evolution_config.population_size as usize {
+            return Err(BuildError::InitialPopulationTooLarge {
+                given: self.initial_population.len(),
+                population_size: evolution_config.population_size,
+            });
+        }
+        if let Some((index, individual)) = self
+            .initial_population
+            .iter()
+            .enumerate()
+            .find(|(_, individual)| {
+                individual.get_chromosome().len() != evolution_config.dimension as usize
+            })
+        {
+            return Err(BuildError::InitialIndividualDimension {
+                index,
+                genes: individual.get_chromosome().len(),
+                dimension: evolution_config.dimension,
+            });
+        }
+
         let fitness = self.fitness.as_deref().ok_or(BuildError::MissingFitness)?;
         let selection = self
             .selection
@@ -268,6 +328,7 @@ impl<T: Individual> EvolutionBuilder<T> {
         );
         evolution.fixed_seed = self.seed;
         evolution.on_generation = self.on_generation.clone();
+        evolution.initial_population = self.initial_population.clone();
 
         Ok(evolution)
     }

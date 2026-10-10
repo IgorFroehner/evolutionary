@@ -73,6 +73,8 @@ pub struct Evolution<T: Individual> {
     current_population: Vec<T>,
     /// The best individual seen since `start`.
     best_ever: Option<T>,
+    /// The individuals every run starts with, before the random ones.
+    pub(crate) initial_population: Vec<T>,
     /// The seed given to the builder. `None` draws a new one at every `start`.
     pub(crate) fixed_seed: Option<u64>,
     /// The seed of the current run, set by `start`.
@@ -103,6 +105,7 @@ impl<T: Individual> Evolution<T> {
             on_generation: None,
             metrics: Metrics::new(),
             best_ever: None,
+            initial_population: Vec::new(),
             fixed_seed: None,
             run_seed: None,
         }
@@ -111,8 +114,11 @@ impl<T: Individual> Evolution<T> {
     /// Starts the evolution, generating the initial population and calculating the
     /// fitness of each individual.
     ///
-    /// Without a seed (see [`EvolutionBuilder::with_seed`](crate::EvolutionBuilder::with_seed))
-    /// every call starts a different run.
+    /// The population starts with the individuals given to
+    /// [`EvolutionBuilder::with_initial_population`](crate::EvolutionBuilder::with_initial_population),
+    /// if any, and random ones fill the rest. Without a seed (see
+    /// [`EvolutionBuilder::with_seed`](crate::EvolutionBuilder::with_seed)) every call starts a
+    /// different run.
     pub fn start(&mut self) {
         self.metrics = Metrics::new();
         self.best_ever = None;
@@ -122,7 +128,8 @@ impl<T: Individual> Evolution<T> {
         self.run_seed = Some(self.fixed_seed.unwrap_or_else(rand::random));
 
         let rngs = self.rngs(Step::Initialization);
-        self.current_population = (0..self.config.population_size as usize)
+        let given = self.initial_population.len();
+        let random: Vec<T> = (given..self.config.population_size as usize)
             .into_par_iter()
             .map(|index| {
                 T::generate_member(
@@ -132,6 +139,8 @@ impl<T: Individual> Evolution<T> {
                 )
             })
             .collect();
+        self.current_population = self.initial_population.clone();
+        self.current_population.extend(random);
 
         self.process_fitness();
 

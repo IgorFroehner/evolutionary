@@ -19,6 +19,12 @@
 - `generations_without_improvement` (in the report and in `Metrics`) counts the generations since
   the best fitness of the whole run improved. It used to count the generations whose best was
   equal to the previous one, so a best that dropped and came back counted as improving.
+- `toml` and `serde` are optional. The TOML config reader (`config_read`, and `read_config` and
+  `RawConfig` in the prelude) is behind the `config` feature, which is on by default.
+  `GeneCod` implements `Deserialize` only with the `serde` feature, which `config` turns on.
+- `BuildError` has two new variants, `InitialPopulationTooLarge` and
+  `InitialIndividualDimension`. It is `#[non_exhaustive]`, so only matches without a wildcard
+  arm break.
 - `Individual::generate_member` takes the generator to draw the genes from:
   `generate_member<R: Rng + ?Sized>(dimension, range, rng)`.
 
@@ -38,6 +44,13 @@
 - `Evolution::best_ever()`, the best individual seen since the run started, which without
   elitism can be better than `current_best()`.
 - `Evolution::report()`, the report of the last generation.
+- `EvolutionBuilder::with_initial_population(Vec<T>)`, to resume a run from a saved population
+  or seed it with known good individuals. Random individuals fill the rest of the population,
+  and every fitness is calculated again when the run starts.
+- `IntPerm::new`, to build a permutation from a known chromosome. It panics if the chromosome is
+  not a permutation of `1..=n`.
+- The `serde` feature: `Serialize` and `Deserialize` for `Bin`, `Int`, `IntPerm`, `Real` and
+  `GeneCod`, to save and load populations and champions.
 - A seeded `ExperimentRunner` is reproducible, and each of its runs gets its own seed.
 
 ### Fixed
