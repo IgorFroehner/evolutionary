@@ -84,6 +84,14 @@ fn operators(c: &mut Criterion) {
     c.bench_function("rank 300x300", |b| {
         b.iter(|| black_box(RankSelection.get_mating_pool(&weighted_population, &rngs)))
     });
+
+    c.bench_function("sus 300x300", |b| {
+        b.iter(|| {
+            black_box(
+                StochasticUniversalSamplingSelection.get_mating_pool(&weighted_population, &rngs),
+            )
+        })
+    });
 }
 
 criterion_group!(benches, generation, operators);

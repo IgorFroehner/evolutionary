@@ -90,7 +90,9 @@ mod tests {
     /// How many genes the first parent of each pair took from the second.
     fn swapped(population: &[Int]) -> usize {
         population
-            .chunks_exact(2)
+            .as_chunks::<2>()
+            .0
+            .iter()
             .map(|pair| {
                 let (first, second) = (pair[0].get_chromosome(), pair[1].get_chromosome());
                 // Each position keeps one gene of each parent.

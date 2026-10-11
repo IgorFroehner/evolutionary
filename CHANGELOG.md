@@ -15,12 +15,27 @@
 - `StochasticUniversalSamplingSelection` panics with a clear message when no fitness is
   positive or their total is not finite, instead of an "empty range" panic from `rand`, the
   same way `RouletteSelection` does.
+- With the `plot` feature, rendering a chart on Linux aborted debug builds with an "unsafe
+  precondition(s) violated" panic from `font-kit` 0.11 (a null pointer for an empty glyph
+  bitmap, caught by Rust's debug checks). `plotters` 0.3.7 is now the minimum, which pulls
+  `font-kit` 0.14 where this is fixed.
 
 ### Added
 
 - Unit tests for every mutation, selection and crossover operator that only had
   reproducibility coverage, for `generate_member` of each encoding, for `read_config` and for
   `plot_chart`, and an integration test for `ExperimentRunner`.
+
+### Performance
+
+- `StochasticUniversalSamplingSelection` no longer goes through rayon, and seeded runs are
+  unchanged. Its only parallel part was computing the pointer positions, one multiplication
+  per slot, which cost more than the whole sequential walk over the wheel: at 300 individuals
+  of 300 genes it goes from about 70 µs to about 20 µs. A fully parallel version, one binary
+  search over the cumulative weights per slot, gives the same pool but measured slower up to
+  10 000 individuals: the work per slot is a clone, and rayon's fork and join costs more than
+  the walk.
+- `benches/real_at_scale.rs` benchmarks SUS too.
 
 ## 0.3.1 (2026-10-10)
 
