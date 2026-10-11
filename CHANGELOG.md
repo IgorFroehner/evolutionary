@@ -15,6 +15,10 @@
 - `StochasticUniversalSamplingSelection` panics with a clear message when no fitness is
   positive or their total is not finite, instead of an "empty range" panic from `rand`, the
   same way `RouletteSelection` does.
+- With the `plot` feature, rendering a chart on Linux aborted debug builds with an "unsafe
+  precondition(s) violated" panic from `font-kit` 0.11 (a null pointer for an empty glyph
+  bitmap, caught by Rust's debug checks). `plotters` 0.3.7 is now the minimum, which pulls
+  `font-kit` 0.14 where this is fixed.
 
 ### Added
 
