@@ -4,6 +4,16 @@ use rand::Rng;
 use rayon::iter::ParallelIterator;
 use rayon::prelude::IntoParallelIterator;
 
+/// # Stochastic Universal Sampling Selection
+///
+/// Picks the whole mating pool with one spin of a wheel of evenly spaced pointers, where each
+/// individual's slice is proportional to its fitness. Each individual is picked its expected
+/// number of times, rounded down or up. Fitnesses must not be negative; an individual with a
+/// `NaN` fitness gets no chance.
+///
+/// # Panics
+///
+/// If no fitness is positive or their total is not finite.
 #[derive(Clone, Default)]
 pub struct StochasticUniversalSamplingSelection;
 
@@ -13,6 +23,11 @@ impl<T: Individual> Selection<T> for StochasticUniversalSamplingSelection {
             .iter()
             .map(|ind| selection_weight(ind.get_fitness()))
             .sum();
+        assert!(
+            total_fitness > 0.0 && total_fitness.is_finite(),
+            "stochastic universal sampling needs at least one positive fitness and a finite \
+             total, got a total of {total_fitness}"
+        );
         let population_size = initial_population.len();
         let pointer_spacing = total_fitness / population_size as f64;
 
@@ -38,5 +53,44 @@ impl<T: Individual> Selection<T> for StochasticUniversalSamplingSelection {
         }
 
         selected_individuals
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::fitness::fitness_cmp;
+    use crate::selection::tests::{picked, population};
+
+    #[test]
+    fn picks_each_individual_its_expected_number_of_times_rounded_down_or_up() {
+        let fitnesses = [1.0, 2.0, 3.0, 4.0, 0.0, 10.0, f64::NAN, 5.0];
+        let population = population(&fitnesses);
+        let size = fitnesses.len() as f64;
+        let total: f64 = fitnesses.iter().copied().map(selection_weight).sum();
+
+        for seed in 0..50 {
+            let pool = StochasticUniversalSamplingSelection
+                .get_mating_pool(&population, &Rngs::new(seed));
+
+            assert_eq!(pool.len(), population.len());
+            for &fitness in &fitnesses {
+                let expected = selection_weight(fitness) * size / total;
+                let count = picked(&pool, |picked| fitness_cmp(picked, fitness).is_eq()) as f64;
+
+                assert!(
+                    count == expected.floor() || count == expected.ceil(),
+                    "seed {seed}: fitness {fitness} picked {count} times, expected {expected}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "at least one positive fitness")]
+    fn no_positive_fitness_panics() {
+        let population = population(&[0.0, f64::NAN, 0.0]);
+
+        StochasticUniversalSamplingSelection.get_mating_pool(&population, &Rngs::new(0));
     }
 }

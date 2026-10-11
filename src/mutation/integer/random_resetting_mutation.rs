@@ -18,8 +18,9 @@ impl Mutation<Int> for RandomResettingMutation {
                 let mut rng = rngs.rng(index);
                 for j in 0..individual.get_chromosome().len() {
                     if mutates.sample(&mut rng) {
+                        // Inclusive, like `Int::generate_member`.
                         individual
-                            .set_gene(j, rng.random_range(individual.range.0..individual.range.1));
+                            .set_gene(j, rng.random_range(individual.range.0..=individual.range.1));
                     }
                 }
             });

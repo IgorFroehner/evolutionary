@@ -31,3 +31,39 @@ impl<T: Individual> Selection<T> for RouletteSelection {
             .collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::selection::tests::{picked, population};
+
+    #[test]
+    fn picks_in_proportion_to_fitness() {
+        // Fitnesses 1, 2, 3 and 4 a thousand times each: fitness `f` should fill `f / 10` of
+        // the pool.
+        let fitnesses: Vec<f64> = (0..4000).map(|i| f64::from(i % 4 + 1)).collect();
+        let population = population(&fitnesses);
+
+        let pool = RouletteSelection.get_mating_pool(&population, &Rngs::new(6));
+
+        assert_eq!(pool.len(), population.len());
+        for fitness in [1.0_f64, 2.0, 3.0, 4.0] {
+            let share = fitness / 10.0;
+            let expected = share * 4000.0;
+            let deviation = (4000.0 * share * (1.0 - share)).sqrt();
+
+            let count = picked(&pool, |picked| picked == fitness) as f64;
+            assert!((count - expected).abs() < 4.0 * deviation, "{fitness}: {count}");
+        }
+    }
+
+    #[test]
+    fn zero_and_nan_fitnesses_are_never_picked() {
+        let fitnesses: Vec<f64> = [0.0, f64::NAN, 1.0, 2.0].repeat(250);
+        let population = population(&fitnesses);
+
+        let pool = RouletteSelection.get_mating_pool(&population, &Rngs::new(6));
+
+        assert_eq!(picked(&pool, |fitness| fitness == 0.0 || fitness.is_nan()), 0);
+    }
+}

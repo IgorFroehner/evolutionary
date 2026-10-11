@@ -41,3 +41,27 @@ pub trait Selection<T: Individual>: 'static + DynClone + Send + Sync {
     /// should return a new population, drawing its random numbers from `rngs`.
     fn get_mating_pool(&self, initial_population: &[T], rngs: &Rngs) -> Vec<T>;
 }
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use crate::population::{Individual, Real};
+
+    /// One individual per fitness, whose only gene is its fitness.
+    pub(crate) fn population(fitnesses: &[f64]) -> Vec<Real> {
+        fitnesses
+            .iter()
+            .map(|&fitness| {
+                let mut individual = Real::new(vec![fitness], (0.0, 1.0));
+                individual.set_fitness(fitness);
+                individual
+            })
+            .collect()
+    }
+
+    /// How many individuals of `pool` have a fitness for which `matches` holds.
+    pub(crate) fn picked(pool: &[Real], matches: impl Fn(f64) -> bool) -> usize {
+        pool.iter()
+            .filter(|individual| matches(individual.get_fitness()))
+            .count()
+    }
+}

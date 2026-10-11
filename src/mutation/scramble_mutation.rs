@@ -38,3 +38,38 @@ impl<T: Individual> Mutation<T> for ScrambleMutation {
             });
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::population::{is_permutation, IntPerm};
+
+    fn identity() -> Vec<i64> {
+        (1..=50).collect()
+    }
+
+    fn mutated(mutation_rate: f64) -> Vec<IntPerm> {
+        let mut population = vec![IntPerm::new(identity()); 100];
+        ScrambleMutation { mutation_rate }.mutate(&mut population, &Rngs::new(5));
+        population
+    }
+
+    #[test]
+    fn keeps_every_individual_a_permutation() {
+        let population = mutated(1.0);
+
+        assert!(population
+            .iter()
+            .all(|individual| is_permutation(individual.get_chromosome())));
+        assert!(population
+            .iter()
+            .any(|individual| *individual.get_chromosome() != identity()));
+    }
+
+    #[test]
+    fn a_zero_rate_changes_nothing() {
+        assert!(mutated(0.0)
+            .iter()
+            .all(|individual| *individual.get_chromosome() == identity()));
+    }
+}

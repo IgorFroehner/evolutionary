@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+### Breaking
+
+- `RandomResettingMutation` on `Int` now draws reset genes from the whole range, upper bound
+  included, as `Int::generate_member` does. Before, a gene could never be reset to
+  `range.1`. Seeded runs that use it on `Int` give different results; `Real` is unchanged.
+
+### Fixed
+
+- Converting a `RawConfig` into an `EvolutionConfig<IntPerm>` set `gene_cod` to `Bin`
+  instead of `IntPerm`.
+- `StochasticUniversalSamplingSelection` panics with a clear message when no fitness is
+  positive or their total is not finite, instead of an "empty range" panic from `rand`, the
+  same way `RouletteSelection` does.
+
+### Added
+
+- Unit tests for every mutation, selection and crossover operator that only had
+  reproducibility coverage, for `generate_member` of each encoding, for `read_config` and for
+  `plot_chart`, and an integration test for `ExperimentRunner`.
+
 ## 0.3.1 (2026-10-10)
 
 ### Added

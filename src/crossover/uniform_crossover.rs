@@ -73,3 +73,62 @@ impl Crossover<Real> for UniformCrossover {
         self.crossover_population(population, rngs);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Pairs of parents, the first all zeros and the second all ones.
+    fn crossed(crossover: &UniformCrossover) -> Vec<Int> {
+        let mut population: Vec<Int> = (0..200)
+            .map(|i| Int::new(vec![i % 2; 300], (0, 1)))
+            .collect();
+        crossover.crossover(&mut population, &Rngs::new(9));
+        population
+    }
+
+    /// How many genes the first parent of each pair took from the second.
+    fn swapped(population: &[Int]) -> usize {
+        population
+            .chunks_exact(2)
+            .map(|pair| {
+                let (first, second) = (pair[0].get_chromosome(), pair[1].get_chromosome());
+                // Each position keeps one gene of each parent.
+                assert!(first.iter().zip(second).all(|(a, b)| a + b == 1));
+                first.iter().filter(|&&gene| gene == 1).count()
+            })
+            .sum()
+    }
+
+    #[test]
+    fn swaps_the_expected_share_of_genes() {
+        let crossover = UniformCrossover {
+            crossover_rate: 1.0,
+            toss_probability: 0.3,
+        };
+
+        // 30 000 positions at 30%: 9 000 expected, with a standard deviation of about 80.
+        let swapped = swapped(&crossed(&crossover)) as f64;
+        assert!((swapped - 9000.0).abs() < 4.0 * 80.0, "{swapped}");
+    }
+
+    #[test]
+    fn a_certain_toss_swaps_whole_chromosomes() {
+        let crossover = UniformCrossover {
+            crossover_rate: 1.0,
+            toss_probability: 1.0,
+        };
+
+        assert_eq!(swapped(&crossed(&crossover)), 100 * 300);
+    }
+
+    #[test]
+    fn a_zero_crossover_rate_changes_nothing() {
+        let crossover = UniformCrossover {
+            crossover_rate: 0.0,
+            toss_probability: 1.0,
+        };
+
+        assert_eq!(swapped(&crossed(&crossover)), 0);
+    }
+}

@@ -52,3 +52,33 @@ impl Mutation<Bin> for BitFlipMutation {
             });
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// How many bits of a few hundred individuals of a few hundred genes, all `false`, flip.
+    fn flipped(mutation_rate: f64) -> usize {
+        let mut population = vec![Bin::new(vec![false; 300]); 300];
+        BitFlipMutation { mutation_rate }.mutate(&mut population, &Rngs::new(3));
+
+        population
+            .iter()
+            .flat_map(|individual| individual.get_chromosome())
+            .filter(|&&gene| gene)
+            .count()
+    }
+
+    #[test]
+    fn flips_the_expected_share_of_bits() {
+        // 90 000 genes at 5%: 4 500 expected, with a standard deviation of about 65.
+        let flipped = flipped(0.05) as f64;
+
+        assert!((flipped - 4500.0).abs() < 4.0 * 65.0, "{flipped}");
+    }
+
+    #[test]
+    fn a_zero_rate_flips_nothing() {
+        assert_eq!(flipped(0.0), 0);
+    }
+}

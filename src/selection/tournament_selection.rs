@@ -80,18 +80,7 @@ impl<T: Individual> Selection<T> for TournamentSelection {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::population::Real;
-
-    fn population(fitnesses: &[f64]) -> Vec<Real> {
-        fitnesses
-            .iter()
-            .map(|&fitness| {
-                let mut individual = Real::new(vec![fitness], (0.0, 1.0));
-                individual.set_fitness(fitness);
-                individual
-            })
-            .collect()
-    }
+    use crate::selection::tests::population;
 
     #[test]
     fn whole_population_tournament_always_picks_the_best() {

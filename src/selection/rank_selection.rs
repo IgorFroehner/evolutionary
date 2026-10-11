@@ -37,3 +37,38 @@ impl<T: Individual> Selection<T> for RankSelection {
             .collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::selection::tests::{picked, population};
+
+    // A thousand individuals ranked 1 to 1 000: the best half holds 375 250 of the 500 500 rank
+    // points, so it fills 75% of the pool, with a standard deviation of about 14 individuals.
+
+    #[test]
+    fn the_best_half_fills_three_quarters_of_the_pool() {
+        // Listed from the best to the worst, so the ranking can't just follow the positions.
+        let fitnesses: Vec<f64> = (0..1000).rev().map(f64::from).collect();
+        let population = population(&fitnesses);
+
+        let pool = RankSelection.get_mating_pool(&population, &Rngs::new(4));
+
+        assert_eq!(pool.len(), population.len());
+        let best_half = picked(&pool, |fitness| fitness >= 500.0) as f64;
+        assert!((best_half - 750.0).abs() < 4.0 * 14.0, "{best_half}");
+    }
+
+    #[test]
+    fn nan_ranks_below_negative_fitnesses() {
+        let fitnesses: Vec<f64> = (0..1000)
+            .map(|i| if i % 2 == 0 { f64::NAN } else { -1e9 })
+            .collect();
+        let population = population(&fitnesses);
+
+        let pool = RankSelection.get_mating_pool(&population, &Rngs::new(4));
+
+        let nans = picked(&pool, f64::is_nan) as f64;
+        assert!((nans - 250.0).abs() < 4.0 * 14.0, "{nans}");
+    }
+}

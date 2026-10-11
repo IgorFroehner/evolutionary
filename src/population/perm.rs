@@ -21,10 +21,8 @@ impl IntPerm {
     /// If `chromosome` is not a permutation of `1..=chromosome.len()`, which every permutation
     /// operator relies on.
     pub fn new(chromosome: Vec<i64>) -> Self {
-        let mut sorted = chromosome.clone();
-        sorted.sort_unstable();
         assert!(
-            sorted.iter().copied().eq(1..=chromosome.len() as i64),
+            is_permutation(&chromosome),
             "the chromosome must be a permutation of 1..={}, got {chromosome:?}",
             chromosome.len()
         );
@@ -34,6 +32,13 @@ impl IntPerm {
             fitness: 0.0,
         }
     }
+}
+
+/// Whether `chromosome` is a permutation of `1..=chromosome.len()`.
+pub(crate) fn is_permutation(chromosome: &[i64]) -> bool {
+    let mut sorted = chromosome.to_vec();
+    sorted.sort_unstable();
+    sorted.iter().copied().eq(1..=chromosome.len() as i64)
 }
 
 impl Individual for IntPerm {

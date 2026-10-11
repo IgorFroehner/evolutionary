@@ -111,3 +111,25 @@ pub fn plot_boxplot(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn normalize_scales_from_zero_to_max() {
+        assert_eq!(normalize(&[0.0, 5.0, 10.0], 10.0), vec![0.0, 0.5, 1.0]);
+        assert_eq!(normalize(&[-2.0, 4.0], 4.0), vec![-0.5, 1.0]);
+    }
+
+    #[test]
+    fn plot_chart_saves_a_png() {
+        let path = std::env::temp_dir().join(format!("evolutionary-{}-chart.png", std::process::id()));
+
+        plot_chart(&[1.0, 2.0, 4.0], &[0.5, 1.0, 2.0], path.to_str().unwrap(), "Chart").unwrap();
+
+        let bytes = std::fs::read(&path).unwrap();
+        std::fs::remove_file(&path).unwrap();
+        assert!(bytes.starts_with(b"\x89PNG"));
+    }
+}
