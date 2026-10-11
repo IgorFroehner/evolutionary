@@ -69,10 +69,8 @@ mod tests {
 
     /// Writes `contents` to a temporary file, reads it back with `read_config` and removes it.
     fn read(name: &str, contents: &str) -> Option<RawConfig> {
-        let path = std::env::temp_dir().join(format!(
-            "evolutionary-{}-{name}.toml",
-            std::process::id()
-        ));
+        let path =
+            std::env::temp_dir().join(format!("evolutionary-{}-{name}.toml", std::process::id()));
         fs::write(&path, contents).unwrap();
 
         let config = read_config(path.to_str().unwrap());

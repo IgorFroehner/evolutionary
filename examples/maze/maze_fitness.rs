@@ -22,7 +22,6 @@ impl MazeFitness {
         let mut path = vec![start];
 
         for &step in vec {
-
             vis[x][y] = true;
             let mut possibilities = vec![];
             if x as i32 + 1 < maze.len() as i32 && maze[x + 1][y] != 0 && !vis[x + 1][y] {

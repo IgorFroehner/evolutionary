@@ -1,8 +1,8 @@
+use crate::population::Real;
+use crate::{Crossover, Individual, Rngs};
 use rand::Rng;
 use rayon::iter::{IndexedParallelIterator, ParallelIterator};
 use rayon::prelude::ParallelSliceMut;
-use crate::{Crossover, Individual, Rngs};
-use crate::population::Real;
 
 /// # Blend Crossover
 ///
@@ -60,7 +60,8 @@ impl Crossover<Real> for BlendCrossover {
                     let len = parent1.get_chromosome().len();
 
                     for i in 0..len {
-                        let (min, max) = self.blend_min_max(parent1.get_gene(i), parent2.get_gene(i));
+                        let (min, max) =
+                            self.blend_min_max(parent1.get_gene(i), parent2.get_gene(i));
 
                         let gene = rng.random_range(min..=max);
 
@@ -82,4 +83,3 @@ mod tests {
         assert_eq!(blend.blend_min_max(1.0, 2.0), (0.5, 2.5));
     }
 }
-

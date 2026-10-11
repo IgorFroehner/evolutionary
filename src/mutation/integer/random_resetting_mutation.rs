@@ -3,8 +3,8 @@ use rand::Rng;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::mutation::random_resetting_mutation::RandomResettingMutation;
-use crate::{population::Int, Individual, Mutation};
 use crate::Rngs;
+use crate::{population::Int, Individual, Mutation};
 
 impl Mutation<Int> for RandomResettingMutation {
     fn mutate(&self, population: &mut [Int], rngs: &Rngs) {

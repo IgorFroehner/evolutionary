@@ -1,7 +1,7 @@
-use rand::Rng;
-use rand::seq::SliceRandom;
-use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 use crate::{Individual, Mutation, Rngs};
+use rand::seq::SliceRandom;
+use rand::Rng;
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 
 /// # Scramble Mutation
 ///

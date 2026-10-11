@@ -53,7 +53,10 @@ mod tests {
             let deviation = (4000.0 * share * (1.0 - share)).sqrt();
 
             let count = picked(&pool, |picked| picked == fitness) as f64;
-            assert!((count - expected).abs() < 4.0 * deviation, "{fitness}: {count}");
+            assert!(
+                (count - expected).abs() < 4.0 * deviation,
+                "{fitness}: {count}"
+            );
         }
     }
 
@@ -64,6 +67,9 @@ mod tests {
 
         let pool = RouletteSelection.get_mating_pool(&population, &Rngs::new(6));
 
-        assert_eq!(picked(&pool, |fitness| fitness == 0.0 || fitness.is_nan()), 0);
+        assert_eq!(
+            picked(&pool, |fitness| fitness == 0.0 || fitness.is_nan()),
+            0
+        );
     }
 }

@@ -42,7 +42,10 @@ impl SimulatedBinaryCrossover {
     ///
     /// If `eta` is negative.
     pub fn new(crossover_rate: f64, eta: f64) -> Self {
-        assert!(eta >= 0.0, "the distribution index `eta` must be >= 0, got {eta}");
+        assert!(
+            eta >= 0.0,
+            "the distribution index `eta` must be >= 0, got {eta}"
+        );
 
         Self {
             crossover_rate,

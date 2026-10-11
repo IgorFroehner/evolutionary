@@ -2,8 +2,6 @@ use evolutionary::prelude::*;
 
 use radio_fitness::RadioFitness;
 
-
-
 mod radio_fitness;
 
 const L: f64 = 5.;

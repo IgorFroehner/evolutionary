@@ -81,8 +81,11 @@ pub trait Individual: 'static + Clone + Send + Sync {
     type RangeType: Send + Sync + Clone;
 
     /// Creates a random individual of `dimension` genes within `range`, drawing from `rng`.
-    fn generate_member<R: Rng + ?Sized>(dimension: u32, range: &Self::RangeType, rng: &mut R)
-        -> Self;
+    fn generate_member<R: Rng + ?Sized>(
+        dimension: u32,
+        range: &Self::RangeType,
+        rng: &mut R,
+    ) -> Self;
     fn get_chromosome(&self) -> &Vec<Self::Gene>;
     fn get_mut_chromosome(&mut self) -> &mut Vec<Self::Gene>;
     fn set_gene(&mut self, index: usize, value: Self::Gene);
@@ -145,6 +148,9 @@ mod tests {
         assert_eq!(Bin::generate_member(4, &(), rng).get_fitness(), 0.0);
         assert_eq!(Int::generate_member(4, &(0, 1), rng).get_fitness(), 0.0);
         assert_eq!(IntPerm::generate_member(4, &(), rng).get_fitness(), 0.0);
-        assert_eq!(Real::generate_member(4, &(0.0, 1.0), rng).get_fitness(), 0.0);
+        assert_eq!(
+            Real::generate_member(4, &(0.0, 1.0), rng).get_fitness(),
+            0.0
+        );
     }
 }

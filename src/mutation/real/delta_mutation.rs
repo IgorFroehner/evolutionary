@@ -2,8 +2,8 @@ use rand::distr::{Bernoulli, Distribution};
 use rand::Rng;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 
-use crate::{population::Real, Mutation};
 use crate::Rngs;
+use crate::{population::Real, Mutation};
 
 #[derive(Clone)]
 pub struct DeltaMutation {
@@ -102,6 +102,8 @@ mod tests {
             frac: 1.0,
         };
 
-        assert!(genes(&mutation, 0.5, (0.0, 1.0)).iter().all(|&gene| gene == 0.5));
+        assert!(genes(&mutation, 0.5, (0.0, 1.0))
+            .iter()
+            .all(|&gene| gene == 0.5));
     }
 }

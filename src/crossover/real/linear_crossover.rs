@@ -87,9 +87,9 @@ mod tests {
 
             // The candidates of (1.0, 2.0) and of (3.0, 1.0) per gene.
             let expected = [
-                vec![1.5, 2.0],  // the mean
-                vec![0.5, 4.0],  // 1.5 * p1 - 0.5 * p2
-                vec![2.5, 0.0],  // -0.5 * p1 + 1.5 * p2
+                vec![1.5, 2.0], // the mean
+                vec![0.5, 4.0], // 1.5 * p1 - 0.5 * p2
+                vec![2.5, 0.0], // -0.5 * p1 + 1.5 * p2
             ];
 
             let child1 = population[0].get_chromosome();

@@ -26,9 +26,7 @@ fn main() {
             .with_selection(TournamentSelection::default())
             .with_crossover(crossover.clone())
             .with_mutation(mutation.clone())
-            .with_stop_condition(move |report| {
-                report.generations_without_improvement == 20_000
-            })
+            .with_stop_condition(move |report| report.generations_without_improvement == 20_000)
             .with_title("NQueens".to_string());
 
         let mut experiment =

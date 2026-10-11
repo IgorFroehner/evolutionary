@@ -27,7 +27,10 @@ pub enum BuildError {
         population_size: u32,
     },
     /// More initial individuals were given than the population size.
-    InitialPopulationTooLarge { given: usize, population_size: u32 },
+    InitialPopulationTooLarge {
+        given: usize,
+        population_size: u32,
+    },
     /// The initial individual at `index` doesn't have `dimension` genes.
     InitialIndividualDimension {
         index: usize,
@@ -283,13 +286,13 @@ impl<T: Individual> EvolutionBuilder<T> {
                 population_size: evolution_config.population_size,
             });
         }
-        if let Some((index, individual)) = self
-            .initial_population
-            .iter()
-            .enumerate()
-            .find(|(_, individual)| {
-                individual.get_chromosome().len() != evolution_config.dimension as usize
-            })
+        if let Some((index, individual)) =
+            self.initial_population
+                .iter()
+                .enumerate()
+                .find(|(_, individual)| {
+                    individual.get_chromosome().len() != evolution_config.dimension as usize
+                })
         {
             return Err(BuildError::InitialIndividualDimension {
                 index,

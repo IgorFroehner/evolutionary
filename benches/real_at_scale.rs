@@ -15,7 +15,11 @@ struct NearOrigin;
 
 impl Fitness<Real> for NearOrigin {
     fn calculate_fitness(&self, individual: &Real) -> f64 {
-        -individual.get_chromosome().iter().map(|x| x * x).sum::<f64>()
+        -individual
+            .get_chromosome()
+            .iter()
+            .map(|x| x * x)
+            .sum::<f64>()
     }
 }
 

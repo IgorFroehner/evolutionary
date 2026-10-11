@@ -1,4 +1,3 @@
-
 pub fn convert_bin(vec: &[bool]) -> f64 {
     let mut res = 0.0;
     for (i, &bit) in vec.iter().enumerate() {

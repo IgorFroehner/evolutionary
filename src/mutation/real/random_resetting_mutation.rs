@@ -2,9 +2,9 @@ use rand::distr::{Bernoulli, Distribution};
 use rand::Rng;
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 
-use crate::{population::Real, Individual, Mutation};
 use crate::mutation::random_resetting_mutation::RandomResettingMutation;
 use crate::Rngs;
+use crate::{population::Real, Individual, Mutation};
 
 impl Mutation<Real> for RandomResettingMutation {
     fn mutate(&self, population: &mut [Real], rngs: &Rngs) {

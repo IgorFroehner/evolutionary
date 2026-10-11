@@ -1,6 +1,6 @@
+use crate::{Individual, Mutation, Rngs};
 use rand::distr::{Bernoulli, Distribution};
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
-use crate::{Individual, Mutation, Rngs};
 
 use crate::population::Bin;
 

@@ -4,16 +4,16 @@ use crate::population::Individual;
 use crate::rng::Rngs;
 
 mod do_nothing_selection;
-mod roulette_selection;
-mod tournament_selection;
 mod rank_selection;
+mod roulette_selection;
 mod stochastic_universal_sampling_selection;
+mod tournament_selection;
 
 pub use do_nothing_selection::DoNothingSelection;
-pub use roulette_selection::RouletteSelection;
-pub use tournament_selection::TournamentSelection;
 pub use rank_selection::RankSelection;
+pub use roulette_selection::RouletteSelection;
 pub use stochastic_universal_sampling_selection::StochasticUniversalSamplingSelection;
+pub use tournament_selection::TournamentSelection;
 
 /// Trait that defines the selection method. You can implement your own selection method by
 /// implementing this trait.

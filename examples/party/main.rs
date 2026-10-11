@@ -32,10 +32,13 @@ fn main() {
         // Use the Binary Crossover
         .with_crossover(NPointsCrossover::default())
         // Use the Binary Mutation with a mutation rate of 0.05 (which is the default)
-        .with_mutation(BitFlipMutation { mutation_rate: 0.05 })
+        .with_mutation(BitFlipMutation {
+            mutation_rate: 0.05,
+        })
         // Set the stop condition based on the number of iterations
         .with_stop_condition(move |report| report.generation >= 1000)
-        .build().unwrap();
+        .build()
+        .unwrap();
 
     // The run method of the Evolution will run the evolution until the stop condition is met
     evolution.run();
@@ -47,7 +50,9 @@ fn main() {
     println!("Best fitness: {}", evolution.current_best_fitness());
 
     // Prints the best and average fitness over the generations
-    evolution.plot_chart("party_fitness.png", "Party Fitness").unwrap();
+    evolution
+        .plot_chart("party_fitness.png", "Party Fitness")
+        .unwrap();
 
     // Gives an output of the time spent digested by each evolution step
     evolution.time_digest();

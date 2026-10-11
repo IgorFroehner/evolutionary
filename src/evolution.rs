@@ -618,10 +618,11 @@ mod tests {
 
         let mut evolution = builder(20, SumFitness)
             .with_on_generation(move |report| {
-                recorder
-                    .lock()
-                    .unwrap()
-                    .push((report.generation, report.best_fitness, report.average_fitness))
+                recorder.lock().unwrap().push((
+                    report.generation,
+                    report.best_fitness,
+                    report.average_fitness,
+                ))
             })
             .build()
             .unwrap();
@@ -658,7 +659,11 @@ mod tests {
 
     impl Fitness<Real> for NearOrigin {
         fn calculate_fitness(&self, individual: &Real) -> f64 {
-            -individual.get_chromosome().iter().map(|x| x * x).sum::<f64>()
+            -individual
+                .get_chromosome()
+                .iter()
+                .map(|x| x * x)
+                .sum::<f64>()
         }
     }
 
@@ -682,7 +687,10 @@ mod tests {
         assert!(lost, "the best was never lost, the test proves nothing");
         assert_eq!(best_ever.get_fitness(), best_seen);
         assert_eq!(NearOrigin.calculate_fitness(best_ever), best_seen);
-        assert_eq!(evolution.report().best_ever.get_chromosome(), best_ever.get_chromosome());
+        assert_eq!(
+            evolution.report().best_ever.get_chromosome(),
+            best_ever.get_chromosome()
+        );
     }
 
     #[test]
@@ -698,7 +706,10 @@ mod tests {
 
         assert!(evolution.metrics.total_time() > 0);
         assert_eq!(evolution.report().generation, by_run.report().generation);
-        assert_eq!(evolution.metrics.best_fitnesses, by_run.metrics.best_fitnesses);
+        assert_eq!(
+            evolution.metrics.best_fitnesses,
+            by_run.metrics.best_fitnesses
+        );
         assert_eq!(
             evolution.best_ever().get_chromosome(),
             by_run.best_ever().get_chromosome()

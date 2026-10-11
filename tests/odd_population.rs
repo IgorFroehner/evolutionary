@@ -19,9 +19,7 @@ where
 }
 
 fn bins() -> Vec<Bin> {
-    (0..SIZE)
-        .map(|i| Bin::new(vec![i % 2 == 0; 8]))
-        .collect()
+    (0..SIZE).map(|i| Bin::new(vec![i % 2 == 0; 8])).collect()
 }
 
 fn ints() -> Vec<Int> {
@@ -85,9 +83,24 @@ fn real_crossovers() {
 
 #[test]
 fn perm_crossovers() {
-    assert_last_untouched(OrderedCrossover { crossover_rate: 1.0 }, perms());
-    assert_last_untouched(PartiallyMappedCrossover { crossover_rate: 1.0 }, perms());
-    assert_last_untouched(CycleCrossover { crossover_rate: 1.0 }, perms());
+    assert_last_untouched(
+        OrderedCrossover {
+            crossover_rate: 1.0,
+        },
+        perms(),
+    );
+    assert_last_untouched(
+        PartiallyMappedCrossover {
+            crossover_rate: 1.0,
+        },
+        perms(),
+    );
+    assert_last_untouched(
+        CycleCrossover {
+            crossover_rate: 1.0,
+        },
+        perms(),
+    );
 }
 
 #[test]
@@ -112,6 +125,10 @@ struct CountOnes;
 
 impl Fitness<Bin> for CountOnes {
     fn calculate_fitness(&self, individual: &Bin) -> f64 {
-        individual.get_chromosome().iter().filter(|&&gene| gene).count() as f64
+        individual
+            .get_chromosome()
+            .iter()
+            .filter(|&&gene| gene)
+            .count() as f64
     }
 }

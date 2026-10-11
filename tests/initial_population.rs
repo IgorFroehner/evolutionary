@@ -5,7 +5,11 @@ struct CountOnes;
 
 impl Fitness<Bin> for CountOnes {
     fn calculate_fitness(&self, individual: &Bin) -> f64 {
-        individual.get_chromosome().iter().filter(|&&gene| gene).count() as f64
+        individual
+            .get_chromosome()
+            .iter()
+            .filter(|&&gene| gene)
+            .count() as f64
     }
 }
 

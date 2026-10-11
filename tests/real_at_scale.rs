@@ -103,8 +103,7 @@ fn scored_population() -> Vec<Real> {
     let rngs = Rngs::new(3);
     (0..POPULATION as usize)
         .map(|index| {
-            let mut individual =
-                Real::generate_member(GENES, &(-1.0, 1.0), &mut rngs.rng(index));
+            let mut individual = Real::generate_member(GENES, &(-1.0, 1.0), &mut rngs.rng(index));
             individual.set_fitness(target.calculate_fitness(&individual));
             individual
         })

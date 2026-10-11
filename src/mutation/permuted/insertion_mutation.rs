@@ -1,7 +1,7 @@
+use crate::population::IntPerm;
+use crate::{Individual, Mutation, Rngs};
 use rand::Rng;
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
-use crate::{Individual, Mutation, Rngs};
-use crate::population::IntPerm;
 
 /// # Insertion Mutation
 ///

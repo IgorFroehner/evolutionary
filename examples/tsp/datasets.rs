@@ -7,10 +7,12 @@ pub fn load_matrix(dataset: String) -> Vec<Vec<f64>> {
     for line in file.lines() {
         let splitted_line = line.split_whitespace().collect::<Vec<&str>>();
 
-        dataset.push(splitted_line
-            .iter()
-            .map(|x| x.parse::<f64>().unwrap())
-            .collect::<Vec<f64>>());
+        dataset.push(
+            splitted_line
+                .iter()
+                .map(|x| x.parse::<f64>().unwrap())
+                .collect::<Vec<f64>>(),
+        );
     }
 
     dataset

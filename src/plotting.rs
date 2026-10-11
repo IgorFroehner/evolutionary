@@ -124,9 +124,16 @@ mod tests {
 
     #[test]
     fn plot_chart_saves_a_png() {
-        let path = std::env::temp_dir().join(format!("evolutionary-{}-chart.png", std::process::id()));
+        let path =
+            std::env::temp_dir().join(format!("evolutionary-{}-chart.png", std::process::id()));
 
-        plot_chart(&[1.0, 2.0, 4.0], &[0.5, 1.0, 2.0], path.to_str().unwrap(), "Chart").unwrap();
+        plot_chart(
+            &[1.0, 2.0, 4.0],
+            &[0.5, 1.0, 2.0],
+            path.to_str().unwrap(),
+            "Chart",
+        )
+        .unwrap();
 
         let bytes = std::fs::read(&path).unwrap();
         std::fs::remove_file(&path).unwrap();

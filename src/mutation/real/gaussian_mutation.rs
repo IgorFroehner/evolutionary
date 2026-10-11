@@ -126,7 +126,11 @@ mod tests {
 
         // 90 000 genes at 5%: 4 500 expected, with a standard deviation of about 65.
         let expected = 0.05 * genes.len() as f64;
-        assert!((mutated.len() as f64 - expected).abs() < 4.0 * 65.0, "{}", mutated.len());
+        assert!(
+            (mutated.len() as f64 - expected).abs() < 4.0 * 65.0,
+            "{}",
+            mutated.len()
+        );
 
         let mean = mutated.iter().sum::<f64>() / mutated.len() as f64;
         let deviation =

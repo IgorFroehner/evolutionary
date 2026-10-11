@@ -65,7 +65,11 @@ struct NearOrigin;
 
 impl Fitness<Real> for NearOrigin {
     fn calculate_fitness(&self, individual: &Real) -> f64 {
-        -individual.get_chromosome().iter().map(|x| x * x).sum::<f64>()
+        -individual
+            .get_chromosome()
+            .iter()
+            .map(|x| x * x)
+            .sum::<f64>()
     }
 }
 
@@ -86,10 +90,7 @@ fn a_saved_population_resumes_a_run() {
     let saved = serde_json::to_string(&first.current_population()).unwrap();
     let loaded: Vec<Real> = serde_json::from_str(&saved).unwrap();
 
-    let mut resumed = builder()
-        .with_initial_population(loaded)
-        .build()
-        .unwrap();
+    let mut resumed = builder().with_initial_population(loaded).build().unwrap();
     resumed.start();
 
     assert_eq!(resumed.current_best_fitness(), first.current_best_fitness());

@@ -61,7 +61,11 @@ struct CountOnes;
 
 impl Fitness<Bin> for CountOnes {
     fn calculate_fitness(&self, individual: &Bin) -> f64 {
-        individual.get_chromosome().iter().filter(|&&gene| gene).count() as f64
+        individual
+            .get_chromosome()
+            .iter()
+            .filter(|&&gene| gene)
+            .count() as f64
     }
 }
 
@@ -281,5 +285,8 @@ fn the_seed_of_an_unseeded_run_replays_it() {
         replay.current_best().get_chromosome(),
         evolution.current_best().get_chromosome()
     );
-    assert_eq!(replay.metrics.best_fitnesses, evolution.metrics.best_fitnesses);
+    assert_eq!(
+        replay.metrics.best_fitnesses,
+        evolution.metrics.best_fitnesses
+    );
 }

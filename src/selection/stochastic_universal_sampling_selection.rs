@@ -70,8 +70,8 @@ mod tests {
         let total: f64 = fitnesses.iter().copied().map(selection_weight).sum();
 
         for seed in 0..50 {
-            let pool = StochasticUniversalSamplingSelection
-                .get_mating_pool(&population, &Rngs::new(seed));
+            let pool =
+                StochasticUniversalSamplingSelection.get_mating_pool(&population, &Rngs::new(seed));
 
             assert_eq!(pool.len(), population.len());
             for &fitness in &fitnesses {

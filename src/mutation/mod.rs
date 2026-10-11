@@ -3,24 +3,24 @@ use dyn_clone::DynClone;
 use crate::population::Individual;
 use crate::rng::Rngs;
 
-mod real;
 mod binary;
 mod integer;
+mod real;
 
 mod do_nothing_mutation;
-mod swap_mutation;
-mod random_resetting_mutation;
 mod permuted;
+mod random_resetting_mutation;
 mod scramble_mutation;
+mod swap_mutation;
 
-pub use real::*;
 pub use binary::*;
 pub use permuted::*;
+pub use real::*;
 
 pub use do_nothing_mutation::*;
-pub use swap_mutation::*;
 pub use random_resetting_mutation::*;
 pub use scramble_mutation::*;
+pub use swap_mutation::*;
 
 /// # Mutation Trait
 ///

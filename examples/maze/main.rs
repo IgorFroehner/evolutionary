@@ -43,7 +43,7 @@ fn main() {
         .with_mutation(RandomResettingMutation::default())
         .with_title("Maze".to_string())
         .with_stop_condition(move |report| report.best_fitness == max_score);
-        // .with_stop_condition(|report| report.generation >= 10_000);
+    // .with_stop_condition(|report| report.generation >= 10_000);
 
     let mut evolution = evolution_builder.build().unwrap();
 
@@ -51,7 +51,8 @@ fn main() {
 
     evolution.time_digest();
 
-    let _experiment = ExperimentRunner::new("Maze  - Caminho Minimo".to_string(), 30, evolution_builder);
+    let _experiment =
+        ExperimentRunner::new("Maze  - Caminho Minimo".to_string(), 30, evolution_builder);
 
     // experiment.run();
 

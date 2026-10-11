@@ -79,13 +79,13 @@ mod evolution;
 mod evolution_builder;
 mod fitness;
 mod mutation;
+#[cfg(feature = "plot")]
+pub mod plotting;
 mod population;
 mod report;
 mod rng;
 mod selection;
 pub mod utils;
-#[cfg(feature = "plot")]
-pub mod plotting;
 
 pub use crossover::Crossover;
 pub use evolution::Evolution;
@@ -111,11 +111,11 @@ pub mod prelude {
     pub use crate::population::{Bin, GeneCod, Int, IntPerm, Real};
     pub use crate::selection::*;
     pub use crate::utils::{convert_bin, within_range};
+    pub use crate::BuildError;
     pub use crate::Evolution;
     pub use crate::EvolutionBuilder;
-    pub use crate::BuildError;
-    pub use crate::Individual;
     pub use crate::GenerationReport;
+    pub use crate::Individual;
     pub use crate::{Rngs, TaskRng};
     pub use rand::Rng;
 }

@@ -40,7 +40,11 @@ mod tests {
         let reset = reset_ints(0.05);
 
         // 90 000 genes at 5%: 4 500 expected, with a standard deviation of about 65.
-        assert!((reset.len() as f64 - 4500.0).abs() < 4.0 * 65.0, "{}", reset.len());
+        assert!(
+            (reset.len() as f64 - 4500.0).abs() < 4.0 * 65.0,
+            "{}",
+            reset.len()
+        );
         assert!(reset.iter().all(|gene| (0..=9).contains(gene)));
     }
 
