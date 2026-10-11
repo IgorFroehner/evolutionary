@@ -22,6 +22,17 @@
   reproducibility coverage, for `generate_member` of each encoding, for `read_config` and for
   `plot_chart`, and an integration test for `ExperimentRunner`.
 
+### Performance
+
+- `StochasticUniversalSamplingSelection` no longer goes through rayon, and seeded runs are
+  unchanged. Its only parallel part was computing the pointer positions, one multiplication
+  per slot, which cost more than the whole sequential walk over the wheel: at 300 individuals
+  of 300 genes it goes from about 70 µs to about 20 µs. A fully parallel version, one binary
+  search over the cumulative weights per slot, gives the same pool but measured slower up to
+  10 000 individuals: the work per slot is a clone, and rayon's fork and join costs more than
+  the walk.
+- `benches/real_at_scale.rs` benchmarks SUS too.
+
 ## 0.3.1 (2026-10-10)
 
 ### Added

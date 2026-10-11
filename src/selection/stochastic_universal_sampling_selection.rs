@@ -1,8 +1,6 @@
 use crate::fitness::selection_weight;
 use crate::{Individual, Rngs, Selection};
 use rand::Rng;
-use rayon::iter::ParallelIterator;
-use rayon::prelude::IntoParallelIterator;
 
 /// # Stochastic Universal Sampling Selection
 ///
@@ -33,17 +31,17 @@ impl<T: Individual> Selection<T> for StochasticUniversalSamplingSelection {
 
         let start_point = rngs.rng(0).random_range(0.0..pointer_spacing);
 
-        let pointers: Vec<_> = (0..population_size)
-            .into_par_iter()
-            .map(|i| start_point + i as f64 * pointer_spacing)
-            .collect();
-
-        let mut selected_individuals = Vec::new();
+        // One walk over the wheel places every pointer. The slots could be picked independently,
+        // each with a binary search over the cumulative weights, but the work per slot is a
+        // clone, and at a few hundred individuals the whole walk takes less than rayon's fork
+        // and join: a parallel version measured slower up to 10 000 individuals. (The pointers
+        // used to be computed with rayon too, which cost more than the walk itself.)
+        let mut selected_individuals = Vec::with_capacity(population_size);
         let mut cumulative_fitness = 0.0;
         let mut individual_idx = 0;
 
-        // TODO: find a way to parallelize this part
-        for pointer in pointers {
+        for slot in 0..population_size {
+            let pointer = start_point + slot as f64 * pointer_spacing;
             while cumulative_fitness < pointer && individual_idx < population_size {
                 cumulative_fitness +=
                     selection_weight(initial_population[individual_idx].get_fitness());

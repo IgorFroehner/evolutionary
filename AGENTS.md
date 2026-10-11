@@ -91,3 +91,9 @@ most design decisions:
   code that needs one must be `#[cfg(feature = "...")]`-gated and must compile under both
   `cargo test` and `cargo test --all-features`.
 - Operator doc comments carry a runnable example; `cargo test --doc` must stay green.
+- Parallelism is per individual (mutation, fitness), per pair (crossover) or per slot
+  (selection). Before adding a `par_iter`, measure: at the sizes the crate targets (a few hundred
+  individuals of a few hundred genes) one rayon fork and join costs tens of microseconds, so an
+  operator whose work per item is a clone or a multiplication is faster sequential. SUS is kept
+  sequential for that reason, with the measurement in `CHANGELOG.md`. `RAYON_NUM_THREADS=1 cargo
+  bench` shows what each benchmark gains from the pool.
