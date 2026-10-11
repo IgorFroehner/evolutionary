@@ -20,7 +20,7 @@ A fully extensible Rust framework for solving problems with parallelized genetic
 
 ```toml
 [dependencies]
-evolutionary = "0.3"
+evolutionary = "0.4"
 ```
 
 First, code your fitness function by implementing `Fitness` for the encoding you use. Here the
@@ -164,7 +164,7 @@ No feature is on by default, so embedding the library compiles only the genetic 
 | `plot` | `Evolution::plot_chart`, `Metrics::plot_chart` and the chart saved by `ExperimentRunner`, with [plotters](https://github.com/plotters-rs/plotters). |
 
 ```toml
-evolutionary = { version = "0.3", features = ["serde", "plot"] }
+evolutionary = { version = "0.4", features = ["serde", "plot"] }
 ```
 
 ## Examples
