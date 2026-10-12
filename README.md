@@ -154,6 +154,7 @@ each run. `average_time`, `average_best_fitness` and `average_generations` aggre
 `experiment_digest` prints them. With the `plot` feature, `save_chart(path)` saves a chart of the
 averages over the runs; nothing is written unless you call it. A seeded experiment is reproducible,
 and each of its runs gets its own seed, kept in its result so the run can be replayed on its own.
+Calling `run` again adds runs with new seeds.
 
 ## Features
 

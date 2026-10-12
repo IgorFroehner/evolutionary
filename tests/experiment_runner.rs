@@ -188,6 +188,38 @@ fn an_invalid_builder_returns_the_error_without_running() {
 }
 
 #[test]
+fn an_invalid_builder_is_an_error_even_with_no_runs() {
+    let builder = EvolutionBuilder::new(20, 16, GeneCod::Bin, ())
+        .with_fitness(CountOnes)
+        .with_selection(TournamentSelection::default())
+        .with_crossover(NPointsCrossover::default())
+        .with_mutation(BitFlipMutation::default());
+    let mut runner = ExperimentRunner::new("invalid_no_runs".to_string(), 0, builder);
+
+    assert_eq!(runner.run(), Err(BuildError::MissingStopCondition));
+}
+
+#[test]
+fn a_second_run_gets_new_seeds_and_keeps_the_first_ones() {
+    let seeds = |runner: &ExperimentRunner<Bin>| -> Vec<u64> {
+        runner.experiment_results.iter().map(|r| r.seed).collect()
+    };
+    let once = run("experiment_runner_seeds_once", 17);
+    let mut twice = run("experiment_runner_seeds_twice", 17);
+    twice.run().unwrap();
+
+    let all = seeds(&twice);
+    let (first_call, second_call) = all.split_at(RUNS as usize);
+    assert_eq!(first_call, seeds(&once).as_slice());
+    assert!(second_call.iter().all(|seed| !first_call.contains(seed)));
+
+    // The second call is the same as the second half of one call with twice the runs.
+    let mut double = ExperimentRunner::new("double".to_string(), 2 * RUNS, builder(17));
+    double.run().unwrap();
+    assert_eq!(seeds(&double), seeds(&twice));
+}
+
+#[test]
 fn writes_no_file_unless_asked() {
     let name = "experiment_runner_writes_no_file";
     run(name, 9);

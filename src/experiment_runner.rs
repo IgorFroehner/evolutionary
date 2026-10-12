@@ -50,6 +50,7 @@ pub struct ExperimentRunner<T: Individual> {
 }
 
 /// The outcome of one run of an [`ExperimentRunner`].
+#[non_exhaustive]
 pub struct ExperimentResult<T> {
     /// How long the run took, from the start of the evolution to its stop condition.
     pub time: Duration,
@@ -64,8 +65,9 @@ pub struct ExperimentResult<T> {
     /// The number of generations of the run, the initial population included.
     pub iterations: u32,
     /// The best individual seen during the run, as
-    /// [`Evolution::best_ever`](crate::Evolution::best_ever). Without elitism it can be better
-    /// than the best of the last generation.
+    /// [`Evolution::best_ever`](crate::Evolution::best_ever): the first individual that reached
+    /// the best fitness of the run. Without elitism it can be better than the best of the last
+    /// generation.
     pub best_found: T,
 }
 
@@ -82,21 +84,32 @@ impl<T: Individual> ExperimentRunner<T> {
     /// Runs the evolution `runs` times, in parallel, and adds the results to
     /// [`experiment_results`](Self::experiment_results).
     ///
-    /// Every run is built before any starts, so an invalid builder returns its [`BuildError`]
-    /// without running anything.
+    /// The builder is checked before any run starts, so an invalid one returns its
+    /// [`BuildError`] without running anything, even with zero runs.
+    ///
+    /// In a seeded experiment every run gets its own seed, drawn from the experiment's seed and
+    /// the run's position in [`experiment_results`](Self::experiment_results). Calling `run`
+    /// again adds new runs with new seeds, and the runs of the first call keep the same seeds.
     pub fn run(&mut self) -> Result<(), BuildError> {
-        let evolutions = (0..self.runs)
-            .map(|_| self.evolution_builder.build())
-            .collect::<Result<Vec<_>, _>>()?;
+        // Building is deterministic, so once this succeeds every build below succeeds too.
+        self.evolution_builder.build()?;
         let experiment_seed = self.evolution_builder.seed;
+        let first_run = self.experiment_results.len();
 
-        let results: Vec<ExperimentResult<T>> = evolutions
+        let results: Vec<ExperimentResult<T>> = (0..self.runs as usize)
             .into_par_iter()
-            .enumerate()
-            .map(|(run, mut evolution)| {
+            .map(|run| {
+                // Built here rather than up front, so that only the runs in progress hold a
+                // population.
+                let mut evolution = self
+                    .evolution_builder
+                    .build()
+                    .expect("the builder was checked before the runs started");
                 // A seeded experiment is reproducible, but its runs still differ.
                 let seed = match experiment_seed {
-                    Some(seed) => Rngs::for_step(seed, 0, Step::Experiment).rng(run).random(),
+                    Some(seed) => Rngs::for_step(seed, 0, Step::Experiment)
+                        .rng(first_run + run)
+                        .random(),
                     None => rand::random(),
                 };
                 evolution.fixed_seed = Some(seed);
