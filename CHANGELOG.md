@@ -29,7 +29,10 @@
   for `get_mut_chromosome`; the bodies (`&self.chromosome`) stay. To copy the genes, write
   `individual.get_chromosome().to_vec()` instead of `individual.get_chromosome().clone()`.
   Comparing a chromosome with a `Vec` still works. The built-in individuals keep their
-  `Vec` fields.
+  `Vec` fields. Code that resized a chromosome through `get_mut_chromosome` (a `push`, a
+  `remove`) builds a new individual instead for `Bin` and `Int`, whose fields are private:
+  `Bin::new(genes)` or `Int::new(genes, individual.range)`. For `IntPerm` and `Real` it can
+  resize the public `chromosome` field: `individual.chromosome.push(gene)`.
 - An individual that was never evaluated has a fitness of `NaN` instead of `0.0`:
   `generate_member` and `Bin::new`, `Int::new`, `IntPerm::new` and `Real::new` start there,
   so a fitness that was never computed can't pass for a real zero. Write
@@ -37,7 +40,9 @@
   one apart. Every comparison already ranks `NaN` last, and an evolution evaluates every
   individual before reading its fitness, so seeded runs are unchanged. With the `serde`
   feature such an individual is saved to JSON with a `null` fitness, which now loads back as
-  `NaN`; files saved before load as they did.
+  `NaN`; files saved before load as they did. `serde_json` also writes an infinite fitness
+  as `null`, so one saved to JSON now loads back as `NaN`, silently, where the file failed to
+  load before. Binary formats keep infinities.
 - `Evolution::new` is private: write `EvolutionBuilder::new(..)` with its `with_*` calls and
   `.build()?` instead of `Evolution::new(title, config, fitness, ..)`. The builder was already
   the supported way, and checks the parameters `Evolution::new` took on trust.
@@ -56,16 +61,21 @@
   `Option<Duration>`) instead of reading `metrics.step_times[&Steps::Selection].2`.
   `time_digest` prints the same thing, and its documentation now lists the elitism line it
   already printed.
-- With the `plot` feature, `Evolution::plot_chart` takes only the path and captions the chart
-  with the title given to `EvolutionBuilder::with_title`, which nothing read before: write
-  `.with_title("TSP")` on the builder and `evolution.plot_chart("tsp.png")` instead of
+- With the `plot` feature, `Evolution::plot_chart` takes only the path, as any
+  `impl AsRef<Path>` like `ExperimentRunner::save_chart` and `read_config`, and captions the
+  chart with the title given to `EvolutionBuilder::with_title`, which nothing read before:
+  write `.with_title("TSP")` on the builder and `evolution.plot_chart("tsp.png")` instead of
   `evolution.plot_chart("tsp.png", "TSP")`. For another caption, write
-  `evolution.metrics.plot_chart("tsp.png", "Another caption")`.
+  `evolution.metrics.plot_chart("tsp.png", "Another caption")`. A path that is not valid
+  UTF-8 is an error.
 - `within_range` no longer floors its result, which threw away the precision of the bits it
   decodes: `examples/math_func` decoded 16 bits into the five integers of `(-2, 2)` and now
   searches the whole interval, in steps of `4 / 65535`. Write
   `within_range(range, l, d).floor()` instead of `within_range(range, l, d)` to keep the
-  integer. Both ends of the range are now reached exactly.
+  integer. It also interpolates between the two ends instead of adding a rounded width to
+  the lower one, so `0` and `2^l - 1` give exactly `range.0` and `range.1`, and no result
+  leaves the range: adding the width gave `7.099999999999999` for the top of `(-3.3, 7.1)`
+  and `0.20000000000000004`, above the range, for the top of `(-0.1, 0.2)`.
 
 ### Added
 
