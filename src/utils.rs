@@ -29,6 +29,10 @@ pub fn convert_bin(bits: &[bool]) -> f64 {
 /// values in between are spread evenly, `(range.1 - range.0) / (2^l - 1)` apart, and no result
 /// falls outside of the range.
 ///
+/// A `d` above `2^l - 1` saturates at `range.1`, and a negative one at `range.0`, instead of
+/// extrapolating beyond the range. A `NaN` `d`, or a `NaN` bound, gives `NaN`, and so can an
+/// infinite bound (at the other end, infinity times zero is `NaN`).
+///
 /// The result is not rounded: with 16 bits over `(-2.0, 2.0)` it takes 65 536 values, not the
 /// five integers. Round it (`.round()` or `.floor()`) to decode an integer.
 ///
@@ -48,10 +52,17 @@ pub fn within_range(range: (f64, f64), l: f64, d: f64) -> f64 {
     let steps = 2f64.powf(l) - 1.;
     let x = interpolate(range, d / steps);
 
-    // A last guard, so that no rounding in between can leave the range. The tests find no
-    // case where `interpolate` needs it.
+    // A last guard, so that no rounding in between can leave the range (the tests find no
+    // case where `interpolate` needs it), which also saturates a `d` outside of `0..=steps`.
+    // Comparisons rather than `f64::max` and `min`, which would turn a `NaN` into a bound.
     let (low, high) = (range.0.min(range.1), range.0.max(range.1));
-    x.max(low).min(high)
+    if x < low {
+        low
+    } else if x > high {
+        high
+    } else {
+        x
+    }
 }
 
 /// The point at `t` (from 0 to 1) between the ends of `range`. Exact at both ends: there `t`
@@ -149,6 +160,27 @@ mod test {
                 }
             }
         }
+    }
+
+    #[test]
+    fn within_range_saturates_outside_of_the_bits() {
+        assert_eq!(within_range((-0.1, 0.2), 4.0, 16.0), 0.2);
+        assert_eq!(within_range((-0.1, 0.2), 4.0, 1e9), 0.2);
+        assert_eq!(within_range((-0.1, 0.2), 4.0, -1.0), -0.1);
+        // A reversed range saturates at its ends too.
+        assert_eq!(within_range((5.0, 1.0), 4.0, 100.0), 1.0);
+        assert_eq!(within_range((5.0, 1.0), 4.0, -3.0), 5.0);
+    }
+
+    #[test]
+    fn within_range_lets_nan_through() {
+        assert!(within_range((0.0, 1.0), 4.0, f64::NAN).is_nan());
+        assert!(within_range((f64::NAN, 1.0), 4.0, 3.0).is_nan());
+        assert!(within_range((0.0, f64::NAN), 4.0, 15.0).is_nan());
+        assert!(within_range((f64::NAN, f64::NAN), 4.0, 0.0).is_nan());
+        // Infinity times zero.
+        assert!(within_range((0.0, f64::INFINITY), 4.0, 0.0).is_nan());
+        assert_eq!(within_range((0.0, f64::INFINITY), 4.0, 3.0), f64::INFINITY);
     }
 
     #[test]
