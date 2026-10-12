@@ -38,6 +38,9 @@
   individual before reading its fitness, so seeded runs are unchanged. With the `serde`
   feature such an individual is saved to JSON with a `null` fitness, which now loads back as
   `NaN`; files saved before load as they did.
+- `Evolution::new` is private: write `EvolutionBuilder::new(..)` with its `with_*` calls and
+  `.build()?` instead of `Evolution::new(title, config, fitness, ..)`. The builder was already
+  the supported way, and checks the parameters `Evolution::new` took on trust.
 
 ### Added
 

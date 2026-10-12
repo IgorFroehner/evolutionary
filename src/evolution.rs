@@ -36,6 +36,8 @@ pub struct EvolutionConfig<T: Individual> {
 /// This is the struct that does the evolution magic. It has the methods needed to start and iterate
 /// through the evolution.
 ///
+/// Build one with [`EvolutionBuilder`](crate::EvolutionBuilder), which checks the parameters.
+///
 /// # Example:
 ///
 /// ```rust
@@ -92,9 +94,10 @@ pub struct Evolution<T: Individual> {
 }
 
 impl<T: Individual> Evolution<T> {
-    /// Use [`EvolutionBuilder`](crate::EvolutionBuilder), which checks the parameters.
+    /// Only [`EvolutionBuilder::build`](crate::EvolutionBuilder::build) calls this, after
+    /// checking the parameters.
     #[allow(clippy::too_many_arguments)]
-    pub fn new(
+    pub(crate) fn new(
         title: String,
         config: EvolutionConfig<T>,
         fitness: Box<dyn Fitness<T>>,
