@@ -39,7 +39,10 @@ The whole algorithm lives in `src/evolution.rs`. One generation (`Evolution::nex
 2. `Selection::get_mating_pool(&population, &rngs)` returns a new population.
 3. `Crossover::crossover(&mut pool, &rngs)` and `Mutation::mutate(&mut pool, &rngs)` modify it in
    place.
-4. `process_fitness` evaluates every individual in parallel (rayon).
+4. `process_fitness` hands the population to `Fitness::calculate_population`, once per
+   generation, whose default evaluates every individual in parallel (rayon). With
+   `with_reevaluate_elitists(true)` the elitists are appended to the population for that call
+   and split off again, so they get a fresh fitness in the same call.
 5. `replace_worsts_with_elitists` puts the elitists back, then `finish_generation` computes the
    generation stats once (best index, average), updates `best_ever`, `metrics` and calls the
    `on_generation` callback.
@@ -84,6 +87,9 @@ most design decisions:
   (ideally check out the release tag), and commit them before the optimization. Constants
   recorded after the change pin the optimized behavior and catch nothing.
 - The average fitness is summed sequentially on purpose; do not parallelize it.
+- The fitness gets no `Rngs`: it must be deterministic for a seeded run to replay, and a noisy
+  one derives its noise from a fixed hash of the chromosome (see the `Fitness` docs). Fitness
+  evaluation and `with_reevaluate_elitists` draw no random numbers.
 
 ## Conventions
 

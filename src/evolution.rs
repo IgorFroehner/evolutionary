@@ -1,5 +1,4 @@
-use rayon::iter::{IntoParallelIterator, IntoParallelRefMutIterator};
-use rayon::prelude::ParallelIterator;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::cmp::Ordering;
 use std::sync::Arc;
 
@@ -76,6 +75,10 @@ pub struct Evolution<T: Individual> {
     crossover: Box<dyn Crossover<T>>,
     mutation: Box<dyn Mutation<T>>,
     elitism: u32,
+    /// Whether the elitists are evaluated again every generation instead of keeping their
+    /// fitness, see
+    /// [`EvolutionBuilder::with_reevaluate_elitists`](crate::EvolutionBuilder::with_reevaluate_elitists).
+    pub(crate) reevaluate_elitists: bool,
     stop_condition: StopConditionFn<T>,
     pub(crate) on_generation: Option<OnGenerationFn<T>>,
     pub metrics: Metrics,
@@ -120,6 +123,7 @@ impl<T: Individual> Evolution<T> {
             crossover,
             mutation,
             elitism,
+            reevaluate_elitists: false,
             stop_condition,
             on_generation: None,
             metrics: Metrics::new(),
@@ -221,7 +225,7 @@ impl<T: Individual> Evolution<T> {
     /// section of each).
     pub fn next(&mut self) {
         self.metrics.step_start(Steps::Elitism);
-        let elitists = self.find_elitists();
+        let mut elitists = self.find_elitists();
         self.metrics.step_end(Steps::Elitism);
 
         self.metrics.step_start(Steps::Selection);
@@ -243,7 +247,19 @@ impl<T: Individual> Evolution<T> {
         self.current_population = mating_pool;
         self.stats = None;
 
-        self.process_fitness();
+        if self.reevaluate_elitists && !elitists.is_empty() {
+            // Evaluated in the same call as the new individuals, so that a batched fitness
+            // still sees one population per generation.
+            // `replace_worsts_with_elitists` puts back at most one per new individual, so do
+            // not evaluate the others.
+            let pool_size = self.current_population.len();
+            elitists.truncate(pool_size);
+            self.current_population.append(&mut elitists);
+            self.process_fitness();
+            elitists = self.current_population.split_off(pool_size);
+        } else {
+            self.process_fitness();
+        }
 
         self.metrics.step_start(Steps::Elitism);
         self.replace_worsts_with_elitists(elitists);
@@ -579,12 +595,6 @@ impl<T: Individual> Evolution<T> {
         (self.elitism as usize).min(self.current_population.len())
     }
 
-    fn calculate_individual_fitness(fitness: &dyn Fitness<T>, individual: &mut T) -> f64 {
-        let fitness_value = fitness.calculate_fitness(individual);
-        individual.set_fitness(fitness_value);
-        fitness_value
-    }
-
     fn cmp_by_fitness(a: &T, b: &T) -> Ordering {
         fitness_cmp(a.get_fitness(), b.get_fitness())
     }
@@ -593,11 +603,8 @@ impl<T: Individual> Evolution<T> {
         self.stats = None;
         self.metrics.step_start(Steps::Fitness);
 
-        self.current_population
-            .par_iter_mut()
-            .for_each(|individual| {
-                Self::calculate_individual_fitness(self.fitness.as_ref(), individual);
-            });
+        self.fitness
+            .calculate_population(&mut self.current_population);
 
         self.metrics.step_end(Steps::Fitness);
     }
