@@ -56,6 +56,30 @@ fn int_perm_round_trips() {
 }
 
 #[test]
+fn individuals_never_evaluated_round_trip_through_json() {
+    // JSON has no NaN, so serde_json writes the fitness as `null`.
+    let saved = Bin::new(vec![true, false]);
+    let json = serde_json::to_string(&saved).unwrap();
+    assert!(json.contains("null"), "{json}");
+
+    assert!(round_trip(&saved).get_fitness().is_nan());
+    assert!(round_trip(&Int::new(vec![1], (0, 2)))
+        .get_fitness()
+        .is_nan());
+    assert!(round_trip(&IntPerm::new(vec![1])).get_fitness().is_nan());
+    assert!(round_trip(&Real::new(vec![0.5], (0.0, 1.0)))
+        .get_fitness()
+        .is_nan());
+}
+
+#[test]
+fn a_fitness_written_as_an_integer_loads() {
+    let loaded: Bin = serde_json::from_str(r#"{"chromosome":[true],"fitness":3}"#).unwrap();
+
+    assert_eq!(loaded.get_fitness(), 3.0);
+}
+
+#[test]
 fn gene_cod_round_trips() {
     assert!(matches!(round_trip(&GeneCod::IntPerm), GeneCod::IntPerm));
 }

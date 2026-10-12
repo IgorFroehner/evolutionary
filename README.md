@@ -150,7 +150,8 @@ differs, and `evolution.seed()` tells you the seed a run drew so you can replay 
 `.with_initial_population(individuals)` starts a run from given individuals, to resume one or to
 seed it with known good solutions. Random individuals fill the rest of the population. `Bin::new`,
 `Int::new`, `IntPerm::new` and `Real::new` build individuals from a chromosome, and the `serde`
-feature lets you save and load them.
+feature lets you save and load them. An individual that was never evaluated has a `NaN` fitness,
+which ranks below every number.
 
 ## Experiments
 

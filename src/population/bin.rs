@@ -9,14 +9,20 @@ use super::Individual;
 )]
 pub struct Bin {
     chromosome: Vec<bool>,
+    #[cfg_attr(
+        feature = "serde",
+        serde(deserialize_with = "crate::fitness::deserialize_fitness")
+    )]
     fitness: f64,
 }
 
 impl Bin {
+    /// Creates an individual from a known chromosome, for example to seed a population with
+    /// saved solutions. Its fitness is `NaN` until it is evaluated.
     pub fn new(chromosome: Vec<bool>) -> Self {
         Self {
             chromosome,
-            fitness: 0.0,
+            fitness: f64::NAN,
         }
     }
 }
@@ -28,7 +34,7 @@ impl Individual for Bin {
     fn generate_member<R: Rng + ?Sized>(dimension: u32, _: &Self::RangeType, rng: &mut R) -> Self {
         Self {
             chromosome: (0..dimension).map(|_| rng.random()).collect::<Vec<bool>>(),
-            fitness: 0.0,
+            fitness: f64::NAN,
         }
     }
 

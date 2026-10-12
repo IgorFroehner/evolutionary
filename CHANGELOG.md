@@ -30,6 +30,14 @@
   `individual.get_chromosome().to_vec()` instead of `individual.get_chromosome().clone()`.
   Comparing a chromosome with a `Vec` still works. The built-in individuals keep their
   `Vec` fields.
+- An individual that was never evaluated has a fitness of `NaN` instead of `0.0`:
+  `generate_member` and `Bin::new`, `Int::new`, `IntPerm::new` and `Real::new` start there,
+  so a fitness that was never computed can't pass for a real zero. Write
+  `individual.get_fitness().is_nan()` instead of `individual.get_fitness() == 0.0` to tell
+  one apart. Every comparison already ranks `NaN` last, and an evolution evaluates every
+  individual before reading its fitness, so seeded runs are unchanged. With the `serde`
+  feature such an individual is saved to JSON with a `null` fitness, which now loads back as
+  `NaN`; files saved before load as they did.
 
 ### Added
 
