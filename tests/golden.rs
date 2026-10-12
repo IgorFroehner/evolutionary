@@ -1,8 +1,9 @@
 //! Golden replay tests: a seeded run must give exactly the same result in every version.
 //!
 //! Each test runs one short seeded evolution per encoding and compares a fingerprint of the
-//! final population and of the best and average fitness history with constants recorded from
-//! 0.4.0. Between them the four runs use every built-in selection and a different crossover and
+//! final population and of the best and average fitness history with recorded constants. They
+//! were first recorded from 0.4.0; the history of this file shows when each was last
+//! regenerated. Between them the four runs use every built-in selection and a different crossover and
 //! mutation each.
 //!
 //! **A failing test here is a breaking change.** It means a seeded run no longer replays as it
@@ -141,8 +142,8 @@ where
     let actual = fingerprint(builder);
     assert_eq!(
         actual, expected,
-        "a seeded run no longer replays as in 0.4.0, which is a breaking change: see the top of \
-         tests/golden.rs. If deliberate, the new constants are {actual:?}"
+        "a seeded run no longer replays as when its constants were recorded, which is a breaking \
+         change: see the top of tests/golden.rs. If deliberate, the new constants are {actual:?}"
     );
 }
 

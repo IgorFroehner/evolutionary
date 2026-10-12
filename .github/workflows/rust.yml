@@ -52,7 +52,11 @@ jobs:
     - name: Install system dependencies
       run: sudo apt-get update && sudo apt-get install -y libfontconfig1-dev
     - name: Check the library with every feature
-      # Only the library: the dev-dependencies (criterion, only-brain) need a newer Rust, so
-      # the tests, examples and benchmark cannot build here. --locked keeps the dependency
-      # versions the lockfile pins.
+      # Only the library: the dev-dependencies (criterion, only-brain) need Rust 1.85, so the
+      # tests, examples and benchmark cannot build here. --locked checks the versions the
+      # lockfile pins, so no resolver setting applies here. If a dependency bump breaks this
+      # job, regenerate the lockfile with an MSRV-aware resolve (cargo 1.84 or later):
+      #   CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS=fallback cargo update
+      # .cargo/config.toml sets the same thing for every `cargo update` in this repository.
+      # Cargo 1.82 does not know that setting and prints a warning that it is ignored.
       run: cargo check --locked --verbose --all-features

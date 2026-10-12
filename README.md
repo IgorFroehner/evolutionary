@@ -23,7 +23,10 @@ A fully extensible Rust framework for solving problems with parallelized genetic
 evolutionary = "0.4"
 ```
 
-It needs Rust 1.82 or newer.
+It needs Rust 1.82 or newer. With the `config` feature on Rust older than 1.85, also run
+`cargo update -p indexmap --precise 2.13.1`: newer `indexmap` releases, which `toml` pulls in,
+need Rust 1.85. Developing the crate itself (its tests, examples and benchmark) needs Rust
+1.85, because of the dev-dependencies.
 
 First, code your fitness function by implementing `Fitness` for the encoding you use. Here the
 individual is a bit string and the fitness counts its ones:

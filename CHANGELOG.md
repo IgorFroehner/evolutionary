@@ -33,8 +33,9 @@
   history of 0.4.0. A seeded run that stops replaying now fails the tests instead of going
   unnoticed until someone fingerprints runs by hand.
 - `rust-version = "1.82"` in `Cargo.toml`, the oldest Rust that builds the library with every
-  feature (`Option::is_none_or` needs 1.82). The tests and examples need a newer one, through
-  their dev-dependencies.
+  feature (`Option::is_none_or` needs 1.82). With the `config` feature on Rust older than 1.85,
+  run `cargo update -p indexmap --precise 2.13.1`: newer `indexmap` releases, which `toml` pulls
+  in, need 1.85. The tests and examples need 1.85 too, through their dev-dependencies.
 
 ### Fixed
 
@@ -53,6 +54,8 @@
 
 - CI checks formatting, fails on rustdoc warnings, checks the library on Rust 1.82, and
   uses `actions/checkout` v4. Dependabot proposes cargo and GitHub Actions updates monthly.
+- `Cargo.lock` is updated to the newest dependency versions that build on Rust 1.82, and
+  `.cargo/config.toml` makes `cargo update` in this repository keep to them.
 
 ## 0.4.0 (2026-10-11)
 

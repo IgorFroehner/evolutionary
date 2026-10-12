@@ -1,0 +1,6 @@
+# `cargo update` (cargo 1.84 and later) picks the newest dependency versions whose
+# `rust-version` fits ours (1.82, in Cargo.toml), so the lockfile keeps building on the MSRV
+# that CI checks. Only resolution in this repository is affected; crate users resolve on
+# their own.
+[resolver]
+incompatible-rust-versions = "fallback"

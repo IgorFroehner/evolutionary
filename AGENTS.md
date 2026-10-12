@@ -17,7 +17,7 @@ cargo test                                              # unit + integration + d
 cargo test --all-features                               # also serde, config and plot code (CI runs both)
 cargo test --test reproducibility                       # one integration test file
 cargo test --test reproducibility bin                   # tests in that file whose name contains "bin"
-cargo test --test golden                                # seeded runs replay exactly as in 0.4.0
+cargo test --test golden                                # seeded runs replay exactly as recorded
 cargo test --doc                                        # doc tests only
 cargo clippy --all-targets --all-features -- -D warnings  # CI fails on any warning
 cargo fmt --all -- --check                              # CI checks formatting
@@ -75,11 +75,14 @@ most design decisions:
   deliberately rejected for this reason.
 - `src/rng.rs` pins the derivation with `numbers_are_stable_across_versions`;
   `tests/reproducibility.rs` checks that 1 thread and 8 threads agree for every built-in operator;
-  `tests/golden.rs` checks that one seeded run per encoding gives exactly the final population and
-  fitness history of 0.4.0, and between them its runs use every built-in selection. A failing
-  golden test is a breaking change: fix it, or record it in `CHANGELOG.md` and regenerate the
-  constants in the same change (the file's header says how). An operator no golden run uses is
-  only covered by the thread test, so before optimizing one, add it to a golden run first.
+  `tests/golden.rs` checks that one seeded run per encoding gives exactly the recorded final
+  population and fitness history, and between them its runs use every built-in selection. A
+  failing golden test is a breaking change: fix it, or record it in `CHANGELOG.md` and regenerate
+  the constants in the same change (the file's header says how). An operator no golden run uses
+  is only covered by the thread test, so before optimizing one, add it to a golden run first.
+  Record that run's constants on code where the operator is unchanged since the last release
+  (ideally check out the release tag), and commit them before the optimization. Constants
+  recorded after the change pin the optimized behavior and catch nothing.
 - The average fitness is summed sequentially on purpose; do not parallelize it.
 
 ## Conventions
@@ -94,8 +97,12 @@ most design decisions:
   `ROADMAP.md` tracks planned work with checkboxes.
 - The minimum supported Rust version is `rust-version` in `Cargo.toml` (1.82), and CI checks
   the library, with every feature, on that toolchain. Do not use a newer standard-library API
-  without raising it; clippy's `incompatible_msrv` flags most. The dev-dependencies need a newer
-  Rust, so the MSRV job does not build the tests.
+  without raising it; clippy's `incompatible_msrv` flags most. The dev-dependencies need Rust
+  1.85 (edition 2024), so the MSRV job does not build the tests.
+- `Cargo.lock` must keep every library dependency buildable on that version: the MSRV job checks
+  with `--locked`. `.cargo/config.toml` makes `cargo update` (cargo 1.84 and later) prefer
+  versions whose `rust-version` fits, so update with a recent cargo. A plain fresh resolve picks
+  `indexmap` 2.14 (edition 2024) through `toml`.
 - Optional dependencies stay behind features (`serde`, `config`, `plot`), all off by default. New
   code that needs one must be `#[cfg(feature = "...")]`-gated and must compile under both
   `cargo test` and `cargo test --all-features`.
