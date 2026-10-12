@@ -149,9 +149,12 @@ feature lets you save and load them.
 ## Experiments
 
 `ExperimentRunner` runs the same builder several times in parallel and collects the best and
-average fitness of every generation of every run. With the `plot` feature it also saves a chart of
-the averages over the runs. A seeded experiment is reproducible, and each of its runs gets its own
-seed.
+average fitness of every generation of every run, along with the best individual and the time of
+each run. `average_time`, `average_best_fitness` and `average_generations` aggregate them, and
+`experiment_digest` prints them. With the `plot` feature, `save_chart(path)` saves a chart of the
+averages over the runs; nothing is written unless you call it. A seeded experiment is reproducible,
+and each of its runs gets its own seed, kept in its result so the run can be replayed on its own.
+Calling `run` again adds runs with new seeds.
 
 ## Features
 
@@ -161,7 +164,7 @@ No feature is on by default, so embedding the library compiles only the genetic 
 |---|---|
 | `serde` | `Serialize` and `Deserialize` for `Bin`, `Int`, `IntPerm`, `Real` and `GeneCod`. |
 | `config` | `read_config`, which reads the evolution parameters from a TOML file. Implies `serde`. |
-| `plot` | `Evolution::plot_chart`, `Metrics::plot_chart` and the chart saved by `ExperimentRunner`, with [plotters](https://github.com/plotters-rs/plotters). |
+| `plot` | `Evolution::plot_chart`, `Metrics::plot_chart` and `ExperimentRunner::save_chart`, with [plotters](https://github.com/plotters-rs/plotters). |
 
 ```toml
 evolutionary = { version = "0.4", features = ["serde", "plot"] }

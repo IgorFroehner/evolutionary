@@ -1,5 +1,47 @@
 # Changelog
 
+## 0.5.0 (unreleased)
+
+### Breaking
+
+- `ExperimentRunner::run` returns `Result<(), BuildError>`: write `experiment.run()?` (or
+  `experiment.run().unwrap()`) instead of `experiment.run()`. The builder is checked once before
+  any run starts, even with zero runs, so an invalid builder returns its error instead of
+  panicking inside a rayon thread.
+- With the `plot` feature, `ExperimentRunner::run` no longer saves a chart to
+  `results/<name>/<name>.png`: call `experiment.save_chart("results/<name>/<name>.png")` after
+  `run` to keep saving it. Nothing is written unless you ask.
+- `ExperimentResult::best_found` is `Evolution::best_ever`, the first individual that reached
+  the run's best fitness, instead of the best of the last generation, so seeded runs can give a
+  different `best_found`. With or without elitism, on a tie it can be a different chromosome with
+  the same fitness; without elitism it can be better, when the last generation had lost the
+  best. For the best of the final population, replay the run with
+  `EvolutionBuilder::with_seed(result.seed)` and read `current_best()` instead of
+  `best_found`. Each run's seed and fitness history are unchanged.
+
+### Added
+
+- `ExperimentRunner::save_chart(path)`, with the `plot` feature, saves the chart of the best and
+  average fitness per generation averaged over the runs, creating the parent directories.
+- `ExperimentRunner::average_time`, `average_best_fitness`, `average_generations` and
+  `total_time` expose the numbers `experiment_digest` prints. The digest now prints the average
+  best fitness too, and says "generations" instead of "max iterations".
+- `ExperimentResult::time` and `ExperimentResult::seed`: how long a run took and its seed, which
+  `EvolutionBuilder::with_seed` takes to replay that run on its own.
+
+### Fixed
+
+- Calling `ExperimentRunner::run` again on a seeded experiment repeated the seeds of the first
+  call, so the new runs duplicated the old ones and the averages counted them twice. The seed of
+  a run is now drawn from its position in `experiment_results`: the first call draws exactly the
+  same seeds as before, and later calls draw new ones (the same as one call with more runs).
+- Calling `ExperimentRunner::run` twice counted the first batch's time twice, and
+  `experiment_digest` divided the total by the runs of one call instead of the number of
+  results. The times are now added up from the results when asked for. The chart also averages
+  over every result instead of the runs of one call.
+- `experiment_digest` no longer panics when there are no results yet, and saving the chart then
+  returns an error instead of panicking.
+
 ## 0.4.0 (2026-10-11)
 
 ### Breaking

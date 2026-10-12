@@ -39,7 +39,7 @@ fn main() {
 
         let mut experiment = ExperimentRunner::new("radios".to_string(), 10, evolution_builder);
 
-        experiment.run();
+        experiment.run().expect("invalid evolution parameters");
 
         // evolution.plot_chart(&"radios".to_string()).unwrap();
         //

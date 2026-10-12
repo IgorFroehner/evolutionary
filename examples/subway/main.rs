@@ -164,7 +164,7 @@ fn main() {
     let mut experiment =
         ExperimentRunner::new("Metro - E14 -> E7".to_string(), 30, evolution_builder);
 
-    experiment.run();
+    experiment.run().expect("invalid evolution parameters");
 
     experiment.experiment_digest();
 
