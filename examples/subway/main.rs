@@ -155,7 +155,7 @@ fn main() {
         .with_selection(TournamentSelection::default())
         .with_crossover(UniformCrossover::default())
         .with_mutation(RandomResettingMutation::default())
-        .with_title("Metro".to_string())
+        .with_title("Metro")
         .with_stop_condition(move |report| report.generation >= 100)
         // .build()
         // .unwrap()
@@ -189,5 +189,5 @@ fn main() {
     // // evolution.population_digest();
     // evolution.time_digest();
     //
-    // evolution.plot_chart("Metro.png", "Metro E14 -> E7").unwrap();
+    // evolution.plot_chart("Metro.png").unwrap();
 }

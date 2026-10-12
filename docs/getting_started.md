@@ -167,10 +167,11 @@ You can also drive the evolution yourself instead of calling `run`, and look at 
 We have our list of invited friends as the best individual at the end of the evolution, which we expect to be all true. 
 But you can also make some analysis of the evolution. For example, you can plot the fitness of the best individual 
 and average fitness of the population over the generations, and notice that it found the best solution pretty fast 
-(before 10 generations). Charts need the `plot` feature (`features = ["plot"]` in your `Cargo.toml`):
+(before 10 generations). Charts need the `plot` feature (`features = ["plot"]` in your `Cargo.toml`). The chart is
+captioned with the title of the evolution, set with `.with_title("Party Fitness")` on the builder:
 
 ```rust
-    evolution.plot_chart("party_fitness.png", "Party Fitness").unwrap(); ;
+    evolution.plot_chart("party_fitness.png").unwrap();
 ```
 
 <img src="./party_fitness.png" width="400" height="240">

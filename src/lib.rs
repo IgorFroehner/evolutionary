@@ -46,7 +46,7 @@
 //!         .with_selection(TournamentSelection::default())
 //!         .with_crossover(NPointsCrossover::default())
 //!         .with_mutation(BitFlipMutation::default())
-//!         .with_title("Max".to_string())
+//!         .with_title("Max")
 //!         .with_stop_condition(|report| report.generation >= 100)
 //!         .build().unwrap();
 //!

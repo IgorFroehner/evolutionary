@@ -34,7 +34,7 @@ fn main() {
             .with_selection(RouletteSelection)
             .with_crossover(NPointsCrossover::default())
             .with_mutation(BitFlipMutation::default())
-            .with_title("Math Function".to_string())
+            .with_title("Math Function")
             .with_stop_condition(move |report| report.generation >= runs)
             .build()
             .unwrap();
@@ -48,6 +48,6 @@ fn main() {
         println!("x: {}", x);
         println!("f(x): {}", f(x));
 
-        // evolution.plot_chart().unwrap();
+        // evolution.plot_chart("math_func.png").unwrap();
     }
 }

@@ -27,7 +27,7 @@ fn main() {
             .with_crossover(crossover.clone())
             .with_mutation(mutation.clone())
             .with_stop_condition(move |report| report.generations_without_improvement == 20_000)
-            .with_title("NQueens".to_string());
+            .with_title("NQueens");
 
         let mut experiment =
             ExperimentRunner::new(format!("{}Queens", dimension), 30, evolution_builder);

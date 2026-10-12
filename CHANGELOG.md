@@ -56,6 +56,11 @@
   `Option<Duration>`) instead of reading `metrics.step_times[&Steps::Selection].2`.
   `time_digest` prints the same thing, and its documentation now lists the elitism line it
   already printed.
+- With the `plot` feature, `Evolution::plot_chart` takes only the path and captions the chart
+  with the title given to `EvolutionBuilder::with_title`, which nothing read before: write
+  `.with_title("TSP")` on the builder and `evolution.plot_chart("tsp.png")` instead of
+  `evolution.plot_chart("tsp.png", "TSP")`. For another caption, write
+  `evolution.metrics.plot_chart("tsp.png", "Another caption")`.
 
 ### Added
 
@@ -65,6 +70,8 @@
   the prelude, so its traits only come into scope where they are asked for.
 - `Evolution::population()` borrows the current population as a slice, in its current order,
   where `current_population()` clones and sorts it at every call.
+- `EvolutionBuilder::with_title` takes any `impl Into<String>`, so `.with_title("TSP")` works
+  without `.to_string()`, and `Evolution::title()` returns it.
 - `ExperimentRunner::save_chart(path)`, with the `plot` feature, saves the chart of the best and
   average fitness per generation averaged over the runs, creating the parent directories.
 - `ExperimentRunner::average_time`, `average_best_fitness`, `average_generations` and

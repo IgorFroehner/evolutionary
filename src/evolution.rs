@@ -51,7 +51,7 @@ pub struct EvolutionConfig<T: Individual> {
 /// #     .with_selection(TournamentSelection::default())
 /// #     .with_crossover(NPointsCrossover::default())
 /// #     .with_mutation(BitFlipMutation::default())
-/// #     .with_title("Max".to_string())
+/// #     .with_title("Max")
 /// #     .with_stop_condition(|report| report.generation >= 1000)
 /// #     .build().unwrap();
 /// #
@@ -68,7 +68,7 @@ pub struct EvolutionConfig<T: Individual> {
 /// evolution.run();
 /// ```
 pub struct Evolution<T: Individual> {
-    _title: String,
+    title: String,
     config: EvolutionConfig<T>,
     fitness: Box<dyn Fitness<T>>,
     selection: Box<dyn Selection<T>>,
@@ -107,7 +107,7 @@ impl<T: Individual> Evolution<T> {
         stop_condition: StopConditionFn<T>,
     ) -> Self {
         Self {
-            _title: title,
+            title,
             current_population: Vec::new(),
             stats: None,
             config,
@@ -380,15 +380,20 @@ impl<T: Individual> Evolution<T> {
         })
     }
 
-    /// Saves a chart of the best and average fitness per generation to `path`. Needs the `plot`
-    /// feature.
+    /// Saves a chart of the best and average fitness per generation to `path` (a PNG), with the
+    /// [`title`](Self::title) as its caption. Needs the `plot` feature.
+    ///
+    /// For another caption, call [`Metrics::plot_chart`] on [`metrics`](Self::metrics).
     #[cfg(feature = "plot")]
-    pub fn plot_chart(
-        &self,
-        path: impl Into<String>,
-        test_name: impl Into<String>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        self.metrics.plot_chart(&path.into(), &test_name.into())
+    pub fn plot_chart(&self, path: impl Into<String>) -> Result<(), Box<dyn std::error::Error>> {
+        self.metrics.plot_chart(&path.into(), &self.title)
+    }
+
+    /// The title given to
+    /// [`EvolutionBuilder::with_title`](crate::EvolutionBuilder::with_title), `""` without one.
+    /// `plot_chart`, with the `plot` feature, uses it as the caption of the chart.
+    pub fn title(&self) -> &str {
+        &self.title
     }
 
     /// The current generation, 0 for the initial population.

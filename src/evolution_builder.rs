@@ -104,7 +104,7 @@ impl Error for BuildError {}
 ///         .with_selection(TournamentSelection::default())
 ///         .with_crossover(NPointsCrossover::default())
 ///         .with_mutation(BitFlipMutation::default())
-///         .with_title("Max".to_string())
+///         .with_title("Max")
 ///         .with_stop_condition(|report| report.generation >= 1000)
 ///         .build().unwrap();
 /// }
@@ -254,9 +254,10 @@ impl<T: Individual> EvolutionBuilder<T> {
         self
     }
 
-    /// Sets the title of the evolution to use when plotting. Defaults to `""`.
-    pub fn with_title(mut self, title: String) -> Self {
-        self.title = Some(title);
+    /// Sets the title of the evolution, [`Evolution::title`], which `Evolution::plot_chart` (with
+    /// the `plot` feature) uses as the caption of the chart. Defaults to `""`.
+    pub fn with_title(mut self, title: impl Into<String>) -> Self {
+        self.title = Some(title.into());
         self
     }
 
@@ -363,6 +364,19 @@ mod tests {
     #[test]
     fn builds_when_complete() {
         assert!(complete(10, 4).build().is_ok());
+    }
+
+    #[test]
+    fn the_title_reaches_the_evolution() {
+        assert_eq!(complete(10, 4).build().unwrap().title(), "");
+
+        let title = String::from("Max");
+        let evolution = complete(10, 4).with_title(&*title).build().unwrap();
+        assert_eq!(evolution.title(), "Max");
+        assert_eq!(
+            complete(10, 4).with_title(title).build().unwrap().title(),
+            "Max"
+        );
     }
 
     #[test]

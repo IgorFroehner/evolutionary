@@ -37,6 +37,8 @@ fn main() {
         })
         // Set the stop condition based on the number of iterations
         .with_stop_condition(move |report| report.generation >= 1000)
+        // Name the evolution, which captions its chart
+        .with_title("Party Fitness")
         .build()
         .unwrap();
 
@@ -50,9 +52,7 @@ fn main() {
     println!("Best fitness: {}", evolution.current_best_fitness());
 
     // Prints the best and average fitness over the generations
-    evolution
-        .plot_chart("party_fitness.png", "Party Fitness")
-        .unwrap();
+    evolution.plot_chart("party_fitness.png").unwrap();
 
     // Gives an output of the time spent digested by each evolution step
     evolution.time_digest();
