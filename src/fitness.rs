@@ -128,6 +128,13 @@ use crate::population::Individual;
 /// same `Evolution` carries on from where the first run left it: build a new `Evolution` from
 /// the builder to replay a run.
 ///
+/// A run resumed with
+/// [`EvolutionBuilder::with_checkpoint`](crate::EvolutionBuilder::with_checkpoint) gets a new
+/// clone of the fitness too, and does not evaluate the checkpoint's population again. To go on
+/// with the same noise, start the count where the saved run had it: one call for the initial
+/// population and one per generation since, so `checkpoint.generation + 1` in the example
+/// above.
+///
 /// A fitness of this kind has no seed of its own, so two runs with different seeds see the
 /// same noise in the same generation; put a seed of your own in the fitness if that matters.
 pub trait Fitness<T: Individual>: 'static + DynClone + Send + Sync {

@@ -336,7 +336,9 @@ impl<T: Individual> EvolutionBuilder<T> {
     /// the current population, every member of which, elitists included, was evaluated in the
     /// last generation.
     ///
-    /// For a noisy fitness that still replays a seeded run, see [`Fitness`]'s "Randomness".
+    /// For a noisy fitness that still replays a seeded run, see [`Fitness`]'s "Randomness". A
+    /// run resumed from a [`with_checkpoint`](Self::with_checkpoint) goes on exactly only with
+    /// the same setting as the run that was saved.
     pub fn with_reevaluate_elitists(mut self, reevaluate: bool) -> Self {
         self.reevaluate_elitists = reevaluate;
         self

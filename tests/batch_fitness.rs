@@ -4,7 +4,7 @@
 //! `tests/golden.rs`, whose runs all use it.
 
 use evolutionary::prelude::*;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 
 const POPULATION: u32 = 20;
@@ -439,4 +439,96 @@ fn reevaluation_handles_a_selection_that_shrinks_the_pool() {
         check_shape(population, elitism, KeepHalf, |size| size.div_ceil(2));
         check_shape(population, elitism, KeepOne, |_| 1);
     }
+}
+
+/// The sum of the genes plus noise from a generation count kept in the fitness value, copied by
+/// `Clone`: the pattern the `Fitness` docs recommend.
+struct CountedNoise {
+    generation: AtomicU64,
+}
+
+impl CountedNoise {
+    fn starting_at(generation: u64) -> Self {
+        CountedNoise {
+            generation: AtomicU64::new(generation),
+        }
+    }
+}
+
+impl Clone for CountedNoise {
+    fn clone(&self) -> Self {
+        Self::starting_at(self.generation.load(Ordering::Relaxed))
+    }
+}
+
+impl Fitness<Real> for CountedNoise {
+    fn calculate_fitness(&self, individual: &Real) -> f64 {
+        let generation = self.generation.load(Ordering::Relaxed);
+        let hash = individual
+            .get_chromosome()
+            .iter()
+            .fold(generation, |hash, gene| {
+                (hash ^ gene.to_bits()).wrapping_mul(0x0000_0100_0000_01b3)
+            });
+
+        sum(individual) + (hash % 1000) as f64 / 1000.0
+    }
+
+    fn calculate_population(&self, population: &mut [Real]) {
+        self.generation.fetch_add(1, Ordering::Relaxed);
+        for individual in population {
+            individual.set_fitness(self.calculate_fitness(individual));
+        }
+    }
+}
+
+const CHECKPOINT_AT: u32 = 4;
+
+/// Runs `fitness` for `GENERATIONS` in one go, and again stopped at `CHECKPOINT_AT` and resumed
+/// with `resumed_fitness`, both with re-evaluation on.
+fn resumed_and_uninterrupted<F: Fitness<Real> + Clone>(
+    fitness: F,
+    resumed_fitness: impl FnOnce(u32) -> F,
+) -> (Outcome, Outcome) {
+    let uninterrupted = outcome(&builder(fitness.clone()).with_reevaluate_elitists(true));
+
+    let mut stopped = builder(fitness)
+        .with_reevaluate_elitists(true)
+        .with_stop_condition(|report| report.generation >= CHECKPOINT_AT)
+        .build()
+        .unwrap();
+    stopped.run();
+    let checkpoint = stopped.checkpoint();
+    let generation = checkpoint.generation;
+
+    let resumed = outcome(
+        &builder(resumed_fitness(generation))
+            .with_reevaluate_elitists(true)
+            .with_checkpoint(checkpoint),
+    );
+
+    (uninterrupted, resumed)
+}
+
+#[test]
+fn a_run_with_reevaluation_resumes_exactly() {
+    let (uninterrupted, resumed) = resumed_and_uninterrupted(Sum, |_| Sum);
+
+    assert_eq!(resumed, uninterrupted);
+}
+
+#[test]
+fn a_noise_count_resumes_from_the_generation_after_the_checkpoint() {
+    let (uninterrupted, resumed) =
+        resumed_and_uninterrupted(CountedNoise::starting_at(0), |generation| {
+            CountedNoise::starting_at(u64::from(generation) + 1)
+        });
+    assert_eq!(resumed, uninterrupted);
+
+    // The noise does depend on the count: starting it from zero again gives another run.
+    let (uninterrupted, restarted) =
+        resumed_and_uninterrupted(CountedNoise::starting_at(0), |_| {
+            CountedNoise::starting_at(0)
+        });
+    assert_ne!(restarted, uninterrupted);
 }

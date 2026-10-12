@@ -118,8 +118,11 @@
 - The `Fitness` documentation says what a seeded run needs from the fitness: the same number
   for the same individual every time. The fitness gets no `Rngs`; a noisy fitness that must
   replay derives its noise from a fixed hash of the chromosome, and counts the generations in
-  `calculate_population` to make the noise change from one generation to the next. It has a
-  runnable example.
+  `calculate_population` to make the noise change from one generation to the next. That
+  count lives in the fitness value, copied by `Clone`, never behind an `Arc` or in a `static`,
+  and a run resumed from a checkpoint starts it at `checkpoint.generation + 1`. It has a
+  runnable example. `calculate_population` gets the population in a fixed order: the new
+  individuals in mating-pool order, then the re-evaluated elitists.
 - `evolutionary::rayon` re-exports the `rayon` the crate runs on, as `evolutionary::rand`
   does for `rand`: write `use evolutionary::rayon::prelude::*;` in a parallel custom operator
   instead of adding `rayon` to your own dependencies at a matching version. It stays out of
