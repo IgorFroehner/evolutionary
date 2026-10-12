@@ -340,6 +340,11 @@ impl<T: Individual> EvolutionBuilder<T> {
     ///   doesn't have `dimension` genes, or its fitness history doesn't have one entry per
     ///   generation.
     ///
+    /// The population size check is exact. A custom [`Selection`] may hand back a smaller
+    /// mating pool than the population, and the run then goes on with fewer individuals; a
+    /// checkpoint of such a run has fewer individuals than the population size, so it is
+    /// rejected with [`BuildError::CheckpointPopulationSize`] and can't be resumed.
+    ///
     /// In an [`ExperimentRunner`](crate::prelude::ExperimentRunner), every run resumes from the
     /// checkpoint with a seed of its own drawn from the checkpoint's, so the runs branch off it
     /// in different directions.

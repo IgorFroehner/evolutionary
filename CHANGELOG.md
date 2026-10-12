@@ -88,10 +88,14 @@
   go, on 1 thread or 8. `Checkpoint<T>` (in the prelude) is a `#[non_exhaustive]` struct of
   public fields: the run's `seed`, its `generation`, the `population` with its fitnesses,
   `best_ever`, `best_fitnesses`, `avg_fitnesses` and `generations_without_improvement`.
-  Timings are not part of it. `Checkpoint::new` builds one for a format of your own; with the
-  `serde` feature it is `Serialize` and `Deserialize`, with a `null` fitness in the history
-  read back as `NaN`. To resume exactly from JSON, turn on `serde_json`'s `float_roundtrip`
-  feature, without which the last bit of some numbers changes on the way back.
+  Timings are not part of it. It has no public constructor, so a field can be added without
+  breaking anything: a checkpoint comes from `Evolution::checkpoint`, or from deserializing
+  one. With the `serde` feature it is `Serialize` and `Deserialize`, with a `null` fitness in
+  the history read back as `NaN`. To resume exactly from JSON, add
+  `serde_json = { version = "1", features = ["float_roundtrip"] }` to your own dependencies,
+  without which the last bit of some numbers changes on the way back. JSON also turns an
+  infinite fitness into `NaN`, and the resume is then not exact: save to a binary format such
+  as CBOR if your fitness can be infinite.
 - A resumed run keeps the checkpoint's seed. `build` returns the new `BuildError` variants
   `CheckpointSeed` when `with_seed` gives another one (the same one is fine),
   `CheckpointWithInitialPopulation` when `with_initial_population` gives individuals too,

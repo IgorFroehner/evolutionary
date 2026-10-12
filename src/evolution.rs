@@ -317,15 +317,15 @@ impl<T: Individual> Evolution<T> {
             .run_seed
             .expect("the evolution is not started, call `start` or `run` first");
 
-        Checkpoint::new(
+        Checkpoint {
             seed,
-            self.generation(),
-            self.current_population.clone(),
-            self.best_ever().clone(),
-            self.metrics.best_fitnesses.clone(),
-            self.metrics.avg_fitnesses.clone(),
-            self.metrics.gens_without_improvement,
-        )
+            generation: self.generation(),
+            population: self.current_population.clone(),
+            best_ever: self.best_ever().clone(),
+            best_fitnesses: self.metrics.best_fitnesses.clone(),
+            avg_fitnesses: self.metrics.avg_fitnesses.clone(),
+            generations_without_improvement: self.metrics.gens_without_improvement,
+        }
     }
 
     /// Prints the generation, the best and average fitness, and every individual with its

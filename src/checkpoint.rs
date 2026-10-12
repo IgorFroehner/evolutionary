@@ -9,12 +9,33 @@
 /// The timings of [`Metrics`](crate::metrics::Metrics) are not part of it: a resumed run times
 /// only what it runs itself.
 ///
+/// There is no public constructor: a checkpoint comes from
+/// [`Evolution::checkpoint`](crate::Evolution::checkpoint), or, with the `serde` feature, from
+/// deserializing one that was saved. Its fields are public, to read them or to change one (for
+/// example the `seed`, to branch off the checkpoint).
+///
+/// # Saving a checkpoint
+///
 /// With the `serde` feature it implements `Serialize` and `Deserialize` when the individual
 /// does, so it can be saved in any format serde supports. To resume exactly, the format must
-/// give back every `f64` bit for bit: with `serde_json`, turn on its `float_roundtrip` feature,
-/// without which the last bit of some numbers can change on the way back, and the resumed run
-/// then drifts away from the one that was saved. A fitness that is `NaN` is saved to JSON as
-/// `null` and loads back as `NaN`; an infinite one does too, so it loads back as `NaN`.
+/// give back every `f64` bit for bit, `NaN` and infinities included.
+///
+/// - A binary format such as CBOR (with `ciborium`) gives back every `f64` exactly, `NaN` and
+///   infinities included.
+/// - JSON with `serde_json` needs its `float_roundtrip` feature, in your own dependencies (this
+///   crate does not turn it on for you):
+///
+///   ```toml
+///   serde_json = { version = "1", features = ["float_roundtrip"] }
+///   ```
+///
+///   Without it the last bit of some numbers can change on the way back, and the resumed run
+///   then drifts away from the one that was saved.
+/// - JSON has no `NaN` nor infinities: `serde_json` writes both as `null`, which loads back as
+///   `NaN`. A `NaN` fitness comes back as it was, but an infinite one comes back as `NaN`, and
+///   **the resume is then not exact**: that individual now ranks below every number, as `NaN`
+///   does, so selection, `best_ever` and `generations_without_improvement` go another way than
+///   in the saved run. If your fitness can be infinite, save to a binary format.
 ///
 /// # Example
 ///
@@ -64,6 +85,8 @@
     derive(serde_derive::Serialize, serde_derive::Deserialize)
 )]
 #[non_exhaustive]
+// A field added later must be `#[cfg_attr(feature = "serde", serde(default))]`, so that
+// checkpoints saved by an older version keep loading.
 pub struct Checkpoint<T> {
     /// The seed of the run, which a resumed run keeps: see
     /// [`EvolutionBuilder::with_checkpoint`](crate::EvolutionBuilder::with_checkpoint).
@@ -92,32 +115,4 @@ pub struct Checkpoint<T> {
     /// [`GenerationReport::generations_without_improvement`](crate::GenerationReport::generations_without_improvement)
     /// at `generation`.
     pub generations_without_improvement: u32,
-}
-
-impl<T> Checkpoint<T> {
-    /// A checkpoint from its parts, for one saved in a format of your own.
-    /// [`Evolution::checkpoint`](crate::Evolution::checkpoint) is the usual way to get one, and
-    /// with the `serde` feature `Deserialize` loads one.
-    ///
-    /// [`EvolutionBuilder::build`](crate::EvolutionBuilder::build) checks that it fits the
-    /// builder.
-    pub fn new(
-        seed: u64,
-        generation: u32,
-        population: Vec<T>,
-        best_ever: T,
-        best_fitnesses: Vec<f64>,
-        avg_fitnesses: Vec<f64>,
-        generations_without_improvement: u32,
-    ) -> Self {
-        Self {
-            seed,
-            generation,
-            population,
-            best_ever,
-            best_fitnesses,
-            avg_fitnesses,
-            generations_without_improvement,
-        }
-    }
 }

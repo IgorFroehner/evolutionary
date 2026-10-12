@@ -182,8 +182,22 @@ resumed.run();
 ```
 
 With the `serde` feature a `Checkpoint` is `Serialize` and `Deserialize`, so you pick the format.
-For JSON, turn on `serde_json`'s `float_roundtrip` feature: without it the last bit of some
-numbers changes on the way back, and the resumed run drifts away from the saved one.
+To resume exactly, the format must give back every `f64` bit for bit:
+
+- A binary format such as CBOR (with `ciborium`) does, `NaN` and infinities included.
+- For JSON, add `float_roundtrip` to `serde_json` in your own dependencies (this crate's
+  dev-dependency does not turn it on for you). Without it the last bit of some numbers changes
+  on the way back, and the resumed run drifts away from the saved one:
+
+  ```toml
+  serde_json = { version = "1", features = ["float_roundtrip"] }
+  ```
+
+- JSON has no `NaN` nor infinities, and `serde_json` writes both as `null`, which loads back as
+  `NaN`. A `NaN` fitness survives, but an infinite one comes back as `NaN`, and the resume is
+  then **not exact**: that individual ranks below every number, so selection, `best_ever` and
+  `generations_without_improvement` diverge from the saved run. If your fitness can be infinite,
+  use a binary format.
 
 ## Experiments
 

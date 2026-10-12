@@ -484,27 +484,6 @@ fn a_history_that_does_not_match_the_generation_is_an_error() {
 }
 
 #[test]
-fn a_checkpoint_can_be_built_from_its_parts() {
-    let saved = checkpoint_of(bin());
-
-    let rebuilt = Checkpoint::new(
-        saved.seed,
-        saved.generation,
-        saved.population.clone(),
-        saved.best_ever.clone(),
-        saved.best_fitnesses.clone(),
-        saved.avg_fitnesses.clone(),
-        saved.generations_without_improvement,
-    );
-    let mut from_parts = bin().with_checkpoint(rebuilt).build().unwrap();
-    from_parts.run();
-    let mut uninterrupted = bin().build().unwrap();
-    uninterrupted.run();
-
-    assert_eq!(outcome(&from_parts), outcome(&uninterrupted));
-}
-
-#[test]
 fn an_experiment_branches_off_a_checkpoint() {
     let checkpoint = checkpoint_of(real());
 
@@ -559,16 +538,11 @@ mod serde {
 
     #[test]
     fn nan_fitnesses_round_trip_through_json() {
-        let never_evaluated = Bin::new(vec![true; DIMENSION as usize]);
-        let checkpoint = Checkpoint::new(
-            3,
-            1,
-            vec![never_evaluated.clone()],
-            never_evaluated.clone(),
-            vec![f64::NAN, 2.0],
-            vec![f64::NAN, f64::NAN],
-            1,
-        );
+        let mut checkpoint = checkpoint_of(bin());
+        checkpoint.population[0].set_fitness(f64::NAN);
+        checkpoint.best_ever.set_fitness(f64::NAN);
+        checkpoint.best_fitnesses[0] = f64::NAN;
+        checkpoint.avg_fitnesses = vec![f64::NAN; CHECKPOINT_AT as usize + 1];
 
         let json = serde_json::to_string(&checkpoint).unwrap();
         let loaded: Checkpoint<Bin> = serde_json::from_str(&json).unwrap();
@@ -577,10 +551,28 @@ mod serde {
         assert!(loaded.population[0].get_fitness().is_nan());
         assert!(loaded.best_ever.get_fitness().is_nan());
         assert!(loaded.best_fitnesses[0].is_nan());
-        assert_eq!(loaded.best_fitnesses[1], 2.0);
+        assert_eq!(
+            bits(&loaded.best_fitnesses[1..]),
+            bits(&checkpoint.best_fitnesses[1..])
+        );
         assert!(loaded.avg_fitnesses.iter().all(|average| average.is_nan()));
-        assert_eq!(loaded.seed, 3);
-        assert_eq!(loaded.generation, 1);
-        assert_eq!(loaded.generations_without_improvement, 1);
+        assert_eq!(loaded.seed, checkpoint.seed);
+        assert_eq!(loaded.generation, CHECKPOINT_AT);
+        assert_eq!(
+            loaded.generations_without_improvement,
+            checkpoint.generations_without_improvement
+        );
+    }
+
+    #[test]
+    fn an_infinite_fitness_loads_back_from_json_as_nan() {
+        // As the `Checkpoint` docs warn: JSON can't keep it, so such a resume is not exact.
+        let mut checkpoint = checkpoint_of(bin());
+        checkpoint.best_ever.set_fitness(f64::INFINITY);
+
+        let json = serde_json::to_string(&checkpoint).unwrap();
+        let loaded: Checkpoint<Bin> = serde_json::from_str(&json).unwrap();
+
+        assert!(loaded.best_ever.get_fitness().is_nan());
     }
 }
