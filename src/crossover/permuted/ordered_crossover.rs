@@ -17,6 +17,11 @@ use crate::Rngs;
 /// It maintains the relative order of the elements in the parent chromosomes. With the `crossover_rate`
 /// probability it chooses two points in the parents, maintain the elements between the points and
 /// fill the remaining positions with the elements of the other parent in the order they appear.
+///
+/// # Panics
+///
+/// `crossover` panics if `crossover_rate` is not within `[0, 1]`, or if two parents it crosses
+/// are not permutations of the same genes.
 #[derive(Clone)]
 pub struct OrderedCrossover {
     pub crossover_rate: f64,

@@ -7,6 +7,11 @@ use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelI
 ///
 /// For each individual in the population it has `mutation_rate` probability of scrambling a random
 /// subsequence of the chromosome.
+///
+/// # Panics
+///
+/// `mutate` panics if `mutation_rate` is not within `[0, 1]`, or when it mutates an individual
+/// with no genes.
 #[derive(Clone)]
 pub struct ScrambleMutation {
     pub mutation_rate: f64,

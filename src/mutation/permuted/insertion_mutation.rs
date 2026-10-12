@@ -8,6 +8,11 @@ use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelI
 /// For each individual in the population it has `mutation_rate` probability of removing a random
 /// gene from one place and inserting it back in other random position. If the gene is inserted in
 /// the same position, nothing happens.
+///
+/// # Panics
+///
+/// `mutate` panics if `mutation_rate` is not within `[0, 1]`, or when it mutates an individual
+/// with no genes.
 #[derive(Clone, Debug)]
 pub struct InsertionMutation {
     pub mutation_rate: f64,

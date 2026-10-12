@@ -112,6 +112,12 @@
 
 - `convert_bin` adds `2f64.powi(i)` per set bit instead of `2f64.powf(i)`, with the same
   results, and documents that it is exact up to 53 bits.
+- Every operator that can panic says when in a `# Panics` section: a rate outside `[0, 1]`,
+  an empty population in `RouletteSelection` and `RankSelection`, a negative fitness in
+  `RouletteSelection`, an empty or non-finite range in the resetting and delta mutations, and
+  so on. So do `Evolution::next`, `current_best_fitness` and `population_digest` before the
+  evolution starts, and `Metrics::step_start` and `step_end`. `CycleCrossover`,
+  `PartiallyMappedCrossover`, `SwapMutation` and `DeltaMutation` have a description at last.
 - CI checks formatting, fails on rustdoc warnings, checks the library on Rust 1.82, and
   uses `actions/checkout` v4. Dependabot proposes cargo and GitHub Actions updates monthly.
 - `Cargo.lock` is updated to the newest dependency versions that build on Rust 1.82, and

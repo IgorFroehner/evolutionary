@@ -11,6 +11,16 @@ use crate::population::IntPerm;
 use super::Crossover;
 use crate::Rngs;
 
+/// # Cycle Crossover (CX)
+///
+/// With the `crossover_rate` probability, finds the cycle of positions that starts at the first
+/// gene of the parents, keeps the genes of that cycle in place and swaps all the others between
+/// the parents, so both children stay permutations.
+///
+/// # Panics
+///
+/// `crossover` panics if `crossover_rate` is not within `[0, 1]`, or if two parents it crosses
+/// are not permutations of `1..=n`.
 #[derive(Clone)]
 pub struct CycleCrossover {
     pub crossover_rate: f64,

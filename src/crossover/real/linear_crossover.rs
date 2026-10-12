@@ -22,6 +22,10 @@ use crate::{Crossover, Rngs};
 ///
 /// Reference: Wright, A. H. (1991). Genetic algorithms for real parameter optimization.
 /// Foundations of Genetic Algorithms, 1, 205-218.
+///
+/// # Panics
+///
+/// `crossover` panics if `crossover_rate` is not within `[0, 1]`.
 #[derive(Clone, Debug)]
 pub struct LinearCrossover {
     /// The probability of crossover occurring.

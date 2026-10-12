@@ -11,6 +11,11 @@ use super::Selection;
 ///
 /// Each slot of the mating pool draws an individual with probability proportional to its
 /// fitness. Fitnesses must not be negative; an individual with a `NaN` fitness gets no chance.
+///
+/// # Panics
+///
+/// `get_mating_pool` panics if the population is empty, if a fitness is negative, or if no
+/// fitness is positive or their total is not finite.
 #[derive(Clone, Default)]
 pub struct RouletteSelection;
 

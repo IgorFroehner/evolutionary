@@ -27,6 +27,11 @@ use crate::{Crossover, Rngs};
 ///
 /// Reference: [Simulated Binary Crossover for Continuous Search Space
 /// (Deb & Agrawal, 1995)](https://content.wolfram.com/sites/13/2018/02/09-2-2.pdf)
+///
+/// # Panics
+///
+/// `crossover` panics if `crossover_rate` is not within `[0, 1]`. [`new`](Self::new) panics if
+/// `eta` is negative.
 #[derive(Clone, Debug)]
 pub struct SimulatedBinaryCrossover {
     /// The probability of crossover occurring.

@@ -21,6 +21,10 @@ use crate::population::Bin;
 ///
 /// assert_eq!(*population[0].get_chromosome(), vec![false, true, false, true, false, true, false, true]);
 /// ```
+///
+/// # Panics
+///
+/// `mutate` panics if `mutation_rate` is not within `[0, 1]`.
 #[derive(Clone)]
 pub struct BitFlipMutation {
     pub mutation_rate: f64,

@@ -13,6 +13,11 @@ use rayon::prelude::ParallelSliceMut;
 ///
 /// Reference: [An empirical comparison of two crossover operators in real-coded genetic algorithms
 /// for constrained numerical optimization problems](https://ieeexplore.ieee.org/document/7036347)
+///
+/// # Panics
+///
+/// `crossover` panics if `crossover_rate` is not within `[0, 1]`, if `alpha` is below `-0.5`,
+/// or if `alpha` or a gene of the parents it crosses is not finite.
 #[derive(Clone, Debug)]
 pub struct BlendCrossover {
     pub crossover_rate: f64,

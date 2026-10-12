@@ -164,6 +164,11 @@ impl<T: Individual> Evolution<T> {
 
     /// This method runs one generation of the evolution.
     /// It selects the mating pool, crossover, mutate and calculates the fitness of the new population.
+    ///
+    /// # Panics
+    ///
+    /// If the evolution was not started yet, or if an operator panics (see the `# Panics`
+    /// section of each).
     pub fn next(&mut self) {
         self.metrics.step_start(Steps::Elitism);
         let elitists = self.find_elitists();
@@ -246,6 +251,12 @@ impl<T: Individual> Evolution<T> {
         self.run_seed
     }
 
+    /// Prints the generation, the best and average fitness, and every individual with its
+    /// fitness.
+    ///
+    /// # Panics
+    ///
+    /// If the evolution was not started yet.
     pub fn population_digest(&self) {
         println!("---------------------------------------------");
         println!("Iteration: {}", self.metrics.iterations);
@@ -340,6 +351,11 @@ impl<T: Individual> Evolution<T> {
         (self.stop_condition)(&self.report())
     }
 
+    /// The fitness of [`current_best`](Self::current_best).
+    ///
+    /// # Panics
+    ///
+    /// If the evolution was not started yet.
     pub fn current_best_fitness(&self) -> f64 {
         self.current_best().get_fitness()
     }

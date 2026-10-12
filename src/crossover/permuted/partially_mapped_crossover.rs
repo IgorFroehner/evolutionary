@@ -11,6 +11,15 @@ use crate::{population::IntPerm, Individual};
 use super::Crossover;
 use crate::Rngs;
 
+/// # Partially Mapped Crossover (PMX)
+///
+/// With the `crossover_rate` probability, swaps a random section between the parents, then
+/// repairs the genes outside of it through the mapping the swap defines, so both children stay
+/// permutations.
+///
+/// # Panics
+///
+/// `crossover` panics if `crossover_rate` is not within `[0, 1]`.
 #[derive(Clone)]
 pub struct PartiallyMappedCrossover {
     pub crossover_rate: f64,
