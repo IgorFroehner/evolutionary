@@ -79,7 +79,9 @@ most design decisions:
 - `src/rng.rs` pins the derivation with `numbers_are_stable_across_versions`;
   `tests/reproducibility.rs` checks that 1 thread and 8 threads agree for every built-in operator;
   `tests/golden.rs` checks that one seeded run per encoding gives exactly the recorded final
-  population and fitness history, and between them its runs use every built-in selection. A
+  population and fitness history, and between them its runs use every built-in selection, a
+  scaled one (`FitnessScaling::Rank`) and a scheduled `sigma` too. Its other scalings
+  (`Window`, `Sigma`) are only covered by the thread test. A
   failing golden test is a breaking change: fix it, or record it in `CHANGELOG.md` and regenerate
   the constants in the same change (the file's header says how). An operator no golden run uses
   is only covered by the thread test, so before optimizing one, add it to a golden run first.

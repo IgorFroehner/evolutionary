@@ -77,7 +77,8 @@
   leaves the range: adding the width gave `7.099999999999999` for the top of `(-3.3, 7.1)`
   and `0.20000000000000004`, above the range, for the top of `(-0.1, 0.2)`.
 - `GaussianMutation::sigma` is a `Sigma`, a constant or a schedule over the generations,
-  instead of an `f64`: in a struct literal, write `sigma: 0.1.into()` instead of `sigma: 0.1`.
+  instead of an `f64`: in a struct literal, write `sigma: 0.1.into()` instead of `sigma: 0.1`,
+  and to change it, `mutation.sigma = 0.2.into()` instead of `mutation.sigma = 0.2`.
   `GaussianMutation::new(0.05, 0.1)` takes any `impl Into<Sigma>` and compiles unchanged. To
   read the value, write `mutation.sigma.at(generation)` instead of `mutation.sigma`. A
   constant `sigma` draws exactly the same numbers as before, so seeded runs are unchanged.
@@ -145,9 +146,15 @@
   draw with weights given by a `FitnessScaling` instead of the raw fitness, so negative
   fitnesses (from `Minimize`, say) work. `Window { epsilon }` weighs by `fitness - worst +
   epsilon`, `Rank` by rank with ties sharing their average rank, and `Sigma` by
-  `1 + (fitness - mean) / (2 * standard deviation)`, floored at `0.1`. A `NaN` fitness still
-  gets no chance. Unscaled `RouletteSelection` and `StochasticUniversalSamplingSelection` are
-  unchanged, panics included, and draw the same numbers as before.
+  `1 + (fitness - mean) / (2 * standard deviation)`, floored at `0.1`, with the mean and
+  standard deviation over the finite fitnesses. A `NaN` fitness still gets no chance. Only
+  `Rank` accepts infinite fitnesses: `Sigma` gives them no chance, and `Window` panics on them.
+  Unscaled `RouletteSelection` and `StochasticUniversalSamplingSelection` are unchanged, panics
+  included, and draw the same numbers as before. The `ScaledSelection` docs say when each
+  scaling panics.
+- Golden replay runs pin a rank-scaled SUS with an exponentially decaying `sigma`, and the
+  thread tests cover windowed roulette and sigma-scaled SUS. Their constants are recorded
+  from 0.5.0 code, since these operators are new in it.
 - `RouletteSelection` and `StochasticUniversalSamplingSelection` implement `Debug`.
 - `evolutionary::rayon` re-exports the `rayon` the crate runs on, as `evolutionary::rand`
   does for `rand`: write `use evolutionary::rayon::prelude::*;` in a parallel custom operator
@@ -199,7 +206,8 @@
   evolution starts, and `Metrics::step_start` and `step_end`. `CycleCrossover`,
   `PartiallyMappedCrossover`, `SwapMutation` and `DeltaMutation` have a description at last.
 - `GaussianMutation` panics on a non-finite `sigma` with a message that gives the value and
-  the generation, instead of unwrapping a `rand_distr` error.
+  the generation, instead of unwrapping a `rand_distr` error. `RouletteSelection` panics on
+  an infinite total fitness with its documented message instead of `rand`'s `NonFinite` error.
 - CI checks formatting, fails on rustdoc warnings, checks the library on Rust 1.82, and
   uses `actions/checkout` v4. Dependabot proposes cargo and GitHub Actions updates monthly.
 - `Cargo.lock` is updated to the newest dependency versions that build on Rust 1.82, and

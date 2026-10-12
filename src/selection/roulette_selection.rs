@@ -42,10 +42,16 @@ impl<T: Individual> Selection<T> for RouletteSelection {
 /// there are none, one is negative, none is positive or their total is not finite.
 pub(super) fn spin<T: Individual>(
     population: &[T],
-    weights: impl Iterator<Item = f64>,
+    weights: impl Iterator<Item = f64> + Clone,
     rngs: &Rngs,
     error: &str,
 ) -> Vec<T> {
+    // `WeightedIndex` refuses an infinite total too, but with its own message: check it first so
+    // the panic says what the selection needs. It changes no draw.
+    let total: f64 = weights.clone().sum();
+    if !total.is_finite() {
+        panic!("{error}, got a total of {total}");
+    }
     // Built once for the whole pool: building it per slot would walk the population again for
     // every draw.
     let wheel = WeightedIndex::new(weights).expect(error);
@@ -101,6 +107,17 @@ mod tests {
     #[should_panic(expected = "roulette selection needs")]
     fn a_negative_fitness_panics() {
         let population = population(&[1.0, -1.0, 2.0]);
+
+        RouletteSelection.get_mating_pool(&population, &Rngs::new(0));
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "roulette selection needs individuals, no negative fitness and at \
+                               least one positive, finite fitness, got a total of inf"
+    )]
+    fn an_infinite_total_panics_with_the_documented_message() {
+        let population = population(&[1.0, f64::INFINITY, 2.0]);
 
         RouletteSelection.get_mating_pool(&population, &Rngs::new(0));
     }
