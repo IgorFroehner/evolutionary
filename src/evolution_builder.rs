@@ -193,6 +193,7 @@ pub struct EvolutionBuilder<T: Individual> {
     crossover: Option<Box<dyn Crossover<T>>>,
     mutation: Option<Box<dyn Mutation<T>>>,
     elitism: Option<u32>,
+    reevaluate_elitists: bool,
     stop_condition: Option<StopConditionFn<T>>,
     on_generation: Option<OnGenerationFn<T>>,
     pub(crate) seed: Option<u64>,
@@ -224,6 +225,7 @@ impl<T: Individual> EvolutionBuilder<T> {
             stop_condition: None,
             on_generation: None,
             elitism: None,
+            reevaluate_elitists: false,
             seed: None,
             initial_population: Vec::new(),
             checkpoint: None,
@@ -242,6 +244,7 @@ impl<T: Individual> EvolutionBuilder<T> {
             on_generation: None,
             evolution_config: Some(config.clone()),
             elitism: None,
+            reevaluate_elitists: false,
             seed: None,
             initial_population: Vec::new(),
             checkpoint: None,
@@ -310,6 +313,33 @@ impl<T: Individual> EvolutionBuilder<T> {
         self
     }
 
+    /// Evaluates the elitists again every generation, with the rest of the population, instead
+    /// of carrying the fitness they were stored with. Off by default.
+    ///
+    /// Turn it on when the fitness is noisy: a simulation with random starting conditions, a
+    /// score on a random sample of test cases. Without it, an individual that got one lucky
+    /// evaluation stays the best of the population for as long as elitism keeps it, with its
+    /// lucky fitness, while every other individual is judged on a fresh one. With it, the
+    /// elitists still survive into the next generation, but with their new fitness, and only
+    /// stay the best if they keep scoring as the best. A deterministic fitness gains nothing
+    /// from it: the elitists would get the same numbers again.
+    ///
+    /// It costs `elitism` extra evaluations per generation (see
+    /// [`with_elitism`](Self::with_elitism)): the elitists are passed to
+    /// [`Fitness::calculate_population`] in the same call as the new individuals, so a batched
+    /// fitness still gets one call per generation. It draws no random number, so with a
+    /// deterministic fitness a seeded run is the same with it on or off.
+    ///
+    /// [`Evolution::best_ever`] is a record of the best fitness ever computed, so with a noisy
+    /// fitness it can still be a lucky evaluation; [`Evolution::current_best`] is the one that
+    /// was re-evaluated.
+    ///
+    /// For a noisy fitness that still replays a seeded run, see [`Fitness`]'s "Randomness".
+    pub fn with_reevaluate_elitists(mut self, reevaluate: bool) -> Self {
+        self.reevaluate_elitists = reevaluate;
+        self
+    }
+
     /// Starts every run from `population` instead of from random individuals: to seed it with
     /// known good individuals, or to start a new run from the population of another. When it
     /// has fewer individuals than the population size, random ones fill the rest.
@@ -359,8 +389,9 @@ impl<T: Individual> EvolutionBuilder<T> {
     /// resumed with [`with_checkpoint`](Self::with_checkpoint) keeps the checkpoint's seed, and
     /// `build` fails if this one is another.
     ///
-    /// The fitness, and any custom operator, must be deterministic too, and custom operators
-    /// must draw from the [`Rngs`](crate::Rngs) they receive.
+    /// The fitness, and any custom operator, must be deterministic too (see [`Fitness`]'s
+    /// "Randomness" for a noisy fitness that replays), and custom operators must draw from the
+    /// [`Rngs`](crate::Rngs) they receive.
     pub fn with_seed(mut self, seed: u64) -> Self {
         self.seed = Some(seed);
         self
@@ -450,6 +481,7 @@ impl<T: Individual> EvolutionBuilder<T> {
         evolution.fixed_seed = self
             .seed
             .or(self.checkpoint.as_ref().map(|checkpoint| checkpoint.seed));
+        evolution.reevaluate_elitists = self.reevaluate_elitists;
         evolution.on_generation = self.on_generation.clone();
         evolution.initial_population = self.initial_population.clone();
         evolution.checkpoint = self.checkpoint.clone();

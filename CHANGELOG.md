@@ -103,6 +103,23 @@
   checkpoint doesn't fit the builder. An `ExperimentRunner` whose builder has a checkpoint
   resumes every run from it with a seed of its own, drawn from the checkpoint's, so the runs
   branch off it. Seeded runs without a checkpoint are unchanged.
+- `Fitness::calculate_population(&self, population: &mut [T])` evaluates a whole generation in
+  one call, which the evolution now makes once per generation. The default does what the
+  evolution did before, `calculate_fitness` on every individual in parallel, so existing
+  fitnesses and seeded runs are unchanged (`tests/golden.rs` passes as it was). Override it to
+  evaluate the population as a batch: a simulation that steps every individual together, a
+  batched forward pass, a GPU kernel.
+- `EvolutionBuilder::with_reevaluate_elitists(true)` evaluates the elitists again every
+  generation, with the rest of the population and in the same `calculate_population` call,
+  instead of letting them carry their stored fitness. With a noisy fitness, one lucky
+  evaluation no longer stays at the top for as long as elitism keeps it. It costs `elitism`
+  extra evaluations per generation. Off by default, which is the behavior of 0.4.0; it draws
+  no random number, so with a deterministic fitness a seeded run is the same either way.
+- The `Fitness` documentation says what a seeded run needs from the fitness: the same number
+  for the same individual every time. The fitness gets no `Rngs`; a noisy fitness that must
+  replay derives its noise from a fixed hash of the chromosome, and counts the generations in
+  `calculate_population` to make the noise change from one generation to the next. It has a
+  runnable example.
 - `evolutionary::rayon` re-exports the `rayon` the crate runs on, as `evolutionary::rand`
   does for `rand`: write `use evolutionary::rayon::prelude::*;` in a parallel custom operator
   instead of adding `rayon` to your own dependencies at a matching version. It stays out of

@@ -1,4 +1,5 @@
 use dyn_clone::DynClone;
+use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::population::Individual;
 
@@ -29,9 +30,147 @@ use crate::population::Individual;
 ///     }
 /// }
 /// ```
+///
+/// # Evaluating the whole population at once
+///
+/// The evolution evaluates a generation with one call to
+/// [`calculate_population`](Self::calculate_population), which by default calls
+/// [`calculate_fitness`](Self::calculate_fitness) on every individual in parallel. Override it
+/// when the population is cheaper to evaluate together: a simulation that steps every
+/// individual at once, a batched forward pass, a GPU kernel.
+///
+/// # Randomness
+///
+/// A seeded run (see [`EvolutionBuilder::with_seed`](crate::EvolutionBuilder::with_seed))
+/// replays only if the fitness is deterministic: the same individual must get the same number
+/// every time, whatever the thread that evaluates it. Do not draw from `rand::random()`,
+/// `rand::rng()` or a generator shared between threads; the fitness gets no [`Rngs`](crate::Rngs)
+/// of its own.
+///
+/// A noisy fitness can still replay: derive its noise from a hash of the chromosome, with a
+/// hash whose output is fixed (not [`DefaultHasher`](std::hash::DefaultHasher), which may
+/// change between Rust versions). Noise from the chromosome alone is the same at every
+/// evaluation, though. For noise that changes from one generation to the next, as
+/// [`EvolutionBuilder::with_reevaluate_elitists`](crate::EvolutionBuilder::with_reevaluate_elitists)
+/// needs to be of any use, count the generations in `calculate_population`, which the
+/// evolution calls once per generation, from the thread that runs it, and mix the count into
+/// the hash. The same count can pick a scenario per generation (a track, a set of test cases)
+/// shared by the whole population:
+///
+/// ```
+/// use evolutionary::prelude::*;
+/// use evolutionary::rayon::prelude::*;
+/// use std::sync::atomic::{AtomicU64, Ordering};
+///
+/// /// The sum of the genes, plus noise in `[-0.5, 0.5)` that changes every generation.
+/// struct NoisySum {
+///     generation: AtomicU64,
+/// }
+///
+/// impl Clone for NoisySum {
+///     fn clone(&self) -> Self {
+///         let generation = self.generation.load(Ordering::Relaxed);
+///         NoisySum { generation: AtomicU64::new(generation) }
+///     }
+/// }
+///
+/// /// SplitMix64's finalizer: a hash that gives the same numbers in every Rust version.
+/// fn mix(mut x: u64) -> u64 {
+///     x = (x ^ (x >> 30)).wrapping_mul(0xbf58_476d_1ce4_e5b9);
+///     x = (x ^ (x >> 27)).wrapping_mul(0x94d0_49bb_1331_11eb);
+///     x ^ (x >> 31)
+/// }
+///
+/// impl Fitness<Real> for NoisySum {
+///     fn calculate_fitness(&self, individual: &Real) -> f64 {
+///         let genes = individual.get_chromosome();
+///         let generation = self.generation.load(Ordering::Relaxed);
+///         let hash = genes.iter().fold(mix(generation), |hash, gene| mix(hash ^ gene.to_bits()));
+///         let noise = (hash >> 11) as f64 / (1u64 << 53) as f64 - 0.5;
+///
+///         genes.iter().sum::<f64>() + noise
+///     }
+///
+///     fn calculate_population(&self, population: &mut [Real]) {
+///         self.generation.fetch_add(1, Ordering::Relaxed);
+///         population.par_iter_mut().for_each(|individual| {
+///             let fitness = self.calculate_fitness(individual);
+///             individual.set_fitness(fitness);
+///         });
+///     }
+/// }
+///
+/// let builder = EvolutionBuilder::new(20, 5, (-1.0, 1.0))
+///     .with_fitness(NoisySum { generation: AtomicU64::new(0) })
+///     .with_selection(TournamentSelection::default())
+///     .with_crossover(UniformCrossover::default())
+///     .with_mutation(GaussianMutation::default())
+///     .with_reevaluate_elitists(true)
+///     .with_seed(7)
+///     .with_stop_condition(|report| report.generation >= 30);
+///
+/// // Each build clones the fitness the builder holds, with its count still at zero.
+/// let mut first = builder.build().unwrap();
+/// let mut second = builder.build().unwrap();
+/// first.run();
+/// second.run();
+///
+/// assert_eq!(first.metrics.best_fitnesses, second.metrics.best_fitnesses);
+/// ```
+///
+/// The count lives in the fitness, so a second [`start`](crate::Evolution::start) of the same
+/// [`Evolution`](crate::Evolution) carries on from where the first run left it: build a new
+/// `Evolution` from the builder to replay a run.
+///
+/// A fitness of this kind has no seed of its own, so two runs with different seeds see the
+/// same noise in the same generation; put a seed of your own in the fitness if that matters.
 pub trait Fitness<T: Individual>: 'static + DynClone + Send + Sync {
     /// Method that calculates the fitness of an individual.
     fn calculate_fitness(&self, individual: &T) -> f64;
+
+    /// Calculates the fitness of every individual in `population` and stores it with
+    /// [`Individual::set_fitness`]. The evolution calls it once per generation (and once for the
+    /// initial population), with every individual that needs a fitness.
+    ///
+    /// The default calls [`calculate_fitness`](Self::calculate_fitness) on each individual, in
+    /// parallel with rayon. Override it to evaluate the population as a batch. An override must
+    /// set the fitness of every individual: one it skips keeps the fitness it had, which for a
+    /// new child is its parent's. The order of `population` has no meaning, and may include the
+    /// elitists of the previous generation (see
+    /// [`EvolutionBuilder::with_reevaluate_elitists`](crate::EvolutionBuilder::with_reevaluate_elitists)).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use evolutionary::prelude::*;
+    ///
+    /// #[derive(Clone)]
+    /// struct BatchedSum;
+    ///
+    /// impl Fitness<Real> for BatchedSum {
+    ///     fn calculate_fitness(&self, individual: &Real) -> f64 {
+    ///         individual.get_chromosome().iter().sum()
+    ///     }
+    ///
+    ///     fn calculate_population(&self, population: &mut [Real]) {
+    ///         // One pass over the whole population, as a batched evaluation would do.
+    ///         let sums: Vec<f64> = population
+    ///             .iter()
+    ///             .map(|individual| individual.get_chromosome().iter().sum())
+    ///             .collect();
+    ///
+    ///         for (individual, sum) in population.iter_mut().zip(sums) {
+    ///             individual.set_fitness(sum);
+    ///         }
+    ///     }
+    /// }
+    /// ```
+    fn calculate_population(&self, population: &mut [T]) {
+        population.par_iter_mut().for_each(|individual| {
+            let fitness = self.calculate_fitness(individual);
+            individual.set_fitness(fitness);
+        });
+    }
 }
 
 /// Total order over fitness values where `NaN` ranks below every number, so an individual whose

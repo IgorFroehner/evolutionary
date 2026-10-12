@@ -129,11 +129,27 @@ impl Mutation<Bin> for FlipFirstGene {
 }
 ```
 
+## Expensive or batched fitness
+
+The evolution evaluates each generation with one call to `Fitness::calculate_population`, which
+by default runs `calculate_fitness` on every individual in parallel. When the population is
+cheaper to evaluate together, for example a simulation that steps every individual at once, a
+batched forward pass of many networks or a GPU kernel, override `calculate_population` and set
+each individual's fitness with `set_fitness`. With a noisy fitness (random starting conditions,
+a random sample of test cases), add `.with_reevaluate_elitists(true)`: the elitists are then
+evaluated again every generation instead of keeping their fitness, so one lucky evaluation
+can't stay at the top for the whole run. It costs `elitism` extra evaluations per generation,
+passed in the same `calculate_population` call.
+
 ## Reproducible runs
 
 Seed a run with `.with_seed(42)`: two runs with the same seed give the same populations and the
 same fitness history, whatever the number of threads or the platform. Without a seed every run
 differs, and `evolution.seed()` tells you the seed a run drew so you can replay it.
+
+The fitness must be deterministic for a run to replay: it gets no random generator, so a noisy
+fitness should derive its noise from a hash of the chromosome. The `Fitness` documentation shows
+how to make that noise change every generation and still replay.
 
 ## Following a run
 
@@ -142,7 +158,8 @@ differs, and `evolution.seed()` tells you the seed a run drew so you can replay 
 - `evolution.best_ever()` is the best individual seen in the whole run, which without elitism can
   be better than `current_best()`.
 - `.with_elitism(n)` carries the `n` best individuals into the next generation unchanged. The
-  default is 1.
+  default is 1. With `.with_reevaluate_elitists(true)` they are evaluated again instead of
+  keeping their fitness.
 - `evolution.start()` and `evolution.next()` drive the evolution one generation at a time, with
   `evolution.report()` in between, as an alternative to `run()`.
 - `evolution.population()` borrows the current population; `current_population()` returns a
