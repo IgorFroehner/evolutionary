@@ -28,6 +28,13 @@
   best fitness too, and says "generations" instead of "max iterations".
 - `ExperimentResult::time` and `ExperimentResult::seed`: how long a run took and its seed, which
   `EvolutionBuilder::with_seed` takes to replay that run on its own.
+- Golden replay tests (`tests/golden.rs`): one short seeded run per encoding, which between
+  them use every built-in selection, must give exactly the final population and fitness
+  history of 0.4.0. A seeded run that stops replaying now fails the tests instead of going
+  unnoticed until someone fingerprints runs by hand.
+- `rust-version = "1.82"` in `Cargo.toml`, the oldest Rust that builds the library with every
+  feature (`Option::is_none_or` needs 1.82). The tests and examples need a newer one, through
+  their dev-dependencies.
 
 ### Fixed
 
@@ -41,6 +48,11 @@
   over every result instead of the runs of one call.
 - `experiment_digest` no longer panics when there are no results yet, and saving the chart then
   returns an error instead of panicking.
+
+### Changed
+
+- CI checks formatting, fails on rustdoc warnings, checks the library on Rust 1.82, and
+  uses `actions/checkout` v4. Dependabot proposes cargo and GitHub Actions updates monthly.
 
 ## 0.4.0 (2026-10-11)
 

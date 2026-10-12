@@ -17,8 +17,11 @@ cargo test                                              # unit + integration + d
 cargo test --all-features                               # also serde, config and plot code (CI runs both)
 cargo test --test reproducibility                       # one integration test file
 cargo test --test reproducibility bin                   # tests in that file whose name contains "bin"
+cargo test --test golden                                # seeded runs replay exactly as in 0.4.0
 cargo test --doc                                        # doc tests only
 cargo clippy --all-targets --all-features -- -D warnings  # CI fails on any warning
+cargo fmt --all -- --check                              # CI checks formatting
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features  # CI fails on rustdoc warnings
 cargo bench                                             # criterion: a generation of Real at 300x300
 cargo run --example xor --release                       # examples: see required-features in Cargo.toml
 ```
@@ -71,10 +74,12 @@ most design decisions:
   change the draw pattern (for example geometric skip-sampling in per-gene mutations) have been
   deliberately rejected for this reason.
 - `src/rng.rs` pins the derivation with `numbers_are_stable_across_versions`;
-  `tests/reproducibility.rs` checks that 1 thread and 8 threads agree for every built-in operator.
-  Neither checks cross-version stability, so before an optimization pass, fingerprint seeded runs
-  (final population plus fitness-history sums) in a temporary test and verify byte-identical output
-  after.
+  `tests/reproducibility.rs` checks that 1 thread and 8 threads agree for every built-in operator;
+  `tests/golden.rs` checks that one seeded run per encoding gives exactly the final population and
+  fitness history of 0.4.0, and between them its runs use every built-in selection. A failing
+  golden test is a breaking change: fix it, or record it in `CHANGELOG.md` and regenerate the
+  constants in the same change (the file's header says how). An operator no golden run uses is
+  only covered by the thread test, so before optimizing one, add it to a golden run first.
 - The average fitness is summed sequentially on purpose; do not parallelize it.
 
 ## Conventions
@@ -87,6 +92,10 @@ most design decisions:
 - Each release has a dated section in `CHANGELOG.md` with Breaking / Added / Fixed / Changed /
   Performance headings; breaking changes are written as "write X instead of Y" migration notes.
   `ROADMAP.md` tracks planned work with checkboxes.
+- The minimum supported Rust version is `rust-version` in `Cargo.toml` (1.82), and CI checks
+  the library, with every feature, on that toolchain. Do not use a newer standard-library API
+  without raising it; clippy's `incompatible_msrv` flags most. The dev-dependencies need a newer
+  Rust, so the MSRV job does not build the tests.
 - Optional dependencies stay behind features (`serde`, `config`, `plot`), all off by default. New
   code that needs one must be `#[cfg(feature = "...")]`-gated and must compile under both
   `cargo test` and `cargo test --all-features`.

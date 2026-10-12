@@ -23,6 +23,8 @@ A fully extensible Rust framework for solving problems with parallelized genetic
 evolutionary = "0.4"
 ```
 
+It needs Rust 1.82 or newer.
+
 First, code your fitness function by implementing `Fitness` for the encoding you use. Here the
 individual is a bit string and the fitness counts its ones:
 
@@ -196,13 +198,16 @@ built with the [bevy game engine](https://bevyengine.org/).
 cargo test                                          # unit, integration and doc tests
 cargo test --all-features                           # also the serde, config and plot code
 cargo clippy --all-targets --all-features -- -D warnings
+cargo fmt --all -- --check
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
 cargo bench                                         # a generation of Real at 300 individuals x 300 genes
 ```
 
 Charts need `fontconfig` on Linux (`libfontconfig1-dev` on Debian and Ubuntu).
 
 A seeded run must replay identically across versions, so changes to how an operator draws its
-random numbers are breaking changes and are recorded in the [changelog](./CHANGELOG.md). The
+random numbers are breaking changes and are recorded in the [changelog](./CHANGELOG.md).
+`tests/golden.rs` fails when a seeded run no longer replays as it did. The
 [roadmap](./ROADMAP.md) lists what is planned.
 
 ## License
