@@ -139,8 +139,9 @@
   parameters. It does not change the generators.
 - `Minimize(fitness)` turns a value to minimize into a fitness by negating it, so the
   evolution, the stop condition and the reports keep maximizing, and `-report.best_fitness` is
-  exactly the value. `examples/xor` uses it instead of negating its error by hand, and replays
-  bit for bit.
+  exactly the value. It hands the population to the wrapped fitness's `calculate_population`,
+  so a batched fitness stays batched. `examples/xor` uses it instead of negating its error by
+  hand, and replays bit for bit.
 - Fitness scaling for the fitness-proportional selections:
   `RouletteSelection::scaled(scaling)` and `StochasticUniversalSamplingSelection::scaled(scaling)`
   draw with weights given by a `FitnessScaling` instead of the raw fitness, so negative
@@ -149,9 +150,9 @@
   `1 + (fitness - mean) / (2 * standard deviation)`, floored at `0.1`, with the mean and
   standard deviation over the finite fitnesses. A `NaN` fitness still gets no chance. Only
   `Rank` accepts infinite fitnesses: `Sigma` gives them no chance, and `Window` panics on them.
-  Unscaled `RouletteSelection` and `StochasticUniversalSamplingSelection` are unchanged, panics
-  included, and draw the same numbers as before. The `ScaledSelection` docs say when each
-  scaling panics.
+  Unscaled `RouletteSelection` and `StochasticUniversalSamplingSelection` draw the same numbers
+  as before and panic in the same cases. The `ScaledSelection` docs say when each scaling
+  panics.
 - Golden replay runs pin a rank-scaled SUS with an exponentially decaying `sigma`, and the
   thread tests cover windowed roulette and sigma-scaled SUS. Their constants are recorded
   from 0.5.0 code, since these operators are new in it.
