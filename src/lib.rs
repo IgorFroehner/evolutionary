@@ -103,7 +103,7 @@ pub use rand;
 
 pub mod prelude {
     #[cfg(feature = "config")]
-    pub use crate::config_read::{read_config, RawConfig};
+    pub use crate::config_read::{read_config, ConfigError, RawConfig};
     pub use crate::crossover::*;
     pub use crate::experiment_runner::ExperimentRunner;
     pub use crate::fitness::Fitness;

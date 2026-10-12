@@ -41,6 +41,15 @@
 - `Evolution::new` is private: write `EvolutionBuilder::new(..)` with its `with_*` calls and
   `.build()?` instead of `Evolution::new(title, config, fitness, ..)`. The builder was already
   the supported way, and checks the parameters `Evolution::new` took on trust.
+- With the `config` feature, `read_config` returns `Result<RawConfig, ConfigError>` instead
+  of printing what went wrong to stdout and returning `None`: write
+  `read_config(path).expect("..")` (unchanged) or `read_config(path)?`, and
+  `if let Ok(config) = read_config(path)` instead of `if let Some(config) = read_config(path)`.
+  `ConfigError`, in the prelude, tells a file that could not be read (`Io`) from one that
+  could not be parsed (`Parse`), names the file and implements `std::error::Error`.
+  `read_config` takes any path (`impl AsRef<Path>`), so `&str` still works.
+- `RawConfig::runs` is a `u32` instead of an `i32`, so a negative `runs` is a parse error:
+  write `report.generation >= config.runs` instead of `report.generation >= config.runs as u32`.
 
 ### Added
 
