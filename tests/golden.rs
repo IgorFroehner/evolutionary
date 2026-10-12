@@ -6,6 +6,11 @@
 //! regenerated. Between them the four runs use every built-in selection and a different crossover and
 //! mutation each.
 //!
+//! A fifth run, `real_minimize_rank_scaled_sus_decaying_sigma`, pins operators that are new in
+//! 0.5.0: a scaled selection (`FitnessScaling::Rank`) and a scheduled `sigma`
+//! (`Sigma::exponential_decay`). There is no older release to pin them to, so its constants
+//! were recorded from the code that introduced them, before 0.5.0 was released.
+//!
 //! **A failing test here is a breaking change.** It means a seeded run no longer replays as it
 //! did: an operator draws its random numbers in another order or number, `Rngs::rng` derives
 //! its keys differently, or the floating-point evaluation order changed. If that is a bug, fix
@@ -265,6 +270,41 @@ fn real_roulette_simulated_binary_gaussian() {
             population: 0x9c5e7b42705e7bbc,
             best_fitnesses: 0x9600a73129554763,
             avg_fitnesses: 0x962d0e3645ae0154,
+        },
+    );
+}
+
+/// The squared distance from the origin, to bring down with `Minimize`: every fitness is
+/// negative, which only a scaled fitness-proportional selection accepts.
+#[derive(Clone)]
+struct SquaredDistance;
+
+impl Fitness<Real> for SquaredDistance {
+    fn calculate_fitness(&self, individual: &Real) -> f64 {
+        individual.get_chromosome().iter().map(|x| x * x).sum()
+    }
+}
+
+/// Recorded from 0.5.0 code, which introduced these operators: see the top of this file.
+#[test]
+fn real_minimize_rank_scaled_sus_decaying_sigma() {
+    assert_golden(
+        EvolutionBuilder::new(POPULATION, DIMENSION, (-1.0, 1.0))
+            .with_fitness(Minimize(SquaredDistance))
+            .with_selection(StochasticUniversalSamplingSelection::scaled(
+                FitnessScaling::Rank,
+            ))
+            .with_crossover(BlendCrossover::default())
+            .with_mutation(GaussianMutation::new(
+                0.2,
+                Sigma::exponential_decay(0.3, 0.9),
+            ))
+            .with_elitism(2),
+        Golden {
+            generations: 21,
+            population: 0x050a5f41ddf0e2d0,
+            best_fitnesses: 0x96dc59e3d9d1a19c,
+            avg_fitnesses: 0x64b57572c528c03b,
         },
     );
 }

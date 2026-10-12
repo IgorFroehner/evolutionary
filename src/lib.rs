@@ -92,7 +92,7 @@ pub use checkpoint::Checkpoint;
 pub use crossover::Crossover;
 pub use evolution::Evolution;
 pub use evolution_builder::{BuildError, EvolutionBuilder};
-pub use fitness::Fitness;
+pub use fitness::{Fitness, Minimize};
 pub use mutation::Mutation;
 pub use population::Individual;
 pub use report::GenerationReport;
@@ -115,7 +115,7 @@ pub mod prelude {
     pub use crate::config_read::{read_config, ConfigError, RawConfig};
     pub use crate::crossover::*;
     pub use crate::experiment_runner::ExperimentRunner;
-    pub use crate::fitness::Fitness;
+    pub use crate::fitness::{Fitness, Minimize};
     pub use crate::mutation::*;
     pub use crate::population::{Bin, GeneCod, Int, IntPerm, Real};
     pub use crate::selection::*;

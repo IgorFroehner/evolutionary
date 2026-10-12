@@ -32,13 +32,14 @@ fn squared_error(network: &Network) -> f64 {
         .sum()
 }
 
-/// The fitness is maximised, so it is the error with its sign flipped.
+/// The squared error of the network, to minimise: the evolution gets it through `Minimize`, which
+/// negates it, so its reports carry the error with its sign flipped.
 #[derive(Clone)]
-struct XorFitness;
+struct XorError;
 
-impl Fitness<Real> for XorFitness {
+impl Fitness<Real> for XorError {
     fn calculate_fitness(&self, individual: &Real) -> f64 {
-        -squared_error(&network(individual))
+        squared_error(&network(individual))
     }
 }
 
@@ -46,7 +47,7 @@ fn main() {
     let dimension = Network::parameter_count_for(&HIDDEN) as u32;
 
     let mut evolution = EvolutionBuilder::new(100, dimension, (-1.0, 1.0))
-        .with_fitness(XorFitness)
+        .with_fitness(Minimize(XorError))
         .with_selection(TournamentSelection::new(3, 0.9))
         .with_crossover(UniformCrossover::default())
         // Only 13 genes, so mutate about one in five. The steps are big next to the initial range:
@@ -54,6 +55,7 @@ fn main() {
         .with_mutation(GaussianMutation::new(0.2, 0.5))
         .with_elitism(2)
         .with_seed(1)
+        // The reports carry the negated error, so `-report.best_fitness` is the error itself.
         .with_on_generation(|report| {
             if report.generation % 100 == 0 {
                 println!(

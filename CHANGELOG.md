@@ -76,6 +76,12 @@
   the lower one, so `0` and `2^l - 1` give exactly `range.0` and `range.1`, and no result
   leaves the range: adding the width gave `7.099999999999999` for the top of `(-3.3, 7.1)`
   and `0.20000000000000004`, above the range, for the top of `(-0.1, 0.2)`.
+- `GaussianMutation::sigma` is a `Sigma`, a constant or a schedule over the generations,
+  instead of an `f64`: in a struct literal, write `sigma: 0.1.into()` instead of `sigma: 0.1`,
+  and to change it, `mutation.sigma = 0.2.into()` instead of `mutation.sigma = 0.2`.
+  `GaussianMutation::new(0.05, 0.1)` takes any `impl Into<Sigma>` and compiles unchanged. To
+  read the value, write `mutation.sigma.at(generation)` instead of `mutation.sigma`. A
+  constant `sigma` draws exactly the same numbers as before, so seeded runs are unchanged.
 
 ### Added
 
@@ -123,6 +129,34 @@
   and a run resumed from a checkpoint starts it at `checkpoint.generation + 1`. It has a
   runnable example. `calculate_population` gets the population in a fixed order: the new
   individuals in mating-pool order, then the re-evaluated elitists.
+- Scheduled `sigma` for `GaussianMutation`: `Sigma::schedule(|generation| ..)` sets it from
+  the generation, and `Sigma::exponential_decay(start, factor)` multiplies it by `factor` at
+  every generation, to explore first and refine later without stopping the run. A schedule
+  changes only the spread of the numbers drawn, not which ones are drawn. The decay computes
+  its powers with multiplications only, so it gives the same values on every platform.
+- `Rngs::generation()`, the generation an operator is called for (1 at the first
+  `Evolution::next`, as in its `GenerationReport`), so a custom operator can schedule its own
+  parameters. It does not change the generators.
+- `Minimize(fitness)` turns a value to minimize into a fitness by negating it, so the
+  evolution, the stop condition and the reports keep maximizing, and `-report.best_fitness` is
+  exactly the value. It hands the population to the wrapped fitness's `calculate_population`,
+  so a batched fitness stays batched. `examples/xor` uses it instead of negating its error by
+  hand, and replays bit for bit.
+- Fitness scaling for the fitness-proportional selections:
+  `RouletteSelection::scaled(scaling)` and `StochasticUniversalSamplingSelection::scaled(scaling)`
+  draw with weights given by a `FitnessScaling` instead of the raw fitness, so negative
+  fitnesses (from `Minimize`, say) work. `Window { epsilon }` weighs by `fitness - worst +
+  epsilon`, `Rank` by rank with ties sharing their average rank, and `Sigma` by
+  `1 + (fitness - mean) / (2 * standard deviation)`, floored at `0.1`, with the mean and
+  standard deviation over the finite fitnesses. A `NaN` fitness still gets no chance. Only
+  `Rank` accepts infinite fitnesses: `Sigma` gives them no chance, and `Window` panics on them.
+  Unscaled `RouletteSelection` and `StochasticUniversalSamplingSelection` draw the same numbers
+  as before and panic in the same cases. The `ScaledSelection` docs say when each scaling
+  panics.
+- Golden replay runs pin a rank-scaled SUS with an exponentially decaying `sigma`, and the
+  thread tests cover windowed roulette and sigma-scaled SUS. Their constants are recorded
+  from 0.5.0 code, since these operators are new in it.
+- `RouletteSelection` and `StochasticUniversalSamplingSelection` implement `Debug`.
 - `evolutionary::rayon` re-exports the `rayon` the crate runs on, as `evolutionary::rand`
   does for `rand`: write `use evolutionary::rayon::prelude::*;` in a parallel custom operator
   instead of adding `rayon` to your own dependencies at a matching version. It stays out of
@@ -172,6 +206,9 @@
   so on. So do `Evolution::next`, `current_best_fitness` and `population_digest` before the
   evolution starts, and `Metrics::step_start` and `step_end`. `CycleCrossover`,
   `PartiallyMappedCrossover`, `SwapMutation` and `DeltaMutation` have a description at last.
+- `GaussianMutation` panics on a non-finite `sigma` with a message that gives the value and
+  the generation, instead of unwrapping a `rand_distr` error. `RouletteSelection` panics on
+  an infinite total fitness with its documented message instead of `rand`'s `NonFinite` error.
 - CI checks formatting, fails on rustdoc warnings, checks the library on Rust 1.82, and
   uses `actions/checkout` v4. Dependabot proposes cargo and GitHub Actions updates monthly.
 - `Cargo.lock` is updated to the newest dependency versions that build on Rust 1.82, and

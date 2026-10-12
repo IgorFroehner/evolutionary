@@ -209,6 +209,39 @@ fn real_roulette_n_points_and_uniform_random_resetting() {
     });
 }
 
+/// Negative fitnesses through `Minimize`, which only the scaled selections accept.
+#[test]
+fn real_scaled_roulette_and_sus_with_a_scheduled_sigma() {
+    assert_reproducible(|seed| {
+        EvolutionBuilder::new(POPULATION, DIMENSION, (-1.0, 1.0))
+            .with_fitness(Minimize(Sphere))
+            .with_selection(RouletteSelection::scaled(FitnessScaling::Window {
+                epsilon: 1e-3,
+            }))
+            .with_crossover(SimulatedBinaryCrossover::default())
+            .with_mutation(GaussianMutation::new(
+                0.1,
+                Sigma::exponential_decay(0.3, 0.95),
+            ))
+            .with_stop_condition(stop)
+            .with_seed(seed)
+    });
+    assert_reproducible(|seed| {
+        EvolutionBuilder::new(POPULATION, DIMENSION, (-1.0, 1.0))
+            .with_fitness(Minimize(Sphere))
+            .with_selection(StochasticUniversalSamplingSelection::scaled(
+                FitnessScaling::Sigma,
+            ))
+            .with_crossover(LinearCrossover::default())
+            .with_mutation(GaussianMutation::new(
+                0.1,
+                Sigma::schedule(|generation| if generation < 10 { 0.3 } else { 0.05 }),
+            ))
+            .with_stop_condition(stop)
+            .with_seed(seed)
+    });
+}
+
 #[test]
 fn perm_ordered_insertion() {
     assert_reproducible(|seed| {

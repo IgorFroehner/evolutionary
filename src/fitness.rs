@@ -31,6 +31,11 @@ use crate::population::Individual;
 /// }
 /// ```
 ///
+/// The evolution maximizes the fitness: the best individual is the one with the highest, and
+/// [`GenerationReport::best_fitness`](crate::GenerationReport::best_fitness) is the highest
+/// value. To minimize something (an error, a cost, a time), wrap the function that computes it
+/// in [`Minimize`] instead of negating it by hand.
+///
 /// # Evaluating the whole population at once
 ///
 /// The evolution evaluates a generation with one call to
@@ -200,6 +205,73 @@ pub trait Fitness<T: Individual>: 'static + DynClone + Send + Sync {
     }
 }
 
+/// Turns a value to minimize into a fitness, by negating it: the individual with the smallest
+/// value gets the highest fitness, and the evolution, the stop condition and the reports keep
+/// maximizing.
+///
+/// Every fitness the evolution reports is the negated value, so negate it again to read the
+/// value itself: `-report.best_fitness`. Negation is exact, so that gives back exactly what
+/// the wrapped function returned. A `NaN` stays `NaN`, the worst fitness either way.
+///
+/// The fitnesses are negative when the values are positive, so pair `Minimize` with a
+/// selection that ranks individuals rather than weighs them (`TournamentSelection`,
+/// `RankSelection`), or with a scaled fitness-proportional one
+/// ([`RouletteSelection::scaled`](crate::prelude::RouletteSelection::scaled)).
+///
+/// ```
+/// use evolutionary::prelude::*;
+///
+/// /// The distance of the genes from the origin, to bring down to 0.
+/// #[derive(Clone)]
+/// struct Distance;
+///
+/// impl Fitness<Real> for Distance {
+///     fn calculate_fitness(&self, individual: &Real) -> f64 {
+///         individual.chromosome.iter().map(|gene| gene * gene).sum::<f64>().sqrt()
+///     }
+/// }
+///
+/// let mut evolution = EvolutionBuilder::new(50, 3, (-10.0, 10.0))
+///     .with_fitness(Minimize(Distance))
+///     .with_selection(TournamentSelection::default())
+///     .with_crossover(UniformCrossover::default())
+///     .with_mutation(GaussianMutation::new(0.3, 0.1))
+///     .with_seed(1)
+///     .with_stop_condition(|report| -report.best_fitness < 0.5 || report.generation >= 500)
+///     .build()
+///     .unwrap();
+///
+/// evolution.run();
+///
+/// let distance = -evolution.report().best_fitness;
+/// assert!(distance < 0.5);
+/// assert_eq!(distance, Distance.calculate_fitness(evolution.current_best()));
+/// ```
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Minimize<F>(pub F);
+
+impl<T: Individual, F: Fitness<T> + Clone> Fitness<T> for Minimize<F> {
+    fn calculate_fitness(&self, individual: &T) -> f64 {
+        -self.0.calculate_fitness(individual)
+    }
+
+    /// Hands the population to the wrapped fitness's own `calculate_population`, so a batched
+    /// fitness stays batched, then negates what it stored. The fitnesses are negated before the
+    /// call too, so the wrapped fitness sees raw values throughout, and one it leaves unset keeps
+    /// its fitness exactly.
+    fn calculate_population(&self, population: &mut [T]) {
+        negate_fitnesses(population);
+        self.0.calculate_population(population);
+        negate_fitnesses(population);
+    }
+}
+
+fn negate_fitnesses<T: Individual>(population: &mut [T]) {
+    for individual in population.iter_mut() {
+        individual.set_fitness(-individual.get_fitness());
+    }
+}
+
 /// Total order over fitness values where `NaN` ranks below every number, so an individual whose
 /// fitness could not be computed is always treated as the worst one instead of panicking a
 /// comparison.
@@ -308,6 +380,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::population::Real;
     use std::cmp::Ordering;
 
     #[test]
@@ -323,6 +396,97 @@ mod tests {
         assert_eq!(fitness_cmp(1.0, 2.0), Ordering::Less);
         assert_eq!(fitness_cmp(2.0, 1.0), Ordering::Greater);
         assert_eq!(fitness_cmp(1.0, 1.0), Ordering::Equal);
+    }
+
+    /// The first gene, as a value to minimize.
+    #[derive(Clone)]
+    struct FirstGene;
+
+    impl Fitness<Real> for FirstGene {
+        fn calculate_fitness(&self, individual: &Real) -> f64 {
+            individual.chromosome[0]
+        }
+    }
+
+    #[test]
+    fn minimize_ranks_the_smaller_value_first() {
+        let small = Real::new(vec![-3.5], (-10.0, 10.0));
+        let big = Real::new(vec![2.0], (-10.0, 10.0));
+        let minimize = Minimize(FirstGene);
+
+        let (small, big) = (
+            minimize.calculate_fitness(&small),
+            minimize.calculate_fitness(&big),
+        );
+
+        assert_eq!(fitness_cmp(small, big), Ordering::Greater);
+        assert_eq!((-small, -big), (-3.5, 2.0));
+    }
+
+    /// A batch fitness that counts its calls, skips its last individual and gives the others
+    /// their first gene plus the number of individuals in the batch.
+    #[derive(Clone, Default)]
+    struct Batched {
+        calls: std::sync::Arc<std::sync::atomic::AtomicUsize>,
+    }
+
+    impl Fitness<Real> for Batched {
+        fn calculate_fitness(&self, _individual: &Real) -> f64 {
+            panic!("a batch fitness evaluates through calculate_population");
+        }
+
+        fn calculate_population(&self, population: &mut [Real]) {
+            self.calls
+                .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            let size = population.len() as f64;
+            let last = population.len() - 1;
+            for individual in &mut population[..last] {
+                individual.set_fitness(individual.chromosome[0] + size);
+            }
+        }
+    }
+
+    #[test]
+    fn minimize_hands_the_population_to_a_batch_fitness() {
+        let batched = Batched::default();
+        let mut population: Vec<Real> = [1.0, -2.0, 7.0]
+            .iter()
+            .map(|&gene| Real::new(vec![gene], (-10.0, 10.0)))
+            .collect();
+        population[2].set_fitness(-4.5);
+
+        Minimize(batched.clone()).calculate_population(&mut population);
+
+        assert_eq!(batched.calls.load(std::sync::atomic::Ordering::Relaxed), 1);
+        let fitnesses: Vec<f64> = population.iter().map(|i| i.get_fitness()).collect();
+        // The one the batch skipped keeps its fitness exactly.
+        assert_eq!(fitnesses, vec![-4.0, -1.0, -4.5]);
+    }
+
+    #[test]
+    fn minimize_makes_the_smallest_value_the_best_of_a_run() {
+        use crate::prelude::*;
+
+        let mut evolution = EvolutionBuilder::new(30, 1, (-10.0, 10.0))
+            .with_fitness(Minimize(FirstGene))
+            .with_selection(TournamentSelection::default())
+            .with_crossover(DoNothingCrossover)
+            .with_mutation(GaussianMutation::new(1.0, 0.5))
+            .with_seed(5)
+            .with_stop_condition(|report| report.generation >= 30)
+            .build()
+            .unwrap();
+        evolution.run();
+
+        let smallest = evolution
+            .population()
+            .iter()
+            .map(|individual| individual.chromosome[0])
+            .fold(f64::INFINITY, f64::min);
+        assert_eq!(evolution.current_best().chromosome[0], smallest);
+        assert_eq!(-evolution.current_best_fitness(), smallest);
+        // The run pushed the value down, below anything the initial range allowed.
+        assert!(smallest < -10.0, "{smallest}");
     }
 
     #[test]

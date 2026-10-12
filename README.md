@@ -70,6 +70,10 @@ genes. The individual type (here `Bin`, from the fitness) sets the encoding and 
 range: `()` for `Bin` and `IntPerm`, `(i64, i64)` for `Int` and `(f64, f64)` for `Real`. `build`
 returns a `BuildError` naming any missing or inconsistent parameter.
 
+The evolution maximizes the fitness. To minimize something instead (an error, a cost), wrap the
+fitness that computes it in `Minimize`, as in `.with_fitness(Minimize(Error))`: it negates the
+value, so the reports carry `-error` and `-report.best_fitness` is the error itself.
+
 The stop condition receives a `GenerationReport`, so it can look at the generation, the best and
 average fitness, or the generations without improvement:
 
@@ -90,6 +94,7 @@ with any `Individual`, including your own.
 | Operator | Works with |
 |---|---|
 | `TournamentSelection`, `RouletteSelection`, `RankSelection`, `StochasticUniversalSamplingSelection` | any |
+| `RouletteSelection::scaled(scaling)`, `StochasticUniversalSamplingSelection::scaled(scaling)`, with a `FitnessScaling` (`Window`, `Rank` or `Sigma`) that accepts negative fitnesses | any |
 | `NPointsCrossover`, `UniformCrossover` | `Bin`, `Int`, `Real` |
 | `ArithmeticCrossover`, `BlendCrossover`, `LinearCrossover`, `SimulatedBinaryCrossover` | `Real` |
 | `OrderedCrossover`, `PartiallyMappedCrossover`, `CycleCrossover` | `IntPerm` |
@@ -100,6 +105,11 @@ with any `Individual`, including your own.
 | `SwapMutation`, `ScrambleMutation` | any |
 
 `DoNothingSelection`, `DoNothingCrossover` and `DoNothingMutation` skip a step entirely.
+
+`RouletteSelection` and `StochasticUniversalSamplingSelection` weigh individuals by their raw
+fitness, which must not be negative; their `scaled` versions weigh them by a `FitnessScaling`
+of it instead. `GaussianMutation`'s `sigma` is a number or a `Sigma`, which can change with the
+generation, for example `Sigma::exponential_decay(0.5, 0.99)` to explore first and refine later.
 
 To write your own, implement the trait and pass it to the builder. Operators get their random
 numbers from an `Rngs`, asking for one generator per unit of work with `rngs.rng(index)`, which is

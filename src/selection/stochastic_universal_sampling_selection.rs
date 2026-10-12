@@ -9,49 +9,66 @@ use rand::Rng;
 /// number of times, rounded down or up. Fitnesses must not be negative; an individual with a
 /// `NaN` fitness gets no chance.
 ///
+/// For fitnesses that can be negative, as with [`Minimize`](crate::Minimize), or to set how
+/// strongly the best individuals are favored, scale them first with
+/// [`StochasticUniversalSamplingSelection::scaled`].
+///
 /// # Panics
 ///
 /// If no fitness is positive or their total is not finite.
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct StochasticUniversalSamplingSelection;
 
 impl<T: Individual> Selection<T> for StochasticUniversalSamplingSelection {
     fn get_mating_pool(&self, initial_population: &[T], rngs: &Rngs) -> Vec<T> {
-        let total_fitness: f64 = initial_population
-            .iter()
-            .map(|ind| selection_weight(ind.get_fitness()))
-            .sum();
-        assert!(
-            total_fitness > 0.0 && total_fitness.is_finite(),
-            "stochastic universal sampling needs at least one positive fitness and a finite \
-             total, got a total of {total_fitness}"
-        );
-        let population_size = initial_population.len();
-        let pointer_spacing = total_fitness / population_size as f64;
-
-        let start_point = rngs.rng(0).random_range(0.0..pointer_spacing);
-
-        // One walk over the wheel places every pointer. The slots could be picked independently,
-        // each with a binary search over the cumulative weights, but the work per slot is a
-        // clone, and at a few hundred individuals the whole walk takes less than rayon's fork
-        // and join: a parallel version measured slower up to 10 000 individuals. (The pointers
-        // used to be computed with rayon too, which cost more than the walk itself.)
-        let mut selected_individuals = Vec::with_capacity(population_size);
-        let mut cumulative_fitness = 0.0;
-        let mut individual_idx = 0;
-
-        for slot in 0..population_size {
-            let pointer = start_point + slot as f64 * pointer_spacing;
-            while cumulative_fitness < pointer && individual_idx < population_size {
-                cumulative_fitness +=
-                    selection_weight(initial_population[individual_idx].get_fitness());
-                individual_idx += 1;
-            }
-            selected_individuals.push(initial_population[individual_idx - 1].clone());
-        }
-
-        selected_individuals
+        sample(
+            initial_population,
+            |index| selection_weight(initial_population[index].get_fitness()),
+            rngs,
+            "fitness",
+        )
     }
+}
+
+/// Picks a mating pool as large as `population` with one spin of a wheel where each
+/// individual's slice is `weight(index)`. Panics if no weight is positive or their total is not
+/// finite, calling the weights `what` in the message.
+pub(super) fn sample<T: Individual>(
+    population: &[T],
+    weight: impl Fn(usize) -> f64,
+    rngs: &Rngs,
+    what: &str,
+) -> Vec<T> {
+    let population_size = population.len();
+    let total_weight: f64 = (0..population_size).map(&weight).sum();
+    assert!(
+        total_weight > 0.0 && total_weight.is_finite(),
+        "stochastic universal sampling needs at least one positive {what} and a finite total, \
+         got a total of {total_weight}"
+    );
+    let pointer_spacing = total_weight / population_size as f64;
+
+    let start_point = rngs.rng(0).random_range(0.0..pointer_spacing);
+
+    // One walk over the wheel places every pointer. The slots could be picked independently,
+    // each with a binary search over the cumulative weights, but the work per slot is a clone,
+    // and at a few hundred individuals the whole walk takes less than rayon's fork and join: a
+    // parallel version measured slower up to 10 000 individuals. (The pointers used to be
+    // computed with rayon too, which cost more than the walk itself.)
+    let mut selected_individuals = Vec::with_capacity(population_size);
+    let mut cumulative_weight = 0.0;
+    let mut individual_idx = 0;
+
+    for slot in 0..population_size {
+        let pointer = start_point + slot as f64 * pointer_spacing;
+        while cumulative_weight < pointer && individual_idx < population_size {
+            cumulative_weight += weight(individual_idx);
+            individual_idx += 1;
+        }
+        selected_individuals.push(population[individual_idx - 1].clone());
+    }
+
+    selected_individuals
 }
 
 #[cfg(test)]

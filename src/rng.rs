@@ -72,6 +72,21 @@ impl Rngs {
         }
     }
 
+    /// The generation these generators are for: the number the [`GenerationReport`] of the
+    /// generation being built will carry. It is 0 for the initial population and for
+    /// [`Rngs::new`], then 1 for the operators of the first [`Evolution::next`], 2 for the
+    /// second, and so on.
+    ///
+    /// An operator whose parameter changes during a run reads it here, as
+    /// [`GaussianMutation`](crate::prelude::GaussianMutation) does with a scheduled
+    /// [`Sigma`](crate::prelude::Sigma). It does not change the generators.
+    ///
+    /// [`GenerationReport`]: crate::GenerationReport
+    /// [`Evolution::next`]: crate::Evolution::next
+    pub fn generation(&self) -> u32 {
+        self.generation
+    }
+
     /// The generator for the unit of work at `index`. Calling it twice with the same index
     /// returns two generators that produce the same numbers.
     pub fn rng(&self, index: usize) -> TaskRng {
@@ -131,6 +146,12 @@ mod tests {
         assert_ne!(base, draws(Rngs::for_step(7, 2, Step::Selection).rng(0)));
         assert_ne!(base, draws(Rngs::for_step(7, 1, Step::Mutation).rng(0)));
         assert_ne!(base, draws(Rngs::for_step(7, 1, Step::Selection).rng(1)));
+    }
+
+    #[test]
+    fn generation_is_the_one_given() {
+        assert_eq!(Rngs::new(7).generation(), 0);
+        assert_eq!(Rngs::for_step(7, 12, Step::Mutation).generation(), 12);
     }
 
     #[test]
