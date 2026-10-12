@@ -79,6 +79,8 @@ fn main() {
         .with_mutation(BitFlipMutation { mutation_rate: 0.05 })
         // Set the stop condition based on the number of generations
         .with_stop_condition(|report| report.generation >= 1000)
+        // Name the evolution, which captions its chart
+        .with_title("Party Fitness")
         .build().unwrap();
 
     // The run method of the Evolution will run the evolution until the stop condition is met
@@ -168,7 +170,7 @@ We have our list of invited friends as the best individual at the end of the evo
 But you can also make some analysis of the evolution. For example, you can plot the fitness of the best individual 
 and average fitness of the population over the generations, and notice that it found the best solution pretty fast 
 (before 10 generations). Charts need the `plot` feature (`features = ["plot"]` in your `Cargo.toml`). The chart is
-captioned with the title of the evolution, set with `.with_title("Party Fitness")` on the builder:
+captioned with the title of the evolution, "Party Fitness", which we gave the builder with `.with_title`:
 
 ```rust
     evolution.plot_chart("party_fitness.png").unwrap();

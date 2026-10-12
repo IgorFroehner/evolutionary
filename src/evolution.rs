@@ -401,8 +401,18 @@ impl<T: Individual> Evolution<T> {
     ///
     /// For another caption, call [`Metrics::plot_chart`] on [`metrics`](Self::metrics).
     #[cfg(feature = "plot")]
-    pub fn plot_chart(&self, path: impl Into<String>) -> Result<(), Box<dyn std::error::Error>> {
-        self.metrics.plot_chart(&path.into(), &self.title)
+    ///
+    /// Returns an error if `path` is not valid UTF-8 or the chart can't be written.
+    pub fn plot_chart(
+        &self,
+        path: impl AsRef<std::path::Path>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let path = path
+            .as_ref()
+            .to_str()
+            .ok_or("the chart path is not valid UTF-8")?;
+
+        self.metrics.plot_chart(path, &self.title)
     }
 
     /// The title given to
@@ -564,6 +574,21 @@ mod tests {
             evolution.next();
             assert_eq!(evolution.current_population().len(), 30);
         }
+    }
+
+    #[cfg(feature = "plot")]
+    #[test]
+    fn plot_chart_takes_a_path() {
+        let mut evolution = builder(10, SumFitness).with_title("Sum").build().unwrap();
+        evolution.run();
+        let path =
+            std::env::temp_dir().join(format!("evolutionary-{}-evolution.png", std::process::id()));
+
+        evolution.plot_chart(&path).unwrap();
+
+        let bytes = std::fs::read(&path).unwrap();
+        std::fs::remove_file(&path).unwrap();
+        assert!(bytes.starts_with(b"\x89PNG"));
     }
 
     #[test]
