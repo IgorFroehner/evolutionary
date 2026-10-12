@@ -9,17 +9,22 @@ use super::Individual;
 )]
 pub struct Int {
     chromosome: Vec<i64>,
+    #[cfg_attr(
+        feature = "serde",
+        serde(deserialize_with = "crate::fitness::deserialize_fitness")
+    )]
     fitness: f64,
     pub range: <Int as Individual>::RangeType,
 }
 
 impl Int {
     /// Creates an individual from a known chromosome, for example to seed a population with
-    /// saved solutions. `range` is the range the genes were generated in.
+    /// saved solutions. `range` is the range the genes were generated in. Its fitness is `NaN`
+    /// until it is evaluated.
     pub fn new(chromosome: Vec<i64>, range: <Int as Individual>::RangeType) -> Self {
         Self {
             chromosome,
-            fitness: 0.0,
+            fitness: f64::NAN,
             range,
         }
     }
@@ -38,16 +43,16 @@ impl Individual for Int {
             chromosome: (0..dimension)
                 .map(|_| rng.random_range(range.0..=range.1))
                 .collect::<Vec<i64>>(),
-            fitness: 0.0,
+            fitness: f64::NAN,
             range: *range,
         }
     }
 
-    fn get_chromosome(&self) -> &Vec<Self::Gene> {
+    fn get_chromosome(&self) -> &[Self::Gene] {
         &self.chromosome
     }
 
-    fn get_mut_chromosome(&mut self) -> &mut Vec<Self::Gene> {
+    fn get_mut_chromosome(&mut self) -> &mut [Self::Gene] {
         &mut self.chromosome
     }
 

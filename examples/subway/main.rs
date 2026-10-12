@@ -87,7 +87,7 @@ impl Fitness<Real> for MetroFitness {
 }
 
 fn main() {
-    let filename = "examples/subway/subway.in";
+    let filename = "examples/subway/metro.in";
     let content = fs::read_to_string(filename).expect("Failed to read the file");
 
     let first_line = content
@@ -143,7 +143,7 @@ fn main() {
         }
     }
 
-    let evolution_builder = EvolutionBuilder::new(30, 30,    GeneCod::Real, (0.0, 1.0))
+    let evolution_builder = EvolutionBuilder::new(30, 30, (0.0, 1.0))
         .with_fitness(MetroFitness {
             start,
             end,
@@ -155,7 +155,7 @@ fn main() {
         .with_selection(TournamentSelection::default())
         .with_crossover(UniformCrossover::default())
         .with_mutation(RandomResettingMutation::default())
-        .with_title("Metro".to_string())
+        .with_title("Metro")
         .with_stop_condition(move |report| report.generation >= 100)
         // .build()
         // .unwrap()
@@ -189,5 +189,5 @@ fn main() {
     // // evolution.population_digest();
     // evolution.time_digest();
     //
-    // evolution.plot_chart("Metro.png", "Metro E14 -> E7").unwrap();
+    // evolution.plot_chart("Metro.png").unwrap();
 }

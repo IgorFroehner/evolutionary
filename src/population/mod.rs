@@ -12,6 +12,11 @@ pub use int::*;
 pub use perm::*;
 pub use real::*;
 
+/// The name of a built-in encoding, as a config file gives it (`RawConfig::gene_cod` with the
+/// `config` feature), to pick the individual type to build.
+///
+/// An evolution does not need it: the individual type of the
+/// [`EvolutionBuilder`](crate::EvolutionBuilder) is the encoding.
 #[derive(Debug, Clone)]
 #[cfg_attr(
     feature = "serde",
@@ -28,6 +33,19 @@ pub enum GeneCod {
 ///
 /// [`generate_member`](Self::generate_member) draws the random genes of a new individual from
 /// `rng`, so that a seeded run starts from the same population every time.
+///
+/// # Fitness of an individual that was never evaluated
+///
+/// [`get_fitness`](Self::get_fitness) returns what the last
+/// [`set_fitness`](Self::set_fitness) stored. An evolution evaluates every individual before
+/// reading its fitness, so there it is always the result of the [`Fitness`](crate::Fitness).
+///
+/// Before that, the built-in individuals have a fitness of `NaN`: `generate_member` and the
+/// constructors ([`Bin::new`], [`Int::new`], [`IntPerm::new`], [`Real::new`]) start there, so a
+/// fitness that was never computed can't be mistaken for a real `0.0`. Check it with
+/// `f64::is_nan`. Every comparison in the crate ranks `NaN` below every number, the same as a
+/// fitness function that returns `NaN`, so such an individual never wins a selection or
+/// becomes the best. Implementations of your own should start at `NaN` too.
 ///
 /// # Example
 ///
@@ -47,15 +65,16 @@ pub enum GeneCod {
 ///     fn generate_member<R: Rng + ?Sized>(dimension: u32, _: &Self::RangeType, rng: &mut R) -> Self {
 ///         Self {
 ///             chromosome: (0..dimension).map(|_| rng.random()).collect(),
-///             fitness: 0.0,
+///             // Not evaluated yet.
+///             fitness: f64::NAN,
 ///         }
 ///     }
 ///
-///     fn get_chromosome(&self) -> &Vec<Self::Gene> {
+///     fn get_chromosome(&self) -> &[Self::Gene] {
 ///         &self.chromosome
 ///     }
 ///
-///     fn get_mut_chromosome(&mut self) -> &mut Vec<Self::Gene> {
+///     fn get_mut_chromosome(&mut self) -> &mut [Self::Gene] {
 ///         &mut self.chromosome
 ///     }
 ///
@@ -86,11 +105,18 @@ pub trait Individual: 'static + Clone + Send + Sync {
         range: &Self::RangeType,
         rng: &mut R,
     ) -> Self;
-    fn get_chromosome(&self) -> &Vec<Self::Gene>;
-    fn get_mut_chromosome(&mut self) -> &mut Vec<Self::Gene>;
+    /// The genes of the individual.
+    fn get_chromosome(&self) -> &[Self::Gene];
+    /// The genes of the individual, to change in place. Operators keep the number of genes, so
+    /// this is a slice: an individual whose length can change is not one the built-in
+    /// operators handle.
+    fn get_mut_chromosome(&mut self) -> &mut [Self::Gene];
     fn set_gene(&mut self, index: usize, value: Self::Gene);
     fn get_gene(&self, index: usize) -> Self::Gene;
+    /// Stores the fitness of the individual, as computed by the [`Fitness`](crate::Fitness).
     fn set_fitness(&mut self, fitness: f64);
+    /// The fitness stored by [`set_fitness`](Self::set_fitness), or `NaN` if it was never
+    /// evaluated (see [the trait docs](Self#fitness-of-an-individual-that-was-never-evaluated)).
     fn get_fitness(&self) -> f64;
 }
 
@@ -142,15 +168,22 @@ mod tests {
     }
 
     #[test]
-    fn new_individuals_start_with_zero_fitness() {
+    fn generated_individuals_start_without_a_fitness() {
         let rng = &mut Rngs::new(0).rng(0);
 
-        assert_eq!(Bin::generate_member(4, &(), rng).get_fitness(), 0.0);
-        assert_eq!(Int::generate_member(4, &(0, 1), rng).get_fitness(), 0.0);
-        assert_eq!(IntPerm::generate_member(4, &(), rng).get_fitness(), 0.0);
-        assert_eq!(
-            Real::generate_member(4, &(0.0, 1.0), rng).get_fitness(),
-            0.0
-        );
+        assert!(Bin::generate_member(4, &(), rng).get_fitness().is_nan());
+        assert!(Int::generate_member(4, &(0, 1), rng).get_fitness().is_nan());
+        assert!(IntPerm::generate_member(4, &(), rng).get_fitness().is_nan());
+        assert!(Real::generate_member(4, &(0.0, 1.0), rng)
+            .get_fitness()
+            .is_nan());
+    }
+
+    #[test]
+    fn built_individuals_start_without_a_fitness() {
+        assert!(Bin::new(vec![true]).get_fitness().is_nan());
+        assert!(Int::new(vec![0], (0, 1)).get_fitness().is_nan());
+        assert!(IntPerm::new(vec![1]).get_fitness().is_nan());
+        assert!(Real::new(vec![0.0], (0.0, 1.0)).get_fitness().is_nan());
     }
 }

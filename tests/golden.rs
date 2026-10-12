@@ -199,7 +199,7 @@ impl Fitness<Real> for Sphere {
 #[test]
 fn bin_tournament_n_points_bit_flip() {
     assert_golden(
-        EvolutionBuilder::new(POPULATION, DIMENSION, GeneCod::Bin, ())
+        EvolutionBuilder::new(POPULATION, DIMENSION, ())
             .with_fitness(CountOnes)
             .with_selection(TournamentSelection::new(3, 0.8))
             .with_crossover(NPointsCrossover {
@@ -220,7 +220,7 @@ fn bin_tournament_n_points_bit_flip() {
 #[test]
 fn int_rank_uniform_random_resetting() {
     assert_golden(
-        EvolutionBuilder::new(POPULATION, DIMENSION, GeneCod::Int, (-10, 10))
+        EvolutionBuilder::new(POPULATION, DIMENSION, (-10, 10))
             .with_fitness(SumOfGenes)
             .with_selection(RankSelection)
             .with_crossover(UniformCrossover::default())
@@ -237,7 +237,7 @@ fn int_rank_uniform_random_resetting() {
 #[test]
 fn perm_sus_partially_mapped_insertion() {
     assert_golden(
-        EvolutionBuilder::new(POPULATION, DIMENSION, GeneCod::IntPerm, ())
+        EvolutionBuilder::new(POPULATION, DIMENSION, ())
             .with_fitness(InPlace)
             .with_selection(StochasticUniversalSamplingSelection)
             .with_crossover(PartiallyMappedCrossover::default())
@@ -254,7 +254,7 @@ fn perm_sus_partially_mapped_insertion() {
 #[test]
 fn real_roulette_simulated_binary_gaussian() {
     assert_golden(
-        EvolutionBuilder::new(POPULATION, DIMENSION, GeneCod::Real, (-1.0, 1.0))
+        EvolutionBuilder::new(POPULATION, DIMENSION, (-1.0, 1.0))
             .with_fitness(Sphere)
             .with_selection(RouletteSelection)
             .with_crossover(SimulatedBinaryCrossover::default())

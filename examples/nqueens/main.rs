@@ -62,15 +62,13 @@ fn main() {
             .with_mutation(mutation.clone())
             .with_elitism(10)
             .with_stop_condition(move |report| report.best_fitness == max_colisions)
-            .with_title("NQueens".to_string());
+            .with_title("NQueens Problem");
 
         let mut evolution = evolution_builder.build().unwrap();
 
         evolution.run();
 
-        evolution
-            .plot_chart("NQueens.png", "NQueens Problem")
-            .unwrap();
+        evolution.plot_chart("NQueens.png").unwrap();
 
         println!("Best individual: {:?}", evolution.current_best());
         println!("Best fitness: {}", evolution.current_best_fitness());

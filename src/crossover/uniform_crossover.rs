@@ -11,6 +11,10 @@ use crate::{Crossover, Individual, Rngs};
 ///
 /// It works for [`Bin`], [`Int`] and [`Real`], but not for permuted individuals, as swapping
 /// genes between two permutations rarely yields permutations.
+///
+/// # Panics
+///
+/// `crossover` panics if `crossover_rate` or `toss_probability` is not within `[0, 1]`.
 #[derive(Clone)]
 pub struct UniformCrossover {
     /// The probability of crossover occurring.

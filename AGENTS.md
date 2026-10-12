@@ -91,7 +91,8 @@ most design decisions:
   `src/fitness.rs`, where `NaN` ranks below every number. Keep using them instead of `partial_cmp`.
 - Built-in crossovers pair the population two by two; with an odd size the last individual passes
   through unchanged (`tests/odd_population.rs`).
-- Public helpers and operator traits take slices (`&[T]`, `&mut [T]`), not `&Vec<T>`.
+- Public helpers and operator traits take slices (`&[T]`, `&mut [T]`), not `&Vec<T>`, and
+  `Individual` hands out its chromosome as one, so operators never change its length.
 - Each release has a dated section in `CHANGELOG.md` with Breaking / Added / Fixed / Changed /
   Performance headings; breaking changes are written as "write X instead of Y" migration notes.
   `ROADMAP.md` tracks planned work with checkboxes.

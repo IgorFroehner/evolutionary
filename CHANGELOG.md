@@ -18,9 +18,75 @@
   best. For the best of the final population, replay the run with
   `EvolutionBuilder::with_seed(result.seed)` and read `current_best()` instead of
   `best_found`. Each run's seed and fitness history are unchanged.
+- `EvolutionBuilder::new` no longer takes the encoding, which the individual type already
+  fixes: write `EvolutionBuilder::new(30, 10, ())` instead of
+  `EvolutionBuilder::new(30, 10, GeneCod::Bin, ())`. `EvolutionConfig` loses its `gene_cod`
+  field, which nothing read. `GeneCod` stays, for `RawConfig::gene_cod` with the `config`
+  feature.
+- `Individual::get_chromosome` returns `&[Gene]` and `get_mut_chromosome` returns
+  `&mut [Gene]`. In an `Individual` implementation, write
+  `fn get_chromosome(&self) -> &[Self::Gene]` instead of `-> &Vec<Self::Gene>`, and the same
+  for `get_mut_chromosome`; the bodies (`&self.chromosome`) stay. To copy the genes, write
+  `individual.get_chromosome().to_vec()` instead of `individual.get_chromosome().clone()`.
+  Comparing a chromosome with a `Vec` still works. The built-in individuals keep their
+  `Vec` fields. Code that resized a chromosome through `get_mut_chromosome` (a `push`, a
+  `remove`) builds a new individual instead for `Bin` and `Int`, whose fields are private:
+  `Bin::new(genes)` or `Int::new(genes, individual.range)`. For `IntPerm` and `Real` it can
+  resize the public `chromosome` field: `individual.chromosome.push(gene)`.
+- An individual that was never evaluated has a fitness of `NaN` instead of `0.0`:
+  `generate_member` and `Bin::new`, `Int::new`, `IntPerm::new` and `Real::new` start there,
+  so a fitness that was never computed can't pass for a real zero. Write
+  `individual.get_fitness().is_nan()` instead of `individual.get_fitness() == 0.0` to tell
+  one apart. Every comparison already ranks `NaN` last, and an evolution evaluates every
+  individual before reading its fitness, so seeded runs are unchanged. With the `serde`
+  feature such an individual is saved to JSON with a `null` fitness, which now loads back as
+  `NaN`; files saved before load as they did. `serde_json` also writes an infinite fitness
+  as `null`, so one saved to JSON now loads back as `NaN`, silently, where the file failed to
+  load before. Binary formats keep infinities.
+- `Evolution::new` is private: write `EvolutionBuilder::new(..)` with its `with_*` calls and
+  `.build()?` instead of `Evolution::new(title, config, fitness, ..)`. The builder was already
+  the supported way, and checks the parameters `Evolution::new` took on trust.
+- With the `config` feature, `read_config` returns `Result<RawConfig, ConfigError>` instead
+  of printing what went wrong to stdout and returning `None`: write
+  `read_config(path).expect("..")` (unchanged) or `read_config(path)?`, and
+  `if let Ok(config) = read_config(path)` instead of `if let Some(config) = read_config(path)`.
+  `ConfigError`, in the prelude, tells a file that could not be read (`Io`) from one that
+  could not be parsed (`Parse`), names the file and implements `std::error::Error`.
+  `read_config` takes any path (`impl AsRef<Path>`), so `&str` still works.
+- `RawConfig::runs` is a `u32` instead of an `i32`, so a negative `runs` is a parse error:
+  write `report.generation >= config.runs` instead of `report.generation >= config.runs as u32`.
+- `Metrics::total_time` returns a `Duration` instead of nanoseconds as a `u128`: write
+  `metrics.total_time().as_nanos()` instead of `metrics.total_time()` where you need the
+  number. `Metrics::step_times` is private: write `metrics.step_time(Steps::Selection)` (an
+  `Option<Duration>`) instead of reading `metrics.step_times[&Steps::Selection].2`.
+  `time_digest` prints the same thing, and its documentation now lists the elitism line it
+  already printed.
+- With the `plot` feature, `Evolution::plot_chart` takes only the path, as any
+  `impl AsRef<Path>` like `ExperimentRunner::save_chart` and `read_config`, and captions the
+  chart with the title given to `EvolutionBuilder::with_title`, which nothing read before:
+  write `.with_title("TSP")` on the builder and `evolution.plot_chart("tsp.png")` instead of
+  `evolution.plot_chart("tsp.png", "TSP")`. For another caption, write
+  `evolution.metrics.plot_chart("tsp.png", "Another caption")`. A path that is not valid
+  UTF-8 is an error.
+- `within_range` no longer floors its result, which threw away the precision of the bits it
+  decodes: `examples/math_func` decoded 16 bits into the five integers of `(-2, 2)` and now
+  searches the whole interval, in steps of `4 / 65535`. Write
+  `within_range(range, l, d).floor()` instead of `within_range(range, l, d)` to keep the
+  integer. It also interpolates between the two ends instead of adding a rounded width to
+  the lower one, so `0` and `2^l - 1` give exactly `range.0` and `range.1`, and no result
+  leaves the range: adding the width gave `7.099999999999999` for the top of `(-3.3, 7.1)`
+  and `0.20000000000000004`, above the range, for the top of `(-0.1, 0.2)`.
 
 ### Added
 
+- `evolutionary::rayon` re-exports the `rayon` the crate runs on, as `evolutionary::rand`
+  does for `rand`: write `use evolutionary::rayon::prelude::*;` in a parallel custom operator
+  instead of adding `rayon` to your own dependencies at a matching version. It stays out of
+  the prelude, so its traits only come into scope where they are asked for.
+- `Evolution::population()` borrows the current population as a slice, in its current order,
+  where `current_population()` clones and sorts it at every call.
+- `EvolutionBuilder::with_title` takes any `impl Into<String>`, so `.with_title("TSP")` works
+  without `.to_string()`, and `Evolution::title()` returns it.
 - `ExperimentRunner::save_chart(path)`, with the `plot` feature, saves the chart of the best and
   average fitness per generation averaged over the runs, creating the parent directories.
 - `ExperimentRunner::average_time`, `average_best_fitness`, `average_generations` and
@@ -49,9 +115,19 @@
   over every result instead of the runs of one call.
 - `experiment_digest` no longer panics when there are no results yet, and saving the chart then
   returns an error instead of panicking.
+- `examples/subway` panicked at start: it read `examples/subway/subway.in`, which does not exist,
+  instead of the `metro.in` network it ships with.
 
 ### Changed
 
+- `convert_bin` adds `2f64.powi(i)` per set bit instead of `2f64.powf(i)`, with the same
+  results, and documents that it is exact up to 53 bits.
+- Every operator that can panic says when in a `# Panics` section: a rate outside `[0, 1]`,
+  an empty population in `RouletteSelection` and `RankSelection`, a negative fitness in
+  `RouletteSelection`, an empty or non-finite range in the resetting and delta mutations, and
+  so on. So do `Evolution::next`, `current_best_fitness` and `population_digest` before the
+  evolution starts, and `Metrics::step_start` and `step_end`. `CycleCrossover`,
+  `PartiallyMappedCrossover`, `SwapMutation` and `DeltaMutation` have a description at last.
 - CI checks formatting, fails on rustdoc warnings, checks the library on Rust 1.82, and
   uses `actions/checkout` v4. Dependabot proposes cargo and GitHub Actions updates monthly.
 - `Cargo.lock` is updated to the newest dependency versions that build on Rust 1.82, and

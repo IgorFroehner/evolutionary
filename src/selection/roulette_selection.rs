@@ -11,6 +11,11 @@ use super::Selection;
 ///
 /// Each slot of the mating pool draws an individual with probability proportional to its
 /// fitness. Fitnesses must not be negative; an individual with a `NaN` fitness gets no chance.
+///
+/// # Panics
+///
+/// `get_mating_pool` panics if the population is empty, if a fitness is negative, or if no
+/// fitness is positive or their total is not finite.
 #[derive(Clone, Default)]
 pub struct RouletteSelection;
 
@@ -23,7 +28,10 @@ impl<T: Individual> Selection<T> for RouletteSelection {
                 .iter()
                 .map(|individual| selection_weight(individual.get_fitness())),
         )
-        .expect("roulette selection needs at least one positive, finite fitness");
+        .expect(
+            "roulette selection needs individuals, no negative fitness and at least one \
+             positive, finite fitness",
+        );
 
         (0..initial_population.len())
             .into_par_iter()
@@ -71,5 +79,19 @@ mod tests {
             picked(&pool, |fitness| fitness == 0.0 || fitness.is_nan()),
             0
         );
+    }
+
+    #[test]
+    #[should_panic(expected = "roulette selection needs")]
+    fn a_negative_fitness_panics() {
+        let population = population(&[1.0, -1.0, 2.0]);
+
+        RouletteSelection.get_mating_pool(&population, &Rngs::new(0));
+    }
+
+    #[test]
+    #[should_panic(expected = "roulette selection needs")]
+    fn an_empty_population_panics() {
+        RouletteSelection.get_mating_pool(&population(&[]), &Rngs::new(0));
     }
 }

@@ -49,7 +49,7 @@ and run it:
 
 ```rust
 fn main() {
-    let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
+    let mut evolution = EvolutionBuilder::new(30, 10, ())
         .with_fitness(MaxFitness)
         .with_selection(TournamentSelection::default())
         .with_crossover(NPointsCrossover::default())
@@ -65,9 +65,10 @@ fn main() {
 }
 ```
 
-`EvolutionBuilder::new` takes the population size, the chromosome length, the encoding and its
-range. The range is `()` for `Bin` and `IntPerm`, `(i64, i64)` for `Int` and `(f64, f64)` for
-`Real`. `build` returns a `BuildError` naming any missing or inconsistent parameter.
+`EvolutionBuilder::new` takes the population size, the chromosome length and the range of the
+genes. The individual type (here `Bin`, from the fitness) sets the encoding and the type of the
+range: `()` for `Bin` and `IntPerm`, `(i64, i64)` for `Int` and `(f64, f64)` for `Real`. `build`
+returns a `BuildError` naming any missing or inconsistent parameter.
 
 The stop condition receives a `GenerationReport`, so it can look at the generation, the best and
 average fitness, or the generations without improvement:
@@ -102,11 +103,13 @@ with any `Individual`, including your own.
 
 To write your own, implement the trait and pass it to the builder. Operators get their random
 numbers from an `Rngs`, asking for one generator per unit of work with `rngs.rng(index)`, which is
-what keeps a seeded run reproducible when the operator runs in parallel:
+what keeps a seeded run reproducible when the operator runs in parallel. The crate re-exports the
+`rayon` it runs on as `evolutionary::rayon`, so a parallel operator needs no `rayon` dependency of
+its own:
 
 ```rust
 use evolutionary::prelude::*;
-use rayon::prelude::*;
+use evolutionary::rayon::prelude::*;
 
 #[derive(Clone)]
 struct FlipFirstGene;
@@ -142,6 +145,8 @@ differs, and `evolution.seed()` tells you the seed a run drew so you can replay 
   default is 1.
 - `evolution.start()` and `evolution.next()` drive the evolution one generation at a time, with
   `evolution.report()` in between, as an alternative to `run()`.
+- `evolution.population()` borrows the current population; `current_population()` returns a
+  copy sorted by fitness.
 - `evolution.time_digest()` prints how long each step took.
 
 ## Starting from a known population
@@ -149,7 +154,8 @@ differs, and `evolution.seed()` tells you the seed a run drew so you can replay 
 `.with_initial_population(individuals)` starts a run from given individuals, to resume one or to
 seed it with known good solutions. Random individuals fill the rest of the population. `Bin::new`,
 `Int::new`, `IntPerm::new` and `Real::new` build individuals from a chromosome, and the `serde`
-feature lets you save and load them.
+feature lets you save and load them. An individual that was never evaluated has a `NaN` fitness,
+which ranks below every number.
 
 ## Experiments
 

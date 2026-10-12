@@ -47,6 +47,10 @@ use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelI
 ///
 /// assert!(population[0].get_chromosome().iter().all(|gene| (-1.0..=1.0).contains(gene)));
 /// ```
+///
+/// # Panics
+///
+/// `mutate` panics if `mutation_rate` is not within `[0, 1]`, or if `sigma` is not finite.
 #[derive(Clone, Debug)]
 pub struct GaussianMutation {
     pub mutation_rate: f64,

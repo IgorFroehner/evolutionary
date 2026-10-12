@@ -45,7 +45,7 @@ impl Fitness<Real> for XorFitness {
 fn main() {
     let dimension = Network::parameter_count_for(&HIDDEN) as u32;
 
-    let mut evolution = EvolutionBuilder::new(100, dimension, GeneCod::Real, (-1.0, 1.0))
+    let mut evolution = EvolutionBuilder::new(100, dimension, (-1.0, 1.0))
         .with_fitness(XorFitness)
         .with_selection(TournamentSelection::new(3, 0.9))
         .with_crossover(UniformCrossover::default())

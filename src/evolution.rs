@@ -2,14 +2,13 @@ use rayon::iter::{IntoParallelIterator, IntoParallelRefMutIterator};
 use rayon::prelude::ParallelIterator;
 use std::cmp::Ordering;
 use std::sync::Arc;
-use std::time::Duration;
 
 use crate::{
     crossover::Crossover,
     fitness::{fitness_cmp, Fitness},
     metrics::{Metrics, Steps},
     mutation::Mutation,
-    population::{GeneCod, Individual},
+    population::Individual,
     report::GenerationReport,
     rng::{Rngs, Step},
     selection::Selection,
@@ -31,11 +30,12 @@ pub struct EvolutionConfig<T: Individual> {
     pub dimension: u32,
     pub population_size: u32,
     pub range: T::RangeType,
-    pub gene_cod: GeneCod,
 }
 
 /// This is the struct that does the evolution magic. It has the methods needed to start and iterate
 /// through the evolution.
+///
+/// Build one with [`EvolutionBuilder`](crate::EvolutionBuilder), which checks the parameters.
 ///
 /// # Example:
 ///
@@ -46,12 +46,12 @@ pub struct EvolutionConfig<T: Individual> {
 /// # impl Fitness<Bin> for YourFitness {
 /// #    fn calculate_fitness(&self, individual: &Bin) -> f64 { 0.0 }
 /// # }
-/// # let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
+/// # let mut evolution = EvolutionBuilder::new(30, 10, ())
 /// #     .with_fitness(YourFitness)
 /// #     .with_selection(TournamentSelection::default())
 /// #     .with_crossover(NPointsCrossover::default())
 /// #     .with_mutation(BitFlipMutation::default())
-/// #     .with_title("Max".to_string())
+/// #     .with_title("Max")
 /// #     .with_stop_condition(|report| report.generation >= 1000)
 /// #     .build().unwrap();
 /// #
@@ -68,7 +68,7 @@ pub struct EvolutionConfig<T: Individual> {
 /// evolution.run();
 /// ```
 pub struct Evolution<T: Individual> {
-    _title: String,
+    title: String,
     config: EvolutionConfig<T>,
     fitness: Box<dyn Fitness<T>>,
     selection: Box<dyn Selection<T>>,
@@ -93,9 +93,10 @@ pub struct Evolution<T: Individual> {
 }
 
 impl<T: Individual> Evolution<T> {
-    /// Use [`EvolutionBuilder`](crate::EvolutionBuilder), which checks the parameters.
+    /// Only [`EvolutionBuilder::build`](crate::EvolutionBuilder::build) calls this, after
+    /// checking the parameters.
     #[allow(clippy::too_many_arguments)]
-    pub fn new(
+    pub(crate) fn new(
         title: String,
         config: EvolutionConfig<T>,
         fitness: Box<dyn Fitness<T>>,
@@ -106,7 +107,7 @@ impl<T: Individual> Evolution<T> {
         stop_condition: StopConditionFn<T>,
     ) -> Self {
         Self {
-            _title: title,
+            title,
             current_population: Vec::new(),
             stats: None,
             config,
@@ -163,6 +164,11 @@ impl<T: Individual> Evolution<T> {
 
     /// This method runs one generation of the evolution.
     /// It selects the mating pool, crossover, mutate and calculates the fitness of the new population.
+    ///
+    /// # Panics
+    ///
+    /// If the evolution was not started yet, or if an operator panics (see the `# Panics`
+    /// section of each).
     pub fn next(&mut self) {
         self.metrics.step_start(Steps::Elitism);
         let elitists = self.find_elitists();
@@ -245,6 +251,12 @@ impl<T: Individual> Evolution<T> {
         self.run_seed
     }
 
+    /// Prints the generation, the best and average fitness, and every individual with its
+    /// fitness.
+    ///
+    /// # Panics
+    ///
+    /// If the evolution was not started yet.
     pub fn population_digest(&self) {
         println!("---------------------------------------------");
         println!("Iteration: {}", self.metrics.iterations);
@@ -270,49 +282,25 @@ impl<T: Individual> Evolution<T> {
     /// Crossover time: X.XXXXs (XX.XX%)
     /// Mutation time: X.XXXXs (XX.XX%)
     /// Fitness time: X.XXXXs (XX.XX%)
+    /// Elitism time: X.XXXXs (XX.XX%)
     /// ---------------------------------------
     /// ```
+    ///
+    /// [`metrics`](Self::metrics) gives the same numbers, with
+    /// [`Metrics::total_time`] and [`Metrics::step_time`].
     pub fn time_digest(&self) {
+        let total_time = self.metrics.total_time();
+
         println!("------------ Time Digest ------------");
-        println!(
-            "Total time: {:?}",
-            Duration::from_nanos(self.metrics.total_time() as u64)
-        );
-        println!(
-            "Selection time: {:?} ({:.2}%)",
-            self.metrics.step_time(Steps::Selection).unwrap(),
-            self.metrics.step_time(Steps::Selection).unwrap().as_nanos() as f64
-                / self.metrics.total_time() as f64
-                * 100.0
-        );
-        println!(
-            "Crossover time: {:?} ({:.2}%)",
-            self.metrics.step_time(Steps::Crossover).unwrap(),
-            self.metrics.step_time(Steps::Crossover).unwrap().as_nanos() as f64
-                / self.metrics.total_time() as f64
-                * 100.0
-        );
-        println!(
-            "Mutation time: {:?} ({:.2}%)",
-            self.metrics.step_time(Steps::Mutation).unwrap(),
-            self.metrics.step_time(Steps::Mutation).unwrap().as_nanos() as f64
-                / self.metrics.total_time() as f64
-                * 100.0
-        );
-        println!(
-            "Fitness time: {:?} ({:.2}%)",
-            self.metrics.step_time(Steps::Fitness).unwrap(),
-            self.metrics.step_time(Steps::Fitness).unwrap().as_nanos() as f64
-                / self.metrics.total_time() as f64
-                * 100.0
-        );
-        println!(
-            "Elitism time: {:?} ({:.2}%)",
-            self.metrics.step_time(Steps::Elitism).unwrap(),
-            self.metrics.step_time(Steps::Elitism).unwrap().as_nanos() as f64
-                / self.metrics.total_time() as f64
-                * 100.0
-        );
+        println!("Total time: {:?}", total_time);
+        for (step, time) in self.metrics.step_times() {
+            println!(
+                "{:?} time: {:?} ({:.2}%)",
+                step,
+                time,
+                time.as_nanos() as f64 / total_time.as_nanos() as f64 * 100.0
+            );
+        }
         println!("---------------------------------------");
     }
 
@@ -331,7 +319,21 @@ impl<T: Individual> Evolution<T> {
         &self.current_population[stats.best_index]
     }
 
-    /// Returns a copy of the current population sorted by fitness.
+    /// The current population, borrowed in its current order, without copying or sorting it.
+    /// Empty before the evolution is started.
+    ///
+    /// The order is the one the last generation left, which has no meaning of its own: use
+    /// [`current_best`](Self::current_best) for the best individual, and
+    /// [`current_population`](Self::current_population) for a copy sorted by fitness.
+    pub fn population(&self) -> &[T] {
+        &self.current_population
+    }
+
+    /// Returns a copy of the current population sorted by fitness, from the worst to the best
+    /// (individuals with a `NaN` fitness first).
+    ///
+    /// It clones and sorts the whole population at every call: to look at the individuals
+    /// without copying them, borrow them with [`population`](Self::population).
     pub fn current_population(&self) -> Vec<T> {
         let mut current_population = self.current_population.clone();
 
@@ -349,6 +351,11 @@ impl<T: Individual> Evolution<T> {
         (self.stop_condition)(&self.report())
     }
 
+    /// The fitness of [`current_best`](Self::current_best).
+    ///
+    /// # Panics
+    ///
+    /// If the evolution was not started yet.
     pub fn current_best_fitness(&self) -> f64 {
         self.current_best().get_fitness()
     }
@@ -389,15 +396,30 @@ impl<T: Individual> Evolution<T> {
         })
     }
 
-    /// Saves a chart of the best and average fitness per generation to `path`. Needs the `plot`
-    /// feature.
+    /// Saves a chart of the best and average fitness per generation to `path` (a PNG), with the
+    /// [`title`](Self::title) as its caption. Needs the `plot` feature.
+    ///
+    /// For another caption, call [`Metrics::plot_chart`] on [`metrics`](Self::metrics).
     #[cfg(feature = "plot")]
+    ///
+    /// Returns an error if `path` is not valid UTF-8 or the chart can't be written.
     pub fn plot_chart(
         &self,
-        path: impl Into<String>,
-        test_name: impl Into<String>,
+        path: impl AsRef<std::path::Path>,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        self.metrics.plot_chart(&path.into(), &test_name.into())
+        let path = path
+            .as_ref()
+            .to_str()
+            .ok_or("the chart path is not valid UTF-8")?;
+
+        self.metrics.plot_chart(path, &self.title)
+    }
+
+    /// The title given to
+    /// [`EvolutionBuilder::with_title`](crate::EvolutionBuilder::with_title), `""` without one.
+    /// `plot_chart`, with the `plot` feature, uses it as the caption of the chart.
+    pub fn title(&self) -> &str {
+        &self.title
     }
 
     /// The current generation, 0 for the initial population.
@@ -506,6 +528,7 @@ impl<T: Individual> Evolution<T> {
 
 #[cfg(test)]
 mod tests {
+    use crate::fitness::fitness_cmp;
     use crate::prelude::*;
     use std::sync::{Arc, Mutex};
 
@@ -532,7 +555,7 @@ mod tests {
     }
 
     fn builder<F: Fitness<Real>>(population_size: u32, fitness: F) -> EvolutionBuilder<Real> {
-        EvolutionBuilder::new(population_size, 3, GeneCod::Real, (-1.0, 1.0))
+        EvolutionBuilder::new(population_size, 3, (-1.0, 1.0))
             .with_fitness(fitness)
             .with_selection(TournamentSelection::default())
             .with_crossover(DoNothingCrossover)
@@ -551,6 +574,46 @@ mod tests {
             evolution.next();
             assert_eq!(evolution.current_population().len(), 30);
         }
+    }
+
+    #[cfg(feature = "plot")]
+    #[test]
+    fn plot_chart_takes_a_path() {
+        let mut evolution = builder(10, SumFitness).with_title("Sum").build().unwrap();
+        evolution.run();
+        let path =
+            std::env::temp_dir().join(format!("evolutionary-{}-evolution.png", std::process::id()));
+
+        evolution.plot_chart(&path).unwrap();
+
+        let bytes = std::fs::read(&path).unwrap();
+        std::fs::remove_file(&path).unwrap();
+        assert!(bytes.starts_with(b"\x89PNG"));
+    }
+
+    #[test]
+    fn population_borrows_what_current_population_sorts() {
+        let mut evolution = builder(30, SumFitness).with_seed(2).build().unwrap();
+        assert!(evolution.population().is_empty());
+
+        evolution.run();
+
+        let mut borrowed: Vec<Real> = evolution.population().to_vec();
+        borrowed.sort_by(|a, b| fitness_cmp(a.get_fitness(), b.get_fitness()));
+        let sorted = evolution.current_population();
+
+        assert_eq!(evolution.population().len(), 30);
+        let genes = |population: &[Real]| -> Vec<Vec<f64>> {
+            population
+                .iter()
+                .map(|individual| individual.get_chromosome().to_vec())
+                .collect()
+        };
+        assert_eq!(genes(&borrowed), genes(&sorted));
+        assert_eq!(
+            sorted.last().unwrap().get_fitness(),
+            evolution.current_best_fitness()
+        );
     }
 
     #[test]
@@ -704,7 +767,7 @@ mod tests {
         let mut by_run = builder(20, SumFitness).with_seed(4).build().unwrap();
         by_run.run();
 
-        assert!(evolution.metrics.total_time() > 0);
+        assert!(evolution.metrics.total_time() > std::time::Duration::ZERO);
         assert_eq!(evolution.report().generation, by_run.report().generation);
         assert_eq!(
             evolution.metrics.best_fitnesses,

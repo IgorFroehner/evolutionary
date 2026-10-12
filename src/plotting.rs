@@ -9,6 +9,8 @@ fn normalize(values: &[f64], max: f64) -> Vec<f64> {
     values.iter().map(|&v| (v - min) / (max - min)).collect()
 }
 
+/// Saves a chart of the best and average fitness per generation to `path` (a PNG), captioned
+/// `test_name`. Both series are scaled so that the highest value is 1.
 pub fn plot_chart(
     best_fitness: &[f64],
     average_fitness: &[f64],
@@ -75,6 +77,11 @@ pub fn plot_chart(
     Ok(())
 }
 
+/// Saves a box plot of `quartiles`, one box per label, to `boxplot.png`.
+///
+/// # Panics
+///
+/// If `quartiles` is empty.
 pub fn plot_boxplot(
     quartiles: &[Quartiles],
     labels: &[String],

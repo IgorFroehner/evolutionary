@@ -41,12 +41,12 @@
 //! // Then you will be able to build a evolution object using the `EvolutionBuilder`
 //! // and setting all the required parameters:
 //! fn main() {
-//!     let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
+//!     let mut evolution = EvolutionBuilder::new(30, 10, ())
 //!         .with_fitness(MaxFitness)
 //!         .with_selection(TournamentSelection::default())
 //!         .with_crossover(NPointsCrossover::default())
 //!         .with_mutation(BitFlipMutation::default())
-//!         .with_title("Max".to_string())
+//!         .with_title("Max")
 //!         .with_stop_condition(|report| report.generation >= 100)
 //!         .build().unwrap();
 //!
@@ -101,9 +101,16 @@ pub use selection::Selection;
 /// [`TaskRng`], or when implementing [`Individual::generate_member`].
 pub use rand;
 
+/// The `rayon` this crate runs its operators and fitness on. Write custom operators that run in
+/// parallel with `use evolutionary::rayon::prelude::*;`, so they need no `rayon` dependency of
+/// their own, at a version that has to match.
+///
+/// It is not in [`prelude`], so that its traits only come into scope where they are asked for.
+pub use rayon;
+
 pub mod prelude {
     #[cfg(feature = "config")]
-    pub use crate::config_read::{read_config, RawConfig};
+    pub use crate::config_read::{read_config, ConfigError, RawConfig};
     pub use crate::crossover::*;
     pub use crate::experiment_runner::ExperimentRunner;
     pub use crate::fitness::Fitness;

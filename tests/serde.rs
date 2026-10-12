@@ -56,6 +56,38 @@ fn int_perm_round_trips() {
 }
 
 #[test]
+fn individuals_never_evaluated_round_trip_through_json() {
+    // JSON has no NaN, so serde_json writes the fitness as `null`.
+    let saved = Bin::new(vec![true, false]);
+    let json = serde_json::to_string(&saved).unwrap();
+    assert!(json.contains("null"), "{json}");
+
+    assert!(round_trip(&saved).get_fitness().is_nan());
+    assert!(round_trip(&Int::new(vec![1], (0, 2)))
+        .get_fitness()
+        .is_nan());
+    assert!(round_trip(&IntPerm::new(vec![1])).get_fitness().is_nan());
+    assert!(round_trip(&Real::new(vec![0.5], (0.0, 1.0)))
+        .get_fitness()
+        .is_nan());
+}
+
+#[test]
+fn an_infinite_fitness_comes_back_from_json_as_nan() {
+    // serde_json writes infinities as `null` too, which can only be read back as NaN.
+    let saved = with_fitness(Bin::new(vec![true]), f64::INFINITY);
+
+    assert!(round_trip(&saved).get_fitness().is_nan());
+}
+
+#[test]
+fn a_fitness_written_as_an_integer_loads() {
+    let loaded: Bin = serde_json::from_str(r#"{"chromosome":[true],"fitness":3}"#).unwrap();
+
+    assert_eq!(loaded.get_fitness(), 3.0);
+}
+
+#[test]
 fn gene_cod_round_trips() {
     assert!(matches!(round_trip(&GeneCod::IntPerm), GeneCod::IntPerm));
 }
@@ -76,7 +108,7 @@ impl Fitness<Real> for NearOrigin {
 #[test]
 fn a_saved_population_resumes_a_run() {
     let builder = || {
-        EvolutionBuilder::new(30, 8, GeneCod::Real, (-1.0, 1.0))
+        EvolutionBuilder::new(30, 8, (-1.0, 1.0))
             .with_fitness(NearOrigin)
             .with_selection(TournamentSelection::default())
             .with_crossover(BlendCrossover::default())

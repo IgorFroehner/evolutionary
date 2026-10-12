@@ -9,12 +9,16 @@ use super::Individual;
 )]
 pub struct IntPerm {
     pub chromosome: Vec<i64>,
+    #[cfg_attr(
+        feature = "serde",
+        serde(deserialize_with = "crate::fitness::deserialize_fitness")
+    )]
     fitness: f64,
 }
 
 impl IntPerm {
     /// Creates an individual from a known chromosome, for example to seed a population with
-    /// saved solutions.
+    /// saved solutions. Its fitness is `NaN` until it is evaluated.
     ///
     /// # Panics
     ///
@@ -29,7 +33,7 @@ impl IntPerm {
 
         Self {
             chromosome,
-            fitness: 0.0,
+            fitness: f64::NAN,
         }
     }
 }
@@ -51,15 +55,15 @@ impl Individual for IntPerm {
 
         Self {
             chromosome: member,
-            fitness: 0.0,
+            fitness: f64::NAN,
         }
     }
 
-    fn get_chromosome(&self) -> &Vec<Self::Gene> {
+    fn get_chromosome(&self) -> &[Self::Gene] {
         &self.chromosome
     }
 
-    fn get_mut_chromosome(&mut self) -> &mut Vec<Self::Gene> {
+    fn get_mut_chromosome(&mut self) -> &mut [Self::Gene] {
         &mut self.chromosome
     }
 

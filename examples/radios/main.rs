@@ -34,14 +34,14 @@ fn main() {
             .with_fitness(fitness)
             .with_crossover(crossover)
             .with_mutation(mutation)
-            .with_title("Radios".to_string())
-            .with_stop_condition(move |report| report.generation > max_runs as u32);
+            .with_title("Radios")
+            .with_stop_condition(move |report| report.generation > max_runs);
 
         let mut experiment = ExperimentRunner::new("radios".to_string(), 10, evolution_builder);
 
         experiment.run().expect("invalid evolution parameters");
 
-        // evolution.plot_chart(&"radios".to_string()).unwrap();
+        // evolution.plot_chart("radios.png").unwrap();
         //
         // let best_found = evolution.current_best();
         // println!("Best found: {:?}", best_found);

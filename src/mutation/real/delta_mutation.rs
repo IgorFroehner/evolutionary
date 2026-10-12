@@ -5,6 +5,16 @@ use rayon::prelude::{IndexedParallelIterator, IntoParallelRefMutIterator, Parall
 use crate::Rngs;
 use crate::{population::Real, Mutation};
 
+/// # Delta Mutation
+///
+/// For each gene, with probability `mutation_rate`, adds or subtracts (at random) a step drawn
+/// uniformly from the individual's `range` and divided by `frac`, then clamps the gene to the
+/// `range`.
+///
+/// # Panics
+///
+/// `mutate` panics if `mutation_rate` is not within `[0, 1]`, or when it mutates a gene of an
+/// individual whose `range` is empty (`range.0 >= range.1`) or has a bound that is not finite.
 #[derive(Clone)]
 pub struct DeltaMutation {
     pub mutation_rate: f64,

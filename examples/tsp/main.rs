@@ -50,12 +50,12 @@ fn main() {
 
     println!("Best possible: {}", best_fitness_possible);
 
-    let mut evolution = EvolutionBuilder::new(30, size as u32, GeneCod::IntPerm, ())
+    let mut evolution = EvolutionBuilder::new(30, size as u32, ())
         .with_selection(TournamentSelection::default())
         .with_fitness(fitness)
         .with_crossover(OrderedCrossover::default())
         .with_mutation(SwapMutation::default())
-        .with_title("TSP".to_string())
+        .with_title("TSP")
         .with_stop_condition(move |report| report.best_fitness >= best_fitness_possible)
         .with_elitism(3)
         .build()
@@ -71,5 +71,5 @@ fn main() {
     );
     evolution.time_digest();
 
-    evolution.plot_chart("tsp.png", "TSP").unwrap();
+    evolution.plot_chart("tsp.png").unwrap();
 }

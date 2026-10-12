@@ -56,6 +56,65 @@ pub(crate) fn selection_weight(fitness: f64) -> f64 {
     }
 }
 
+/// Reads the fitness of a saved individual, taking `null` as `NaN`.
+///
+/// An individual that was never evaluated has a `NaN` fitness, and JSON has no `NaN`:
+/// `serde_json` writes it as `null`, which a plain `f64` refuses to read back. Formats that
+/// are not human-readable (bincode and the like) store the `f64` as it is, so they read it as
+/// one too, and the format of every saved individual stays the same.
+///
+/// `serde_json` writes `+inf` and `-inf` as `null` too, and there is no telling them apart
+/// from a `NaN` once written: an infinite fitness saved to JSON loads back as `NaN`, silently,
+/// where the file failed to load before. Binary formats keep infinities.
+#[cfg(feature = "serde")]
+pub(crate) fn deserialize_fitness<'de, D>(deserializer: D) -> Result<f64, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    struct FitnessVisitor;
+
+    impl<'de> serde::de::Visitor<'de> for FitnessVisitor {
+        type Value = f64;
+
+        fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+            formatter.write_str("a fitness: a number, or null for one never evaluated")
+        }
+
+        fn visit_f64<E>(self, value: f64) -> Result<f64, E> {
+            Ok(value)
+        }
+
+        fn visit_i64<E>(self, value: i64) -> Result<f64, E> {
+            Ok(value as f64)
+        }
+
+        fn visit_u64<E>(self, value: u64) -> Result<f64, E> {
+            Ok(value as f64)
+        }
+
+        fn visit_unit<E>(self) -> Result<f64, E> {
+            Ok(f64::NAN)
+        }
+
+        fn visit_none<E>(self) -> Result<f64, E> {
+            Ok(f64::NAN)
+        }
+
+        fn visit_some<D>(self, deserializer: D) -> Result<f64, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            deserializer.deserialize_any(self)
+        }
+    }
+
+    if deserializer.is_human_readable() {
+        deserializer.deserialize_any(FitnessVisitor)
+    } else {
+        deserializer.deserialize_f64(FitnessVisitor)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -67,9 +67,9 @@ fn main() {
 
     // Set an arbitrary number of individuals: 30
     // Set the size of the chromosome: max_guests to meet our constraints
-    // And set this evolution to use the Binary encoding
-    let mut evolution = EvolutionBuilder::new(30, max_guests, GeneCod::Bin, ())
-        // Set the fitness function
+    // And the range of the genes, which is `()` for the Binary encoding
+    let mut evolution = EvolutionBuilder::new(30, max_guests, ())
+        // Set the fitness function, which works on `Bin` and so picks the Binary encoding
         .with_fitness(PartyFitness)
         // Use the Tournament Selection
         .with_selection(TournamentSelection::default())
@@ -79,6 +79,8 @@ fn main() {
         .with_mutation(BitFlipMutation { mutation_rate: 0.05 })
         // Set the stop condition based on the number of generations
         .with_stop_condition(|report| report.generation >= 1000)
+        // Name the evolution, which captions its chart
+        .with_title("Party Fitness")
         .build().unwrap();
 
     // The run method of the Evolution will run the evolution until the stop condition is met
@@ -103,6 +105,41 @@ without improvement:
             report.best_fitness == 5.0 || report.generations_without_improvement >= 100
         })
 ```
+
+### Writing your own operator
+
+Any of the three operators can be your own: implement `Selection`, `Crossover` or `Mutation` and pass it to the
+builder. Here is a mutation that invites one more friend, picked at random, to some of the parties. It draws its random
+numbers from the `Rngs` it receives, one generator per individual, so a seeded run gives the same result however the
+work is split between threads. The crate re-exports the `rayon` it runs on, so running the mutation in parallel needs
+no `rayon` dependency of your own:
+
+```rust
+use evolutionary::prelude::*;
+use evolutionary::rayon::prelude::*;
+
+#[derive(Clone)]
+struct InviteOneMore {
+    rate: f64,
+}
+
+impl Mutation<Bin> for InviteOneMore {
+    fn mutate(&self, population: &mut [Bin], rngs: &Rngs) {
+        population
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(index, individual)| {
+                let mut rng = rngs.rng(index);
+                if rng.random_bool(self.rate) {
+                    let friend = rng.random_range(0..individual.get_chromosome().len());
+                    individual.set_gene(friend, true);
+                }
+            });
+    }
+}
+```
+
+Use it with `.with_mutation(InviteOneMore { rate: 0.1 })` in place of the `BitFlipMutation`.
 
 ### Following a run
 
@@ -132,10 +169,11 @@ You can also drive the evolution yourself instead of calling `run`, and look at 
 We have our list of invited friends as the best individual at the end of the evolution, which we expect to be all true. 
 But you can also make some analysis of the evolution. For example, you can plot the fitness of the best individual 
 and average fitness of the population over the generations, and notice that it found the best solution pretty fast 
-(before 10 generations). Charts need the `plot` feature (`features = ["plot"]` in your `Cargo.toml`):
+(before 10 generations). Charts need the `plot` feature (`features = ["plot"]` in your `Cargo.toml`). The chart is
+captioned with the title of the evolution, "Party Fitness", which we gave the builder with `.with_title`:
 
 ```rust
-    evolution.plot_chart("party_fitness.png", "Party Fitness").unwrap(); ;
+    evolution.plot_chart("party_fitness.png").unwrap();
 ```
 
 <img src="./party_fitness.png" width="400" height="240">
@@ -151,6 +189,7 @@ You can get an eye on how much each step of the evolution is taking:
     // Crossover time: 145.662831ms (11.15%)
     // Mutation time: 267.255769ms (20.46%)
     // Fitness time: 146.738664ms (11.23%)
+    // Elitism time: 9.120874ms (0.70%)
     // ---------------------------------------
 ```
 

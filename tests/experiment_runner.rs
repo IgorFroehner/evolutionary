@@ -23,7 +23,7 @@ impl Fitness<Bin> for CountOnes {
 }
 
 fn builder(seed: u64) -> EvolutionBuilder<Bin> {
-    EvolutionBuilder::new(20, 16, GeneCod::Bin, ())
+    EvolutionBuilder::new(20, 16, ())
         .with_fitness(CountOnes)
         .with_selection(TournamentSelection::default())
         .with_crossover(NPointsCrossover::default())
@@ -42,7 +42,7 @@ fn run(name: &str, seed: u64) -> ExperimentRunner<Bin> {
 /// What two runs must agree on.
 fn outcome(result: &ExperimentResult<Bin>) -> (Vec<bool>, Vec<f64>, Vec<f64>) {
     (
-        result.best_found.get_chromosome().clone(),
+        result.best_found.get_chromosome().to_vec(),
         result.best_fitnesses.clone(),
         result.average_fitnesses.clone(),
     )
@@ -151,7 +151,7 @@ impl Fitness<Real> for NearOrigin {
 
 #[test]
 fn best_found_is_the_best_ever_without_elitism() {
-    let builder = EvolutionBuilder::new(10, 3, GeneCod::Real, (-1.0, 1.0))
+    let builder = EvolutionBuilder::new(10, 3, (-1.0, 1.0))
         .with_fitness(NearOrigin)
         .with_selection(TournamentSelection::default())
         .with_crossover(DoNothingCrossover)
@@ -176,7 +176,7 @@ fn best_found_is_the_best_ever_without_elitism() {
 
 #[test]
 fn an_invalid_builder_returns_the_error_without_running() {
-    let builder = EvolutionBuilder::new(20, 16, GeneCod::Bin, ())
+    let builder = EvolutionBuilder::new(20, 16, ())
         .with_selection(TournamentSelection::default())
         .with_crossover(NPointsCrossover::default())
         .with_mutation(BitFlipMutation::default())
@@ -189,7 +189,7 @@ fn an_invalid_builder_returns_the_error_without_running() {
 
 #[test]
 fn an_invalid_builder_is_an_error_even_with_no_runs() {
-    let builder = EvolutionBuilder::new(20, 16, GeneCod::Bin, ())
+    let builder = EvolutionBuilder::new(20, 16, ())
         .with_fitness(CountOnes)
         .with_selection(TournamentSelection::default())
         .with_crossover(NPointsCrossover::default())

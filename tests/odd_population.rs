@@ -9,7 +9,7 @@ fn assert_last_untouched<T: Individual, C: Crossover<T>>(crossover: C, populatio
 where
     T::Gene: PartialEq + std::fmt::Debug,
 {
-    let last = population.last().unwrap().get_chromosome().clone();
+    let last = population.last().unwrap().get_chromosome().to_vec();
     let mut population = population;
 
     crossover.crossover(&mut population, &Rngs::new(0));
@@ -105,7 +105,7 @@ fn perm_crossovers() {
 
 #[test]
 fn odd_population_evolves() {
-    let mut evolution = EvolutionBuilder::new(SIZE as u32, 8, GeneCod::Bin, ())
+    let mut evolution = EvolutionBuilder::new(SIZE as u32, 8, ())
         .with_fitness(CountOnes)
         .with_selection(TournamentSelection::default())
         .with_crossover(n_points())

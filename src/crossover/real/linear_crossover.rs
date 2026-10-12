@@ -22,6 +22,10 @@ use crate::{Crossover, Rngs};
 ///
 /// Reference: Wright, A. H. (1991). Genetic algorithms for real parameter optimization.
 /// Foundations of Genetic Algorithms, 1, 205-218.
+///
+/// # Panics
+///
+/// `crossover` panics if `crossover_rate` is not within `[0, 1]`.
 #[derive(Clone, Debug)]
 pub struct LinearCrossover {
     /// The probability of crossover occurring.
@@ -86,16 +90,16 @@ mod tests {
             LinearCrossover::new(1.0).crossover(&mut population, &Rngs::new(seed));
 
             // The candidates of (1.0, 2.0) and of (3.0, 1.0) per gene.
-            let expected = [
-                vec![1.5, 2.0], // the mean
-                vec![0.5, 4.0], // 1.5 * p1 - 0.5 * p2
-                vec![2.5, 0.0], // -0.5 * p1 + 1.5 * p2
+            let expected: [&[f64]; 3] = [
+                &[1.5, 2.0], // the mean
+                &[0.5, 4.0], // 1.5 * p1 - 0.5 * p2
+                &[2.5, 0.0], // -0.5 * p1 + 1.5 * p2
             ];
 
             let child1 = population[0].get_chromosome();
             let child2 = population[1].get_chromosome();
-            assert!(expected.contains(child1), "{child1:?}");
-            assert!(expected.contains(child2), "{child2:?}");
+            assert!(expected.contains(&child1), "{child1:?}");
+            assert!(expected.contains(&child2), "{child2:?}");
             assert_ne!(child1, child2);
         }
     }

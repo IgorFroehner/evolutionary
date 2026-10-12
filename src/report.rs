@@ -15,7 +15,7 @@ use crate::population::Individual;
 /// #         individual.get_chromosome().iter().filter(|&&gene| gene).count() as f64
 /// #     }
 /// # }
-/// let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
+/// let mut evolution = EvolutionBuilder::new(30, 10, ())
 ///     .with_fitness(CountOnes)
 ///     .with_selection(TournamentSelection::default())
 ///     .with_crossover(NPointsCrossover::default())

@@ -31,7 +31,7 @@ fn main() {
         toss_probability: 0.3,
     };
 
-    let evolution_builder = EvolutionBuilder::new(50, 100, GeneCod::Real, (0.0, 1.0))
+    let evolution_builder = EvolutionBuilder::new(50, 100, (0.0, 1.0))
         .with_fitness(MazeFitness {
             max_dist: max_score,
             start,
@@ -41,7 +41,7 @@ fn main() {
         .with_selection(RouletteSelection)
         .with_crossover(crossover)
         .with_mutation(RandomResettingMutation::default())
-        .with_title("Maze".to_string())
+        .with_title("Maze")
         .with_stop_condition(move |report| report.best_fitness == max_score);
     // .with_stop_condition(|report| report.generation >= 10_000);
 

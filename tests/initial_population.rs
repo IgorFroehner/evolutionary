@@ -17,7 +17,7 @@ const SIZE: u32 = 20;
 const DIMENSION: u32 = 12;
 
 fn builder() -> EvolutionBuilder<Bin> {
-    EvolutionBuilder::new(SIZE, DIMENSION, GeneCod::Bin, ())
+    EvolutionBuilder::new(SIZE, DIMENSION, ())
         .with_fitness(CountOnes)
         .with_selection(TournamentSelection::default())
         .with_crossover(NPointsCrossover::default())
@@ -29,7 +29,7 @@ fn builder() -> EvolutionBuilder<Bin> {
 fn chromosomes(population: &[Bin]) -> Vec<Vec<bool>> {
     population
         .iter()
-        .map(|individual| individual.get_chromosome().clone())
+        .map(|individual| individual.get_chromosome().to_vec())
         .collect()
 }
 

@@ -8,6 +8,10 @@ use rayon::prelude::*;
 /// It creates an ranking of the individuals based on their fitness, where the works takes 1, the next 2, and follows
 /// linearly so that the best receives `n` (number of individuals in the population). Then it chooses the individuals
 /// with probability based on the ranking value.
+///
+/// # Panics
+///
+/// `get_mating_pool` panics if the population is empty.
 #[derive(Clone, Default)]
 pub struct RankSelection;
 
@@ -70,5 +74,11 @@ mod tests {
 
         let nans = picked(&pool, f64::is_nan) as f64;
         assert!((nans - 250.0).abs() < 4.0 * 14.0, "{nans}");
+    }
+
+    #[test]
+    #[should_panic]
+    fn an_empty_population_panics() {
+        RankSelection.get_mating_pool(&population(&[]), &Rngs::new(0));
     }
 }

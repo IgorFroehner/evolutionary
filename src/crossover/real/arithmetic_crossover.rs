@@ -10,6 +10,10 @@ use rayon::prelude::ParallelSliceMut;
 /// chromosomes. It does so based on the alpha value, where the offspring will be
 /// O1 = [p11 * alpha + p21 * (1 - alpha), p12 * alpha + p22 * (1 - alpha), ...], and the
 /// O2 = [p21 * alpha + p11 * (1 - alpha), p22 * alpha + p12 * (1 - alpha), ...].
+///
+/// # Panics
+///
+/// `crossover` panics if `crossover_rate` is not within `[0, 1]`.
 #[derive(Clone)]
 pub struct ArithmeticCrossover {
     pub crossover_rate: f64,

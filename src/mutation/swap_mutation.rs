@@ -4,6 +4,14 @@ use rayon::prelude::{IndexedParallelIterator, IntoParallelRefMutIterator, Parall
 
 use crate::{Individual, Mutation, Rngs};
 
+/// # Swap Mutation
+///
+/// For each gene, with probability `mutation_rate`, swaps it with a gene at a random position
+/// of the same individual, so a permutation stays one.
+///
+/// # Panics
+///
+/// `mutate` panics if `mutation_rate` is not within `[0, 1]`.
 #[derive(Clone)]
 pub struct SwapMutation {
     pub mutation_rate: f64,

@@ -4,6 +4,12 @@
 ///
 /// For each gene in the real representation it has `mutation_rate` probability of replacing
 /// the gene with a random value within the range.
+///
+/// # Panics
+///
+/// `mutate` panics if `mutation_rate` is not within `[0, 1]`, or when it resets a gene of an
+/// individual whose `range` is empty: `range.0 > range.1` for [`Int`](crate::prelude::Int),
+/// `range.0 >= range.1` (or a bound that is not finite) for [`Real`](crate::prelude::Real).
 #[derive(Clone)]
 pub struct RandomResettingMutation {
     pub mutation_rate: f64,
