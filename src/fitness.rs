@@ -118,9 +118,15 @@ use crate::population::Individual;
 /// assert_eq!(first.metrics.best_fitnesses, second.metrics.best_fitnesses);
 /// ```
 ///
-/// The count lives in the fitness, so a second [`start`](crate::Evolution::start) of the same
-/// [`Evolution`](crate::Evolution) carries on from where the first run left it: build a new
-/// `Evolution` from the builder to replay a run.
+/// The count must live in the fitness value itself and be copied by its `Clone`, as above,
+/// never kept behind an `Arc` or in a `static`. Every [`Evolution`](crate::Evolution) gets its
+/// own clone of the fitness, and a shared count would be advanced by every run at once: two
+/// identical seeded [`ExperimentRunner`](crate::prelude::ExperimentRunner)s, whose runs go in
+/// parallel, would then give different histories.
+///
+/// Because the count lives in the fitness, a second [`start`](crate::Evolution::start) of the
+/// same `Evolution` carries on from where the first run left it: build a new `Evolution` from
+/// the builder to replay a run.
 ///
 /// A fitness of this kind has no seed of its own, so two runs with different seeds see the
 /// same noise in the same generation; put a seed of your own in the fitness if that matters.
@@ -135,9 +141,22 @@ pub trait Fitness<T: Individual>: 'static + DynClone + Send + Sync {
     /// The default calls [`calculate_fitness`](Self::calculate_fitness) on each individual, in
     /// parallel with rayon. Override it to evaluate the population as a batch. An override must
     /// set the fitness of every individual: one it skips keeps the fitness it had, which for a
-    /// new child is its parent's. The order of `population` has no meaning, and may include the
-    /// elitists of the previous generation (see
-    /// [`EvolutionBuilder::with_reevaluate_elitists`](crate::EvolutionBuilder::with_reevaluate_elitists)).
+    /// new child is its parent's.
+    ///
+    /// The order of `population` is fixed, so a fitness that depends on positions (a batch
+    /// split into fixed lanes, noise keyed by index) still replays:
+    ///
+    /// - For the initial population, the individuals given to
+    ///   [`EvolutionBuilder::with_initial_population`](crate::EvolutionBuilder::with_initial_population)
+    ///   come first, in their order, then the random ones.
+    /// - For every later generation, the new individuals come first, in the order of the mating
+    ///   pool after crossover and mutation. With
+    ///   [`EvolutionBuilder::with_reevaluate_elitists`](crate::EvolutionBuilder::with_reevaluate_elitists)
+    ///   on, the elitists of the previous generation follow, at most as many as there are new
+    ///   individuals, in the order elitism found them: the same in every replay, but not
+    ///   sorted by fitness.
+    ///
+    /// The new individuals are the same, at the same positions, with re-evaluation on or off.
     ///
     /// # Example
     ///

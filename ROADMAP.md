@@ -85,6 +85,13 @@ change. Breaking changes are recorded in `CHANGELOG.md` as they land.
   `GaussianMutation::clamp_to_range`.
 - `Fitness` stays `&T -> f64`. Lexicographic goals (laps first, lap time second) can be
   packed into one number by the caller, so no change is needed.
+- [x] **Batched and noisy fitness (0.5.0).** `Fitness::calculate_population` evaluates
+  a whole generation in one call (by default `calculate_fitness` on each individual in
+  parallel), so a simulation can step every car together. `calculate_fitness` stays
+  `&T -> f64`. `EvolutionBuilder::with_reevaluate_elitists(true)` evaluates the elitists
+  again every generation, in the same call, so a lucky evaluation of a noisy fitness can't
+  stay at the top. The fitness gets no `Rngs`: noise that replays comes from a hash of the
+  chromosome and a generation count kept in the fitness (see the `Fitness` docs).
 
 ## 6. Lean and tidy
 

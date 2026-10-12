@@ -324,15 +324,17 @@ impl<T: Individual> EvolutionBuilder<T> {
     /// stay the best if they keep scoring as the best. A deterministic fitness gains nothing
     /// from it: the elitists would get the same numbers again.
     ///
-    /// It costs `elitism` extra evaluations per generation (see
+    /// It costs `elitism` extra evaluations per generation, or fewer when a custom selection
+    /// returns a mating pool smaller than that (see
     /// [`with_elitism`](Self::with_elitism)): the elitists are passed to
     /// [`Fitness::calculate_population`] in the same call as the new individuals, so a batched
     /// fitness still gets one call per generation. It draws no random number, so with a
     /// deterministic fitness a seeded run is the same with it on or off.
     ///
     /// [`Evolution::best_ever`] is a record of the best fitness ever computed, so with a noisy
-    /// fitness it can still be a lucky evaluation; [`Evolution::current_best`] is the one that
-    /// was re-evaluated.
+    /// fitness it can still be a lucky evaluation. [`Evolution::current_best`] is the best of
+    /// the current population, every member of which, elitists included, was evaluated in the
+    /// last generation.
     ///
     /// For a noisy fitness that still replays a seeded run, see [`Fitness`]'s "Randomness".
     pub fn with_reevaluate_elitists(mut self, reevaluate: bool) -> Self {

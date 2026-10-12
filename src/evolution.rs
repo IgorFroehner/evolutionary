@@ -250,7 +250,10 @@ impl<T: Individual> Evolution<T> {
         if self.reevaluate_elitists && !elitists.is_empty() {
             // Evaluated in the same call as the new individuals, so that a batched fitness
             // still sees one population per generation.
+            // `replace_worsts_with_elitists` puts back at most one per new individual, so do
+            // not evaluate the others.
             let pool_size = self.current_population.len();
+            elitists.truncate(pool_size);
             self.current_population.append(&mut elitists);
             self.process_fitness();
             elitists = self.current_population.split_off(pool_size);
