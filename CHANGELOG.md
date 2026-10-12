@@ -49,6 +49,8 @@
   over every result instead of the runs of one call.
 - `experiment_digest` no longer panics when there are no results yet, and saving the chart then
   returns an error instead of panicking.
+- `examples/subway` panicked at start: it read `examples/subway/subway.in`, which does not exist,
+  instead of the `metro.in` network it ships with.
 
 ### Changed
 

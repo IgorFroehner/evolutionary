@@ -87,7 +87,7 @@ impl Fitness<Real> for MetroFitness {
 }
 
 fn main() {
-    let filename = "examples/subway/subway.in";
+    let filename = "examples/subway/metro.in";
     let content = fs::read_to_string(filename).expect("Failed to read the file");
 
     let first_line = content
