@@ -63,8 +63,8 @@
 //!
 //! None is on by default, so embedding the library only compiles the genetic algorithm.
 //!
-//! - `serde`: `Serialize` and `Deserialize` for the built-in individuals, to save and load
-//!   populations.
+//! - `serde`: `Serialize` and `Deserialize` for the built-in individuals and [`Checkpoint`],
+//!   to save and load populations and runs.
 //! - `config`: reads the evolution parameters from a TOML file, with `read_config`.
 //! - `plot`: saves fitness charts with `Evolution::plot_chart` and
 //!   `ExperimentRunner::save_chart`, with `plotters`.
@@ -74,6 +74,7 @@ pub mod config_read;
 pub mod experiment_runner;
 pub mod metrics;
 
+mod checkpoint;
 mod crossover;
 mod evolution;
 mod evolution_builder;
@@ -87,6 +88,7 @@ mod rng;
 mod selection;
 pub mod utils;
 
+pub use checkpoint::Checkpoint;
 pub use crossover::Crossover;
 pub use evolution::Evolution;
 pub use evolution_builder::{BuildError, EvolutionBuilder};
@@ -119,6 +121,7 @@ pub mod prelude {
     pub use crate::selection::*;
     pub use crate::utils::{convert_bin, within_range};
     pub use crate::BuildError;
+    pub use crate::Checkpoint;
     pub use crate::Evolution;
     pub use crate::EvolutionBuilder;
     pub use crate::GenerationReport;

@@ -56,7 +56,7 @@ pub struct ExperimentResult<T> {
     pub time: Duration,
     /// The seed of the run. Pass it to
     /// [`EvolutionBuilder::with_seed`](crate::EvolutionBuilder::with_seed) to replay this run on
-    /// its own.
+    /// its own, or, for a run resumed from a checkpoint, set it as the checkpoint's `seed`.
     pub seed: u64,
     /// The average fitness of each generation of the run.
     pub average_fitnesses: Vec<f64>,
@@ -90,10 +90,20 @@ impl<T: Individual> ExperimentRunner<T> {
     /// In a seeded experiment every run gets its own seed, drawn from the experiment's seed and
     /// the run's position in [`experiment_results`](Self::experiment_results). Calling `run`
     /// again adds new runs with new seeds, and the runs of the first call keep the same seeds.
+    ///
+    /// With a [`Checkpoint`](crate::Checkpoint) in the builder, every run resumes from it with
+    /// its own seed, drawn from the checkpoint's as from the seed of a seeded experiment, so the
+    /// runs branch off the checkpoint. To replay one of them on its own, set the checkpoint's
+    /// `seed` to the run's [`seed`](ExperimentResult::seed) and resume from it.
     pub fn run(&mut self) -> Result<(), BuildError> {
         // Building is deterministic, so once this succeeds every build below succeeds too.
         self.evolution_builder.build()?;
-        let experiment_seed = self.evolution_builder.seed;
+        // A checkpoint carries a seed of its own, which `build` checked against `with_seed`.
+        let experiment_seed = self.evolution_builder.seed.or(self
+            .evolution_builder
+            .checkpoint
+            .as_ref()
+            .map(|checkpoint| checkpoint.seed));
         let first_run = self.experiment_results.len();
 
         let results: Vec<ExperimentResult<T>> = (0..self.runs as usize)

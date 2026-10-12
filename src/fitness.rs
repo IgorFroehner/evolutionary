@@ -115,6 +115,30 @@ where
     }
 }
 
+/// Reads a saved fitness history, taking each `null` as `NaN`, as
+/// [`deserialize_fitness`] does for one fitness: the average of a generation where no fitness
+/// is a number is `NaN`.
+#[cfg(feature = "serde")]
+pub(crate) fn deserialize_fitnesses<'de, D>(deserializer: D) -> Result<Vec<f64>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    struct SavedFitness(f64);
+
+    impl<'de> serde::Deserialize<'de> for SavedFitness {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            deserialize_fitness(deserializer).map(SavedFitness)
+        }
+    }
+
+    let fitnesses: Vec<SavedFitness> = serde::Deserialize::deserialize(deserializer)?;
+
+    Ok(fitnesses.into_iter().map(|fitness| fitness.0).collect())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,4 +1,5 @@
 use crate::{
+    checkpoint::Checkpoint,
     crossover::Crossover,
     evolution::{Evolution, EvolutionConfig, OnGenerationFn, StopConditionFn},
     fitness::Fitness,
@@ -36,6 +37,35 @@ pub enum BuildError {
         index: usize,
         genes: usize,
         dimension: u32,
+    },
+    /// Both [`with_checkpoint`](EvolutionBuilder::with_checkpoint) and a non-empty
+    /// [`with_initial_population`](EvolutionBuilder::with_initial_population) were given: a
+    /// checkpoint already holds the population a run resumes with.
+    CheckpointWithInitialPopulation,
+    /// [`with_seed`](EvolutionBuilder::with_seed) gave another seed than the checkpoint's,
+    /// which the resumed run keeps.
+    CheckpointSeed {
+        seed: u64,
+        checkpoint_seed: u64,
+    },
+    /// The checkpoint's population has `given` individuals instead of the population size.
+    CheckpointPopulationSize {
+        given: usize,
+        population_size: u32,
+    },
+    /// An individual of the checkpoint doesn't have `dimension` genes: the one at `index` in
+    /// its population, or its `best_ever` when `index` is `None`.
+    CheckpointIndividualDimension {
+        index: Option<usize>,
+        genes: usize,
+        dimension: u32,
+    },
+    /// The checkpoint's fitness history doesn't have one best and one average fitness for
+    /// every generation from 0 to `generation`.
+    CheckpointHistory {
+        generation: u32,
+        best_fitnesses: usize,
+        avg_fitnesses: usize,
     },
 }
 
@@ -77,6 +107,52 @@ impl fmt::Display for BuildError {
             } => write!(
                 f,
                 "the initial individual {index} has {genes} genes instead of {dimension}"
+            ),
+            Self::CheckpointWithInitialPopulation => f.write_str(
+                "a checkpoint and an initial population were both given, the checkpoint holds \
+                 the population to resume with",
+            ),
+            Self::CheckpointSeed {
+                seed,
+                checkpoint_seed,
+            } => write!(
+                f,
+                "the seed ({seed}) is not the checkpoint's ({checkpoint_seed}), which the \
+                 resumed run keeps"
+            ),
+            Self::CheckpointPopulationSize {
+                given,
+                population_size,
+            } => write!(
+                f,
+                "the checkpoint has {given} individuals instead of the population size \
+                 ({population_size})"
+            ),
+            Self::CheckpointIndividualDimension {
+                index: Some(index),
+                genes,
+                dimension,
+            } => write!(
+                f,
+                "the checkpoint's individual {index} has {genes} genes instead of {dimension}"
+            ),
+            Self::CheckpointIndividualDimension {
+                index: None,
+                genes,
+                dimension,
+            } => write!(
+                f,
+                "the checkpoint's best ever has {genes} genes instead of {dimension}"
+            ),
+            Self::CheckpointHistory {
+                generation,
+                best_fitnesses,
+                avg_fitnesses,
+            } => write!(
+                f,
+                "a checkpoint of generation {generation} needs {} best and average fitnesses, \
+                 it has {best_fitnesses} and {avg_fitnesses}",
+                u64::from(*generation) + 1
             ),
         }
     }
@@ -121,6 +197,7 @@ pub struct EvolutionBuilder<T: Individual> {
     on_generation: Option<OnGenerationFn<T>>,
     pub(crate) seed: Option<u64>,
     initial_population: Vec<T>,
+    pub(crate) checkpoint: Option<Checkpoint<T>>,
 }
 
 impl<T: Individual> EvolutionBuilder<T> {
@@ -149,6 +226,7 @@ impl<T: Individual> EvolutionBuilder<T> {
             elitism: None,
             seed: None,
             initial_population: Vec::new(),
+            checkpoint: None,
         }
     }
 
@@ -166,6 +244,7 @@ impl<T: Individual> EvolutionBuilder<T> {
             elitism: None,
             seed: None,
             initial_population: Vec::new(),
+            checkpoint: None,
         }
     }
 
@@ -231,21 +310,49 @@ impl<T: Individual> EvolutionBuilder<T> {
         self
     }
 
-    /// Starts every run from `population` instead of from random individuals: to resume a run
-    /// from a saved population, or to seed it with known good individuals. When it has fewer
-    /// individuals than the population size, random ones fill the rest.
+    /// Starts every run from `population` instead of from random individuals: to seed it with
+    /// known good individuals, or to start a new run from the population of another. When it
+    /// has fewer individuals than the population size, random ones fill the rest.
     ///
-    /// Their fitness is calculated again when the run starts. [`build`](Self::build) fails if
-    /// there are more individuals than the population size, or if one doesn't have `dimension`
-    /// genes.
+    /// Their fitness is calculated again when the run starts, which is generation 0. To go on
+    /// with a stopped run exactly where it was instead, use
+    /// [`with_checkpoint`](Self::with_checkpoint). [`build`](Self::build) fails if there are more
+    /// individuals than the population size, or if one doesn't have `dimension` genes.
     pub fn with_initial_population(mut self, population: Vec<T>) -> Self {
         self.initial_population = population;
         self
     }
 
+    /// Resumes every run from `checkpoint`, taken by
+    /// [`Evolution::checkpoint`](crate::Evolution::checkpoint), instead of starting it from
+    /// generation 0: [`Evolution::start`] puts back its population with their fitnesses, its
+    /// best ever and its fitness history, and the run goes on exactly as the saved one would
+    /// have, as long as the rest of the builder (the operators, the fitness, the elitism) is the
+    /// same. The stop condition and the callback can differ, for example to run longer.
+    ///
+    /// The run keeps the checkpoint's seed, so [`with_seed`](Self::with_seed) is not needed.
+    /// [`build`](Self::build) fails if:
+    ///
+    /// - `with_seed` gave another seed ([`BuildError::CheckpointSeed`]),
+    /// - [`with_initial_population`](Self::with_initial_population) gave individuals too
+    ///   ([`BuildError::CheckpointWithInitialPopulation`]),
+    /// - the checkpoint's population doesn't have the population size, an individual of it
+    ///   doesn't have `dimension` genes, or its fitness history doesn't have one entry per
+    ///   generation.
+    ///
+    /// In an [`ExperimentRunner`](crate::prelude::ExperimentRunner), every run resumes from the
+    /// checkpoint with a seed of its own drawn from the checkpoint's, so the runs branch off it
+    /// in different directions.
+    pub fn with_checkpoint(mut self, checkpoint: Checkpoint<T>) -> Self {
+        self.checkpoint = Some(checkpoint);
+        self
+    }
+
     /// Seeds every random choice of the evolution, so that two runs with the same seed and the
     /// same parameters produce the same populations, however many threads they run on. Without
-    /// a seed every run is different; [`Evolution::seed`] tells the seed a run used.
+    /// a seed every run is different; [`Evolution::seed`] tells the seed a run used. A run
+    /// resumed with [`with_checkpoint`](Self::with_checkpoint) keeps the checkpoint's seed, and
+    /// `build` fails if this one is another.
     ///
     /// The fitness, and any custom operator, must be deterministic too, and custom operators
     /// must draw from the [`Rngs`](crate::Rngs) they receive.
@@ -302,6 +409,10 @@ impl<T: Individual> EvolutionBuilder<T> {
             });
         }
 
+        if let Some(checkpoint) = &self.checkpoint {
+            self.check_checkpoint(checkpoint, &evolution_config)?;
+        }
+
         let fitness = self.fitness.as_deref().ok_or(BuildError::MissingFitness)?;
         let selection = self
             .selection
@@ -330,11 +441,70 @@ impl<T: Individual> EvolutionBuilder<T> {
             elitism,
             Arc::clone(stop_condition),
         );
-        evolution.fixed_seed = self.seed;
+        // The checkpoint's seed, unless `with_seed` gave one, which is then the same.
+        evolution.fixed_seed = self
+            .seed
+            .or(self.checkpoint.as_ref().map(|checkpoint| checkpoint.seed));
         evolution.on_generation = self.on_generation.clone();
         evolution.initial_population = self.initial_population.clone();
+        evolution.checkpoint = self.checkpoint.clone();
 
         Ok(evolution)
+    }
+
+    /// Checks that a run of this builder can resume from `checkpoint`.
+    fn check_checkpoint(
+        &self,
+        checkpoint: &Checkpoint<T>,
+        config: &EvolutionConfig<T>,
+    ) -> Result<(), BuildError> {
+        if !self.initial_population.is_empty() {
+            return Err(BuildError::CheckpointWithInitialPopulation);
+        }
+
+        if let Some(seed) = self.seed.filter(|&seed| seed != checkpoint.seed) {
+            return Err(BuildError::CheckpointSeed {
+                seed,
+                checkpoint_seed: checkpoint.seed,
+            });
+        }
+
+        if checkpoint.population.len() != config.population_size as usize {
+            return Err(BuildError::CheckpointPopulationSize {
+                given: checkpoint.population.len(),
+                population_size: config.population_size,
+            });
+        }
+
+        let individuals = checkpoint
+            .population
+            .iter()
+            .enumerate()
+            .map(|(index, individual)| (Some(index), individual))
+            .chain([(None, &checkpoint.best_ever)]);
+        for (index, individual) in individuals {
+            let genes = individual.get_chromosome().len();
+            if genes != config.dimension as usize {
+                return Err(BuildError::CheckpointIndividualDimension {
+                    index,
+                    genes,
+                    dimension: config.dimension,
+                });
+            }
+        }
+
+        let generations = u64::from(checkpoint.generation) + 1;
+        if checkpoint.best_fitnesses.len() as u64 != generations
+            || checkpoint.avg_fitnesses.len() as u64 != generations
+        {
+            return Err(BuildError::CheckpointHistory {
+                generation: checkpoint.generation,
+                best_fitnesses: checkpoint.best_fitnesses.len(),
+                avg_fitnesses: checkpoint.avg_fitnesses.len(),
+            });
+        }
+
+        Ok(())
     }
 }
 
