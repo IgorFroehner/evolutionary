@@ -59,6 +59,10 @@
 
 ### Added
 
+- `evolutionary::rayon` re-exports the `rayon` the crate runs on, as `evolutionary::rand`
+  does for `rand`: write `use evolutionary::rayon::prelude::*;` in a parallel custom operator
+  instead of adding `rayon` to your own dependencies at a matching version. It stays out of
+  the prelude, so its traits only come into scope where they are asked for.
 - `ExperimentRunner::save_chart(path)`, with the `plot` feature, saves the chart of the best and
   average fitness per generation averaged over the runs, creating the parent directories.
 - `ExperimentRunner::average_time`, `average_best_fitness`, `average_generations` and

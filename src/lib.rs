@@ -101,6 +101,13 @@ pub use selection::Selection;
 /// [`TaskRng`], or when implementing [`Individual::generate_member`].
 pub use rand;
 
+/// The `rayon` this crate runs its operators and fitness on. Write custom operators that run in
+/// parallel with `use evolutionary::rayon::prelude::*;`, so they need no `rayon` dependency of
+/// their own, at a version that has to match.
+///
+/// It is not in [`prelude`], so that its traits only come into scope where they are asked for.
+pub use rayon;
+
 pub mod prelude {
     #[cfg(feature = "config")]
     pub use crate::config_read::{read_config, ConfigError, RawConfig};

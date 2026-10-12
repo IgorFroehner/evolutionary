@@ -104,6 +104,41 @@ without improvement:
         })
 ```
 
+### Writing your own operator
+
+Any of the three operators can be your own: implement `Selection`, `Crossover` or `Mutation` and pass it to the
+builder. Here is a mutation that invites one more friend, picked at random, to some of the parties. It draws its random
+numbers from the `Rngs` it receives, one generator per individual, so a seeded run gives the same result however the
+work is split between threads. The crate re-exports the `rayon` it runs on, so running the mutation in parallel needs
+no `rayon` dependency of your own:
+
+```rust
+use evolutionary::prelude::*;
+use evolutionary::rayon::prelude::*;
+
+#[derive(Clone)]
+struct InviteOneMore {
+    rate: f64,
+}
+
+impl Mutation<Bin> for InviteOneMore {
+    fn mutate(&self, population: &mut [Bin], rngs: &Rngs) {
+        population
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(index, individual)| {
+                let mut rng = rngs.rng(index);
+                if rng.random_bool(self.rate) {
+                    let friend = rng.random_range(0..individual.get_chromosome().len());
+                    individual.set_gene(friend, true);
+                }
+            });
+    }
+}
+```
+
+Use it with `.with_mutation(InviteOneMore { rate: 0.1 })` in place of the `BitFlipMutation`.
+
 ### Following a run
 
 `with_on_generation` is called after every generation, the initial one included, with the same report. Use it to log

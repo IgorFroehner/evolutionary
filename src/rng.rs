@@ -13,7 +13,7 @@ use rand_chacha::{rand_core::SeedableRng, ChaCha8Rng};
 ///
 /// ```
 /// use evolutionary::prelude::*;
-/// use rayon::prelude::*;
+/// use evolutionary::rayon::prelude::*;
 ///
 /// #[derive(Clone)]
 /// struct FlipFirstGene;

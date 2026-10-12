@@ -103,11 +103,13 @@ with any `Individual`, including your own.
 
 To write your own, implement the trait and pass it to the builder. Operators get their random
 numbers from an `Rngs`, asking for one generator per unit of work with `rngs.rng(index)`, which is
-what keeps a seeded run reproducible when the operator runs in parallel:
+what keeps a seeded run reproducible when the operator runs in parallel. The crate re-exports the
+`rayon` it runs on as `evolutionary::rayon`, so a parallel operator needs no `rayon` dependency of
+its own:
 
 ```rust
 use evolutionary::prelude::*;
-use rayon::prelude::*;
+use evolutionary::rayon::prelude::*;
 
 #[derive(Clone)]
 struct FlipFirstGene;
