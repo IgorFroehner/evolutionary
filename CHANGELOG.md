@@ -61,6 +61,11 @@
   `.with_title("TSP")` on the builder and `evolution.plot_chart("tsp.png")` instead of
   `evolution.plot_chart("tsp.png", "TSP")`. For another caption, write
   `evolution.metrics.plot_chart("tsp.png", "Another caption")`.
+- `within_range` no longer floors its result, which threw away the precision of the bits it
+  decodes: `examples/math_func` decoded 16 bits into the five integers of `(-2, 2)` and now
+  searches the whole interval, in steps of `4 / 65535`. Write
+  `within_range(range, l, d).floor()` instead of `within_range(range, l, d)` to keep the
+  integer. Both ends of the range are now reached exactly.
 
 ### Added
 
@@ -105,6 +110,8 @@
 
 ### Changed
 
+- `convert_bin` adds `2f64.powi(i)` per set bit instead of `2f64.powf(i)`, with the same
+  results, and documents that it is exact up to 53 bits.
 - CI checks formatting, fails on rustdoc warnings, checks the library on Rust 1.82, and
   uses `actions/checkout` v4. Dependabot proposes cargo and GitHub Actions updates monthly.
 - `Cargo.lock` is updated to the newest dependency versions that build on Rust 1.82, and

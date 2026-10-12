@@ -7,8 +7,13 @@ mod fitness_max;
 #[allow(dead_code)]
 mod fitness_min;
 
+// Maximises `f` over the real interval `RANGE`. Each individual is `L` bits (the `dimension` of
+// `Config.toml`), which `within_range` decodes into an `x` in `RANGE`, in steps of
+// 4 / 65 535: fine enough to find the peak near x = 1.89, where f(x) is about 1.7.
 const L: f64 = 16.;
 const RANGE: (f64, f64) = (-2., 2.);
+// f(x) is above -4 over the whole range, so `f(x) - C_MIN` is a positive fitness, as the
+// roulette selection needs.
 const C_MIN: f64 = -4.;
 
 pub fn f(x: f64) -> f64 {
