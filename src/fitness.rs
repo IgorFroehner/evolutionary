@@ -160,8 +160,9 @@ pub trait Fitness<T: Individual>: 'static + DynClone + Send + Sync {
     ///   pool after crossover and mutation. With
     ///   [`EvolutionBuilder::with_reevaluate_elitists`](crate::EvolutionBuilder::with_reevaluate_elitists)
     ///   on, the elitists of the previous generation follow, at most as many as there are new
-    ///   individuals, in the order elitism found them: the same in every replay, but not
-    ///   sorted by fitness.
+    ///   individuals, in the order elitism found them: not sorted by fitness, and the same in
+    ///   every replay built with the same Rust version (elitism partitions the population with
+    ///   `select_nth_unstable_by`, whose order the standard library may change).
     ///
     /// The new individuals are the same, at the same positions, with re-evaluation on or off.
     ///

@@ -361,8 +361,11 @@ impl<T: Individual> EvolutionBuilder<T> {
     /// [`Evolution::checkpoint`](crate::Evolution::checkpoint), instead of starting it from
     /// generation 0: [`Evolution::start`] puts back its population with their fitnesses, its
     /// best ever and its fitness history, and the run goes on exactly as the saved one would
-    /// have, as long as the rest of the builder (the operators, the fitness, the elitism) is the
-    /// same. The stop condition and the callback can differ, for example to run longer.
+    /// have, as long as the rest of the builder (the operators, the fitness, the elitism,
+    /// [`with_reevaluate_elitists`](Self::with_reevaluate_elitists)) is the same. The stop
+    /// condition and the callback can differ, for example to run longer. A fitness that keeps a
+    /// generation count for its noise must start it at `checkpoint.generation + 1`, see
+    /// [`Fitness`]'s "Randomness".
     ///
     /// The run keeps the checkpoint's seed, so [`with_seed`](Self::with_seed) is not needed.
     /// [`build`](Self::build) fails if:
