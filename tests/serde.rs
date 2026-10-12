@@ -73,6 +73,14 @@ fn individuals_never_evaluated_round_trip_through_json() {
 }
 
 #[test]
+fn an_infinite_fitness_comes_back_from_json_as_nan() {
+    // serde_json writes infinities as `null` too, which can only be read back as NaN.
+    let saved = with_fitness(Bin::new(vec![true]), f64::INFINITY);
+
+    assert!(round_trip(&saved).get_fitness().is_nan());
+}
+
+#[test]
 fn a_fitness_written_as_an_integer_loads() {
     let loaded: Bin = serde_json::from_str(r#"{"chromosome":[true],"fitness":3}"#).unwrap();
 

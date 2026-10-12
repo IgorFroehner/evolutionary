@@ -62,6 +62,10 @@ pub(crate) fn selection_weight(fitness: f64) -> f64 {
 /// `serde_json` writes it as `null`, which a plain `f64` refuses to read back. Formats that
 /// are not human-readable (bincode and the like) store the `f64` as it is, so they read it as
 /// one too, and the format of every saved individual stays the same.
+///
+/// `serde_json` writes `+inf` and `-inf` as `null` too, and there is no telling them apart
+/// from a `NaN` once written: an infinite fitness saved to JSON loads back as `NaN`, silently,
+/// where the file failed to load before. Binary formats keep infinities.
 #[cfg(feature = "serde")]
 pub(crate) fn deserialize_fitness<'de, D>(deserializer: D) -> Result<f64, D::Error>
 where
