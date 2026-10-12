@@ -145,6 +145,8 @@ differs, and `evolution.seed()` tells you the seed a run drew so you can replay 
   default is 1.
 - `evolution.start()` and `evolution.next()` drive the evolution one generation at a time, with
   `evolution.report()` in between, as an alternative to `run()`.
+- `evolution.population()` borrows the current population; `current_population()` returns a
+  copy sorted by fitness.
 - `evolution.time_digest()` prints how long each step took.
 
 ## Starting from a known population

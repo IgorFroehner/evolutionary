@@ -308,7 +308,21 @@ impl<T: Individual> Evolution<T> {
         &self.current_population[stats.best_index]
     }
 
-    /// Returns a copy of the current population sorted by fitness.
+    /// The current population, borrowed in its current order, without copying or sorting it.
+    /// Empty before the evolution is started.
+    ///
+    /// The order is the one the last generation left, which has no meaning of its own: use
+    /// [`current_best`](Self::current_best) for the best individual, and
+    /// [`current_population`](Self::current_population) for a copy sorted by fitness.
+    pub fn population(&self) -> &[T] {
+        &self.current_population
+    }
+
+    /// Returns a copy of the current population sorted by fitness, from the worst to the best
+    /// (individuals with a `NaN` fitness first).
+    ///
+    /// It clones and sorts the whole population at every call: to look at the individuals
+    /// without copying them, borrow them with [`population`](Self::population).
     pub fn current_population(&self) -> Vec<T> {
         let mut current_population = self.current_population.clone();
 
@@ -483,6 +497,7 @@ impl<T: Individual> Evolution<T> {
 
 #[cfg(test)]
 mod tests {
+    use crate::fitness::fitness_cmp;
     use crate::prelude::*;
     use std::sync::{Arc, Mutex};
 
@@ -528,6 +543,31 @@ mod tests {
             evolution.next();
             assert_eq!(evolution.current_population().len(), 30);
         }
+    }
+
+    #[test]
+    fn population_borrows_what_current_population_sorts() {
+        let mut evolution = builder(30, SumFitness).with_seed(2).build().unwrap();
+        assert!(evolution.population().is_empty());
+
+        evolution.run();
+
+        let mut borrowed: Vec<Real> = evolution.population().to_vec();
+        borrowed.sort_by(|a, b| fitness_cmp(a.get_fitness(), b.get_fitness()));
+        let sorted = evolution.current_population();
+
+        assert_eq!(evolution.population().len(), 30);
+        let genes = |population: &[Real]| -> Vec<Vec<f64>> {
+            population
+                .iter()
+                .map(|individual| individual.get_chromosome().to_vec())
+                .collect()
+        };
+        assert_eq!(genes(&borrowed), genes(&sorted));
+        assert_eq!(
+            sorted.last().unwrap().get_fitness(),
+            evolution.current_best_fitness()
+        );
     }
 
     #[test]
