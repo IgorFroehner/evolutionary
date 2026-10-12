@@ -151,11 +151,53 @@ differs, and `evolution.seed()` tells you the seed a run drew so you can replay 
 
 ## Starting from a known population
 
-`.with_initial_population(individuals)` starts a run from given individuals, to resume one or to
-seed it with known good solutions. Random individuals fill the rest of the population. `Bin::new`,
-`Int::new`, `IntPerm::new` and `Real::new` build individuals from a chromosome, and the `serde`
-feature lets you save and load them. An individual that was never evaluated has a `NaN` fitness,
-which ranks below every number.
+`.with_initial_population(individuals)` starts a new run from given individuals, to seed it with
+known good solutions. Random individuals fill the rest of the population, and the run starts at
+generation 0. `Bin::new`, `Int::new`, `IntPerm::new` and `Real::new` build individuals from a
+chromosome, and the `serde` feature lets you save and load them. An individual that was never
+evaluated has a `NaN` fitness, which ranks below every number.
+
+## Checkpoints
+
+`evolution.checkpoint()` saves where a run is: its seed, its generation, the population with its
+fitnesses, the best ever and the fitness history. `.with_checkpoint(checkpoint)` on the same
+builder resumes from it exactly, as if the run had never stopped: the next generation draws the
+same random numbers, no fitness is computed again, and the result is the one the uninterrupted
+run gives, however many threads either uses. The resumed run keeps the checkpoint's seed, so
+`.with_seed` is not needed (`build` fails if it gives another), and it can't be combined with
+`.with_initial_population`. The stop condition can differ, for example to run longer.
+
+```rust
+evolution.start();
+while !evolution.reached_stop_condition() {
+    evolution.next();
+    if evolution.report().generation % 100 == 0 {
+        save(evolution.checkpoint()); // your own storage
+    }
+}
+
+// Later, maybe in another process:
+let mut resumed = builder().with_checkpoint(load()).build()?;
+resumed.run();
+```
+
+With the `serde` feature a `Checkpoint` is `Serialize` and `Deserialize`, so you pick the format.
+To resume exactly, the format must give back every `f64` bit for bit:
+
+- A binary format such as CBOR (with `ciborium`) does, `NaN` and infinities included.
+- For JSON, add `float_roundtrip` to `serde_json` in your own dependencies (this crate's
+  dev-dependency does not turn it on for you). Without it the last bit of some numbers changes
+  on the way back, and the resumed run drifts away from the saved one:
+
+  ```toml
+  serde_json = { version = "1", features = ["float_roundtrip"] }
+  ```
+
+- JSON has no `NaN` nor infinities, and `serde_json` writes both as `null`, which loads back as
+  `NaN`. A `NaN` fitness survives, but an infinite one comes back as `NaN`, and the resume is
+  then **not exact**: that individual ranks below every number, so selection, `best_ever` and
+  `generations_without_improvement` diverge from the saved run. If your fitness can be infinite,
+  use a binary format.
 
 ## Experiments
 
@@ -173,7 +215,7 @@ No feature is on by default, so embedding the library compiles only the genetic 
 
 | Feature | Adds |
 |---|---|
-| `serde` | `Serialize` and `Deserialize` for `Bin`, `Int`, `IntPerm`, `Real` and `GeneCod`. |
+| `serde` | `Serialize` and `Deserialize` for `Bin`, `Int`, `IntPerm`, `Real`, `GeneCod` and `Checkpoint`. |
 | `config` | `read_config`, which reads the evolution parameters from a TOML file. Implies `serde`. |
 | `plot` | `Evolution::plot_chart`, `Metrics::plot_chart` and `ExperimentRunner::save_chart`, with [plotters](https://github.com/plotters-rs/plotters). |
 

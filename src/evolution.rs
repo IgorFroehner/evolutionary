@@ -4,6 +4,7 @@ use std::cmp::Ordering;
 use std::sync::Arc;
 
 use crate::{
+    checkpoint::Checkpoint,
     crossover::Crossover,
     fitness::{fitness_cmp, Fitness},
     metrics::{Metrics, Steps},
@@ -90,6 +91,9 @@ pub struct Evolution<T: Individual> {
     pub(crate) fixed_seed: Option<u64>,
     /// The seed of the current run, set by `start`.
     run_seed: Option<u64>,
+    /// The checkpoint every run resumes from, instead of starting from generation 0. `build`
+    /// sets `fixed_seed` to its seed.
+    pub(crate) checkpoint: Option<Checkpoint<T>>,
 }
 
 impl<T: Individual> Evolution<T> {
@@ -123,6 +127,7 @@ impl<T: Individual> Evolution<T> {
             initial_population: Vec::new(),
             fixed_seed: None,
             run_seed: None,
+            checkpoint: None,
         }
     }
 
@@ -134,6 +139,15 @@ impl<T: Individual> Evolution<T> {
     /// if any, and random ones fill the rest. Without a seed (see
     /// [`EvolutionBuilder::with_seed`](crate::EvolutionBuilder::with_seed)) every call starts a
     /// different run.
+    ///
+    /// Built with
+    /// [`EvolutionBuilder::with_checkpoint`](crate::EvolutionBuilder::with_checkpoint), it
+    /// resumes from the checkpoint instead: the population, the best ever and the fitness
+    /// history are the checkpoint's, no fitness is computed, and the next [`next`](Self::next)
+    /// runs the generation after the checkpoint's, as the run that was saved would have. The
+    /// [`with_on_generation`](crate::EvolutionBuilder::with_on_generation) callback is not
+    /// called for the checkpoint's generation, which it already saw in the run that was saved.
+    /// Every call resumes from the same checkpoint.
     pub fn start(&mut self) {
         self.metrics = Metrics::new();
         self.best_ever = None;
@@ -141,6 +155,11 @@ impl<T: Individual> Evolution<T> {
         self.metrics.start_clock();
 
         self.run_seed = Some(self.fixed_seed.unwrap_or_else(rand::random));
+
+        if let Some(checkpoint) = self.checkpoint.clone() {
+            self.resume(checkpoint);
+            return;
+        }
 
         let rngs = self.rngs(Step::Initialization);
         let given = self.initial_population.len();
@@ -160,6 +179,37 @@ impl<T: Individual> Evolution<T> {
         self.process_fitness();
 
         self.finish_generation();
+    }
+
+    /// The `start` of a run built with a checkpoint: puts back everything `next` and the report
+    /// read, so the run goes on exactly as the one that was saved.
+    fn resume(&mut self, checkpoint: Checkpoint<T>) {
+        let Checkpoint {
+            seed: _,
+            generation: _,
+            population,
+            best_ever,
+            best_fitnesses,
+            avg_fitnesses,
+            generations_without_improvement,
+        } = checkpoint;
+
+        // Starts the clock, and sets `iterations` to the history's length, the checkpoint's
+        // generation plus one: the generation `next` runs, and so the key of its `Rngs`.
+        self.metrics = Metrics::resumed(
+            best_fitnesses,
+            avg_fitnesses,
+            generations_without_improvement,
+            best_ever.get_fitness(),
+        );
+
+        self.current_population = population;
+        self.best_ever = Some(best_ever);
+        // The average is summed in the population's order, which the checkpoint keeps, so it is
+        // the same number the saved run had.
+        self.stats = self.population_stats();
+
+        self.metrics.end_clock();
     }
 
     /// This method runs one generation of the evolution.
@@ -246,9 +296,36 @@ impl<T: Individual> Evolution<T> {
     /// The seed of the current run: the one given to
     /// [`EvolutionBuilder::with_seed`](crate::EvolutionBuilder::with_seed), or the one drawn by
     /// [`start`](Self::start) when none was given. Pass it to `with_seed` to replay the run.
-    /// `None` until the evolution is started.
+    /// A run resumed from a [`Checkpoint`] keeps the checkpoint's seed. `None` until the
+    /// evolution is started.
     pub fn seed(&self) -> Option<u64> {
         self.run_seed
+    }
+
+    /// Saves where the run is after the last generation, to resume it later with
+    /// [`EvolutionBuilder::with_checkpoint`](crate::EvolutionBuilder::with_checkpoint) exactly
+    /// as if it had not stopped. See [`Checkpoint`] for what it holds and an example.
+    ///
+    /// It copies the population, so call it every few generations rather than after each one
+    /// if the population is large.
+    ///
+    /// # Panics
+    ///
+    /// If the evolution was not started yet.
+    pub fn checkpoint(&self) -> Checkpoint<T> {
+        let seed = self
+            .run_seed
+            .expect("the evolution is not started, call `start` or `run` first");
+
+        Checkpoint {
+            seed,
+            generation: self.generation(),
+            population: self.current_population.clone(),
+            best_ever: self.best_ever().clone(),
+            best_fitnesses: self.metrics.best_fitnesses.clone(),
+            avg_fitnesses: self.metrics.avg_fitnesses.clone(),
+            generations_without_improvement: self.metrics.gens_without_improvement,
+        }
     }
 
     /// Prints the generation, the best and average fitness, and every individual with its

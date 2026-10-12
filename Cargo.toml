@@ -30,13 +30,15 @@ rand_distr = "0.5"
 # Only for the xor example: library users never pull it in.
 only-brain = "0.3"
 criterion = { version = "0.8", default-features = false, features = ["cargo_bench_support"] }
-serde_json = "1.0"
+# `float_roundtrip` reads every f64 back bit for bit, which resuming a checkpoint saved to
+# JSON exactly needs (tests/checkpoint.rs).
+serde_json = { version = "1.0", features = ["float_roundtrip"] }
 
 [features]
 default = []
 # Reads evolution parameters from a TOML file: `config_read`.
 config = ["dep:toml", "serde"]
-# `Serialize` and `Deserialize` for the built-in individuals and `GeneCod`.
+# `Serialize` and `Deserialize` for the built-in individuals, `GeneCod` and `Checkpoint`.
 serde = ["dep:serde", "dep:serde_derive"]
 # Fitness charts: `Evolution::plot_chart` and `ExperimentRunner::save_chart`.
 plot = ["dep:plotters"]

@@ -79,6 +79,30 @@
 
 ### Added
 
+- Checkpoints: `evolution.checkpoint()` saves where a run is, and
+  `EvolutionBuilder::with_checkpoint(checkpoint)` resumes it exactly, as if it had never
+  stopped: the next generation is the one after the checkpoint's, with the same random numbers,
+  no fitness is computed again, and the best ever, the fitness history and
+  `generations_without_improvement` go on from the checkpoint's. Resuming a run from 15
+  generations gives the same population, history and best ever after 30 as running 30 in one
+  go, on 1 thread or 8. `Checkpoint<T>` (in the prelude) is a `#[non_exhaustive]` struct of
+  public fields: the run's `seed`, its `generation`, the `population` with its fitnesses,
+  `best_ever`, `best_fitnesses`, `avg_fitnesses` and `generations_without_improvement`.
+  Timings are not part of it. It has no public constructor, so a field can be added without
+  breaking anything: a checkpoint comes from `Evolution::checkpoint`, or from deserializing
+  one. With the `serde` feature it is `Serialize` and `Deserialize`, with a `null` fitness in
+  the history read back as `NaN`. To resume exactly from JSON, add
+  `serde_json = { version = "1", features = ["float_roundtrip"] }` to your own dependencies,
+  without which the last bit of some numbers changes on the way back. JSON also turns an
+  infinite fitness into `NaN`, and the resume is then not exact: save to a binary format such
+  as CBOR if your fitness can be infinite.
+- A resumed run keeps the checkpoint's seed. `build` returns the new `BuildError` variants
+  `CheckpointSeed` when `with_seed` gives another one (the same one is fine),
+  `CheckpointWithInitialPopulation` when `with_initial_population` gives individuals too,
+  `CheckpointPopulationSize`, `CheckpointIndividualDimension` and `CheckpointHistory` when the
+  checkpoint doesn't fit the builder. An `ExperimentRunner` whose builder has a checkpoint
+  resumes every run from it with a seed of its own, drawn from the checkpoint's, so the runs
+  branch off it. Seeded runs without a checkpoint are unchanged.
 - `evolutionary::rayon` re-exports the `rayon` the crate runs on, as `evolutionary::rand`
   does for `rand`: write `use evolutionary::rayon::prelude::*;` in a parallel custom operator
   instead of adding `rayon` to your own dependencies at a matching version. It stays out of

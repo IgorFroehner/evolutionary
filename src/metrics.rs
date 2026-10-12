@@ -72,6 +72,30 @@ impl Metrics {
         }
     }
 
+    /// The metrics of a run resumed from a [`Checkpoint`](crate::Checkpoint): its fitness
+    /// history, as if it had been recorded generation by generation, and fresh timings.
+    /// `best_ever_fitness` is the fitness of the run's best individual, which the next
+    /// [`record`](Self::record) compares with.
+    pub(crate) fn resumed(
+        best_fitnesses: Vec<f64>,
+        avg_fitnesses: Vec<f64>,
+        gens_without_improvement: u32,
+        best_ever_fitness: f64,
+    ) -> Self {
+        // One generation recorded per fitness: `build` checks that the history has one entry
+        // per generation of the checkpoint, the initial population included.
+        let iterations = best_fitnesses.len() as u32;
+
+        Self {
+            best_fitnesses,
+            avg_fitnesses,
+            iterations,
+            gens_without_improvement,
+            best_ever_fitness: Some(best_ever_fitness),
+            ..Self::new()
+        }
+    }
+
     pub fn record(&mut self, best_fitness: f64, avg_fitness: f64) {
         let improved = self
             .best_ever_fitness

@@ -108,3 +108,12 @@ Depends on only-brain 0.3 (`parameter_count()` and `from_parameters`).
   with `from_parameters` and scores its four outputs. Solves it in 60 to 90
   generations across seeds 1 to 20.
 - [x] only-brain is a **dev-dependency** only, so library users never pull it in.
+
+## 8. Long runs (0.5.0)
+
+- [x] **Checkpoint and resume a run exactly.** `Evolution::checkpoint()` saves the seed, the
+  generation, the population with its fitnesses, the best ever and the fitness history, and
+  `EvolutionBuilder::with_checkpoint` resumes from it: the next generation draws the same
+  random numbers as the uninterrupted run, and no fitness is computed again.
+  `with_initial_population` still starts a new run at generation 0. With the `serde` feature
+  a checkpoint can be saved in any format; the library does not pick one.
