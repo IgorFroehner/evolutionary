@@ -15,10 +15,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@stable
+      with:
+        components: clippy, rustfmt
     - name: Install system dependencies
       # plotters needs fontconfig to render charts.
       run: sudo apt-get update && sudo apt-get install -y libfontconfig1-dev
+    - name: Check formatting
+      run: cargo fmt --all -- --check
     - name: Build
       run: cargo build --verbose
     - name: Run tests
@@ -27,3 +32,27 @@ jobs:
       run: cargo test --verbose --all-features
     - name: Clippy
       run: cargo clippy --all-targets --all-features -- -D warnings
+    - name: Docs
+      run: cargo doc --no-deps --all-features
+      env:
+        RUSTDOCFLAGS: -D warnings
+
+  msrv:
+    # The library on the oldest Rust it supports: `rust-version` in Cargo.toml.
+    name: MSRV (1.82)
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dtolnay/rust-toolchain@master
+      with:
+        # Keep in sync with `rust-version` in Cargo.toml.
+        toolchain: "1.82"
+    - name: Install system dependencies
+      run: sudo apt-get update && sudo apt-get install -y libfontconfig1-dev
+    - name: Check the library with every feature
+      # Only the library: the dev-dependencies (criterion, only-brain) need a newer Rust, so
+      # the tests, examples and benchmark cannot build here. --locked keeps the dependency
+      # versions the lockfile pins.
+      run: cargo check --locked --verbose --all-features
