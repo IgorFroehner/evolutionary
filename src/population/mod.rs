@@ -56,11 +56,11 @@ pub enum GeneCod {
 ///         }
 ///     }
 ///
-///     fn get_chromosome(&self) -> &Vec<Self::Gene> {
+///     fn get_chromosome(&self) -> &[Self::Gene] {
 ///         &self.chromosome
 ///     }
 ///
-///     fn get_mut_chromosome(&mut self) -> &mut Vec<Self::Gene> {
+///     fn get_mut_chromosome(&mut self) -> &mut [Self::Gene] {
 ///         &mut self.chromosome
 ///     }
 ///
@@ -91,8 +91,12 @@ pub trait Individual: 'static + Clone + Send + Sync {
         range: &Self::RangeType,
         rng: &mut R,
     ) -> Self;
-    fn get_chromosome(&self) -> &Vec<Self::Gene>;
-    fn get_mut_chromosome(&mut self) -> &mut Vec<Self::Gene>;
+    /// The genes of the individual.
+    fn get_chromosome(&self) -> &[Self::Gene];
+    /// The genes of the individual, to change in place. Operators keep the number of genes, so
+    /// this is a slice: an individual whose length can change is not one the built-in
+    /// operators handle.
+    fn get_mut_chromosome(&mut self) -> &mut [Self::Gene];
     fn set_gene(&mut self, index: usize, value: Self::Gene);
     fn get_gene(&self, index: usize) -> Self::Gene;
     fn set_fitness(&mut self, fitness: f64);

@@ -9,7 +9,7 @@ fn assert_last_untouched<T: Individual, C: Crossover<T>>(crossover: C, populatio
 where
     T::Gene: PartialEq + std::fmt::Debug,
 {
-    let last = population.last().unwrap().get_chromosome().clone();
+    let last = population.last().unwrap().get_chromosome().to_vec();
     let mut population = population;
 
     crossover.crossover(&mut population, &Rngs::new(0));

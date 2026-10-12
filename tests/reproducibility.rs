@@ -26,7 +26,7 @@ fn run_on<T: Individual>(builder: &EvolutionBuilder<T>, threads: usize) -> Outco
             population: evolution
                 .current_population()
                 .iter()
-                .map(|individual| individual.get_chromosome().clone())
+                .map(|individual| individual.get_chromosome().to_vec())
                 .collect(),
             best_fitnesses: evolution.metrics.best_fitnesses.clone(),
             avg_fitnesses: evolution.metrics.avg_fitnesses.clone(),
@@ -262,9 +262,9 @@ fn without_a_seed_every_run_differs() {
     let mut evolution = unseeded().build().unwrap();
 
     evolution.run();
-    let first = evolution.current_best().get_chromosome().clone();
+    let first = evolution.current_best().get_chromosome().to_vec();
     evolution.run();
-    let second = evolution.current_best().get_chromosome().clone();
+    let second = evolution.current_best().get_chromosome().to_vec();
 
     assert_ne!(first, second);
 }

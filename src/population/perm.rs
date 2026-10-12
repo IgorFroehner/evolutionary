@@ -55,11 +55,11 @@ impl Individual for IntPerm {
         }
     }
 
-    fn get_chromosome(&self) -> &Vec<Self::Gene> {
+    fn get_chromosome(&self) -> &[Self::Gene] {
         &self.chromosome
     }
 
-    fn get_mut_chromosome(&mut self) -> &mut Vec<Self::Gene> {
+    fn get_mut_chromosome(&mut self) -> &mut [Self::Gene] {
         &mut self.chromosome
     }
 

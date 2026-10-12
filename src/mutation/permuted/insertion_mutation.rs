@@ -22,9 +22,14 @@ impl Default for InsertionMutation {
 }
 
 impl InsertionMutation {
-    fn insert(chromosome: &mut Vec<i64>, from: usize, to: usize) {
-        let gene = chromosome.remove(from);
-        chromosome.insert(to, gene);
+    /// Moves the gene at `from` to `to`, shifting the genes in between by one: the same as
+    /// removing it and inserting it back, without changing the length.
+    fn insert(chromosome: &mut [i64], from: usize, to: usize) {
+        if from < to {
+            chromosome[from..=to].rotate_left(1);
+        } else {
+            chromosome[to..=from].rotate_right(1);
+        }
     }
 }
 
@@ -58,5 +63,23 @@ mod tests {
         InsertionMutation::insert(&mut chromosome, 0, 3);
 
         assert_eq!(chromosome, vec![2, 3, 4, 1, 5, 6, 7, 9]);
+    }
+
+    #[test]
+    fn insert_is_remove_then_insert_both_ways() {
+        let original: Vec<i64> = (1..=6).collect();
+
+        for from in 0..original.len() {
+            for to in 0..original.len() {
+                let mut expected = original.clone();
+                let gene = expected.remove(from);
+                expected.insert(to, gene);
+
+                let mut chromosome = original.clone();
+                InsertionMutation::insert(&mut chromosome, from, to);
+
+                assert_eq!(chromosome, expected, "from {from} to {to}");
+            }
+        }
     }
 }

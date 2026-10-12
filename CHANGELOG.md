@@ -23,6 +23,13 @@
   `EvolutionBuilder::new(30, 10, GeneCod::Bin, ())`. `EvolutionConfig` loses its `gene_cod`
   field, which nothing read. `GeneCod` stays, for `RawConfig::gene_cod` with the `config`
   feature.
+- `Individual::get_chromosome` returns `&[Gene]` and `get_mut_chromosome` returns
+  `&mut [Gene]`. In an `Individual` implementation, write
+  `fn get_chromosome(&self) -> &[Self::Gene]` instead of `-> &Vec<Self::Gene>`, and the same
+  for `get_mut_chromosome`; the bodies (`&self.chromosome`) stay. To copy the genes, write
+  `individual.get_chromosome().to_vec()` instead of `individual.get_chromosome().clone()`.
+  Comparing a chromosome with a `Vec` still works. The built-in individuals keep their
+  `Vec` fields.
 
 ### Added
 

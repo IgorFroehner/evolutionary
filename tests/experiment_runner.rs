@@ -42,7 +42,7 @@ fn run(name: &str, seed: u64) -> ExperimentRunner<Bin> {
 /// What two runs must agree on.
 fn outcome(result: &ExperimentResult<Bin>) -> (Vec<bool>, Vec<f64>, Vec<f64>) {
     (
-        result.best_found.get_chromosome().clone(),
+        result.best_found.get_chromosome().to_vec(),
         result.best_fitnesses.clone(),
         result.average_fitnesses.clone(),
     )

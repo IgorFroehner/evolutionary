@@ -29,7 +29,7 @@ fn builder() -> EvolutionBuilder<Bin> {
 fn chromosomes(population: &[Bin]) -> Vec<Vec<bool>> {
     population
         .iter()
-        .map(|individual| individual.get_chromosome().clone())
+        .map(|individual| individual.get_chromosome().to_vec())
         .collect()
 }
 
