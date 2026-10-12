@@ -50,6 +50,12 @@
   `read_config` takes any path (`impl AsRef<Path>`), so `&str` still works.
 - `RawConfig::runs` is a `u32` instead of an `i32`, so a negative `runs` is a parse error:
   write `report.generation >= config.runs` instead of `report.generation >= config.runs as u32`.
+- `Metrics::total_time` returns a `Duration` instead of nanoseconds as a `u128`: write
+  `metrics.total_time().as_nanos()` instead of `metrics.total_time()` where you need the
+  number. `Metrics::step_times` is private: write `metrics.step_time(Steps::Selection)` (an
+  `Option<Duration>`) instead of reading `metrics.step_times[&Steps::Selection].2`.
+  `time_digest` prints the same thing, and its documentation now lists the elitism line it
+  already printed.
 
 ### Added
 

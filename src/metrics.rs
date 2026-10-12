@@ -5,6 +5,7 @@ use crate::fitness::fitness_cmp;
 #[cfg(feature = "plot")]
 use crate::plotting::plot_chart;
 
+/// The steps of a generation whose time [`Metrics`] measures.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub enum Steps {
     Selection,
@@ -14,6 +15,26 @@ pub enum Steps {
     Elitism,
 }
 
+impl Steps {
+    /// Every step, in the order a generation runs them.
+    const ALL: [Steps; 5] = [
+        Steps::Selection,
+        Steps::Crossover,
+        Steps::Mutation,
+        Steps::Fitness,
+        Steps::Elitism,
+    ];
+}
+
+/// The time spent in one step, over the whole run.
+#[derive(Clone, Copy, Default)]
+struct StepTimer {
+    /// When the step started, while it runs.
+    started: Option<Instant>,
+    total: Duration,
+}
+
+/// The fitness history and the timings of a run.
 pub struct Metrics {
     pub best_fitnesses: Vec<f64>,
     pub avg_fitnesses: Vec<f64>,
@@ -23,7 +44,7 @@ pub struct Metrics {
     best_ever_fitness: Option<f64>,
     start_time: Instant,
     end_time: Instant,
-    pub step_times: HashMap<Steps, (bool, Instant, u128)>,
+    step_times: HashMap<Steps, StepTimer>,
 }
 
 impl Default for Metrics {
@@ -34,12 +55,10 @@ impl Default for Metrics {
 
 impl Metrics {
     pub fn new() -> Self {
-        let mut step_times = HashMap::new();
-        step_times.insert(Steps::Selection, (false, Instant::now(), 0));
-        step_times.insert(Steps::Crossover, (false, Instant::now(), 0));
-        step_times.insert(Steps::Mutation, (false, Instant::now(), 0));
-        step_times.insert(Steps::Fitness, (false, Instant::now(), 0));
-        step_times.insert(Steps::Elitism, (false, Instant::now(), 0));
+        let step_times = Steps::ALL
+            .into_iter()
+            .map(|step| (step, StepTimer::default()))
+            .collect();
 
         Self {
             best_fitnesses: Vec::new(),
@@ -79,34 +98,44 @@ impl Metrics {
         self.end_time = Instant::now();
     }
 
+    /// Starts timing `step`, until [`step_end`](Self::step_end).
+    ///
+    /// # Panics
+    ///
+    /// If `step` was already started and not ended.
     pub fn step_start(&mut self, step: Steps) {
-        if let Some(a) = self.step_times.get_mut(&step) {
-            if a.0 {
-                panic!("Step already started");
-            }
-            a.0 = true;
-            a.1 = Instant::now();
-        }
+        let timer = self.step_times.entry(step).or_default();
+        assert!(timer.started.is_none(), "Step already started");
+        timer.started = Some(Instant::now());
     }
 
+    /// Stops timing `step` and adds the time since [`step_start`](Self::step_start) to it.
+    ///
+    /// # Panics
+    ///
+    /// If `step` was not started.
     pub fn step_end(&mut self, step: Steps) {
-        if let Some(a) = self.step_times.get_mut(&step) {
-            if !a.0 {
-                panic!("Step not started");
-            }
-            a.0 = false;
-            a.2 += a.1.elapsed().as_nanos();
-        }
+        let timer = self.step_times.entry(step).or_default();
+        let started = timer.started.take().expect("Step not started");
+        timer.total += started.elapsed();
     }
 
+    /// The time spent in `step` since the run started, zero until the step first runs. It is
+    /// `Some` for every step.
     pub fn step_time(&self, step: Steps) -> Option<Duration> {
-        self.step_times
-            .get(&step)
-            .map(|a| Duration::from_nanos(a.2 as u64))
+        self.step_times.get(&step).map(|timer| timer.total)
     }
 
-    pub fn total_time(&self) -> u128 {
-        self.end_time.duration_since(self.start_time).as_nanos()
+    /// The time from the start of the run to the end of its last generation.
+    pub fn total_time(&self) -> Duration {
+        self.end_time.duration_since(self.start_time)
+    }
+
+    /// Every step with the time spent in it, in the order a generation runs them.
+    pub(crate) fn step_times(&self) -> impl Iterator<Item = (Steps, Duration)> + '_ {
+        Steps::ALL
+            .into_iter()
+            .map(|step| (step, self.step_time(step).unwrap_or_default()))
     }
 
     /// Saves a chart of the best and average fitness per generation. Needs the `plot` feature.
@@ -123,6 +152,41 @@ impl Metrics {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn step_times_add_up_and_start_at_zero() {
+        let mut metrics = Metrics::new();
+
+        for step in Steps::ALL {
+            assert_eq!(metrics.step_time(step), Some(Duration::ZERO));
+        }
+
+        metrics.step_start(Steps::Mutation);
+        std::thread::sleep(Duration::from_millis(2));
+        metrics.step_end(Steps::Mutation);
+        let first = metrics.step_time(Steps::Mutation).unwrap();
+        metrics.step_start(Steps::Mutation);
+        metrics.step_end(Steps::Mutation);
+
+        assert!(first >= Duration::from_millis(2));
+        assert!(metrics.step_time(Steps::Mutation).unwrap() >= first);
+        assert_eq!(metrics.step_time(Steps::Selection), Some(Duration::ZERO));
+    }
+
+    #[test]
+    #[should_panic(expected = "Step already started")]
+    fn starting_a_running_step_panics() {
+        let mut metrics = Metrics::new();
+
+        metrics.step_start(Steps::Fitness);
+        metrics.step_start(Steps::Fitness);
+    }
+
+    #[test]
+    #[should_panic(expected = "Step not started")]
+    fn ending_a_step_that_did_not_start_panics() {
+        Metrics::new().step_end(Steps::Fitness);
+    }
 
     #[test]
     fn generations_without_improvement_counts_from_the_best_ever() {

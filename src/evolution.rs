@@ -2,7 +2,6 @@ use rayon::iter::{IntoParallelIterator, IntoParallelRefMutIterator};
 use rayon::prelude::ParallelIterator;
 use std::cmp::Ordering;
 use std::sync::Arc;
-use std::time::Duration;
 
 use crate::{
     crossover::Crossover,
@@ -272,49 +271,25 @@ impl<T: Individual> Evolution<T> {
     /// Crossover time: X.XXXXs (XX.XX%)
     /// Mutation time: X.XXXXs (XX.XX%)
     /// Fitness time: X.XXXXs (XX.XX%)
+    /// Elitism time: X.XXXXs (XX.XX%)
     /// ---------------------------------------
     /// ```
+    ///
+    /// [`metrics`](Self::metrics) gives the same numbers, with
+    /// [`Metrics::total_time`] and [`Metrics::step_time`].
     pub fn time_digest(&self) {
+        let total_time = self.metrics.total_time();
+
         println!("------------ Time Digest ------------");
-        println!(
-            "Total time: {:?}",
-            Duration::from_nanos(self.metrics.total_time() as u64)
-        );
-        println!(
-            "Selection time: {:?} ({:.2}%)",
-            self.metrics.step_time(Steps::Selection).unwrap(),
-            self.metrics.step_time(Steps::Selection).unwrap().as_nanos() as f64
-                / self.metrics.total_time() as f64
-                * 100.0
-        );
-        println!(
-            "Crossover time: {:?} ({:.2}%)",
-            self.metrics.step_time(Steps::Crossover).unwrap(),
-            self.metrics.step_time(Steps::Crossover).unwrap().as_nanos() as f64
-                / self.metrics.total_time() as f64
-                * 100.0
-        );
-        println!(
-            "Mutation time: {:?} ({:.2}%)",
-            self.metrics.step_time(Steps::Mutation).unwrap(),
-            self.metrics.step_time(Steps::Mutation).unwrap().as_nanos() as f64
-                / self.metrics.total_time() as f64
-                * 100.0
-        );
-        println!(
-            "Fitness time: {:?} ({:.2}%)",
-            self.metrics.step_time(Steps::Fitness).unwrap(),
-            self.metrics.step_time(Steps::Fitness).unwrap().as_nanos() as f64
-                / self.metrics.total_time() as f64
-                * 100.0
-        );
-        println!(
-            "Elitism time: {:?} ({:.2}%)",
-            self.metrics.step_time(Steps::Elitism).unwrap(),
-            self.metrics.step_time(Steps::Elitism).unwrap().as_nanos() as f64
-                / self.metrics.total_time() as f64
-                * 100.0
-        );
+        println!("Total time: {:?}", total_time);
+        for (step, time) in self.metrics.step_times() {
+            println!(
+                "{:?} time: {:?} ({:.2}%)",
+                step,
+                time,
+                time.as_nanos() as f64 / total_time.as_nanos() as f64 * 100.0
+            );
+        }
         println!("---------------------------------------");
     }
 
@@ -706,7 +681,7 @@ mod tests {
         let mut by_run = builder(20, SumFitness).with_seed(4).build().unwrap();
         by_run.run();
 
-        assert!(evolution.metrics.total_time() > 0);
+        assert!(evolution.metrics.total_time() > std::time::Duration::ZERO);
         assert_eq!(evolution.report().generation, by_run.report().generation);
         assert_eq!(
             evolution.metrics.best_fitnesses,

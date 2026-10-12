@@ -151,6 +151,7 @@ You can get an eye on how much each step of the evolution is taking:
     // Crossover time: 145.662831ms (11.15%)
     // Mutation time: 267.255769ms (20.46%)
     // Fitness time: 146.738664ms (11.23%)
+    // Elitism time: 9.120874ms (0.70%)
     // ---------------------------------------
 ```
 
