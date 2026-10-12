@@ -67,9 +67,9 @@ fn main() {
 
     // Set an arbitrary number of individuals: 30
     // Set the size of the chromosome: max_guests to meet our constraints
-    // And set this evolution to use the Binary encoding
-    let mut evolution = EvolutionBuilder::new(30, max_guests, GeneCod::Bin, ())
-        // Set the fitness function
+    // And the range of the genes, which is `()` for the Binary encoding
+    let mut evolution = EvolutionBuilder::new(30, max_guests, ())
+        // Set the fitness function, which works on `Bin` and so picks the Binary encoding
         .with_fitness(PartyFitness)
         // Use the Tournament Selection
         .with_selection(TournamentSelection::default())

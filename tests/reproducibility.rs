@@ -107,7 +107,7 @@ impl Fitness<IntPerm> for InPlace {
 #[test]
 fn bin_tournament_n_points_bit_flip() {
     assert_reproducible(|seed| {
-        EvolutionBuilder::new(POPULATION, DIMENSION, GeneCod::Bin, ())
+        EvolutionBuilder::new(POPULATION, DIMENSION, ())
             .with_fitness(CountOnes)
             .with_selection(TournamentSelection::new(3, 0.8))
             .with_crossover(NPointsCrossover {
@@ -124,7 +124,7 @@ fn bin_tournament_n_points_bit_flip() {
 #[test]
 fn bin_roulette_uniform_scramble() {
     assert_reproducible(|seed| {
-        EvolutionBuilder::new(POPULATION, DIMENSION, GeneCod::Bin, ())
+        EvolutionBuilder::new(POPULATION, DIMENSION, ())
             .with_fitness(CountOnes)
             .with_selection(RouletteSelection)
             .with_crossover(UniformCrossover::default())
@@ -137,7 +137,7 @@ fn bin_roulette_uniform_scramble() {
 #[test]
 fn int_rank_n_points_random_resetting() {
     assert_reproducible(|seed| {
-        EvolutionBuilder::new(POPULATION, DIMENSION, GeneCod::Int, (-10, 10))
+        EvolutionBuilder::new(POPULATION, DIMENSION, (-10, 10))
             .with_fitness(SumOfGenes)
             .with_selection(RankSelection)
             .with_crossover(NPointsCrossover::default())
@@ -150,7 +150,7 @@ fn int_rank_n_points_random_resetting() {
 #[test]
 fn int_tournament_uniform_swap() {
     assert_reproducible(|seed| {
-        EvolutionBuilder::new(POPULATION, DIMENSION, GeneCod::Int, (-10, 10))
+        EvolutionBuilder::new(POPULATION, DIMENSION, (-10, 10))
             .with_fitness(SumOfGenes)
             .with_selection(TournamentSelection::default())
             .with_crossover(UniformCrossover::default())
@@ -163,7 +163,7 @@ fn int_tournament_uniform_swap() {
 #[test]
 fn real_tournament_blend_gaussian() {
     assert_reproducible(|seed| {
-        EvolutionBuilder::new(POPULATION, DIMENSION, GeneCod::Real, (-1.0, 1.0))
+        EvolutionBuilder::new(POPULATION, DIMENSION, (-1.0, 1.0))
             .with_fitness(Sphere)
             .with_selection(TournamentSelection::new(4, 0.9))
             .with_crossover(BlendCrossover::default())
@@ -177,7 +177,7 @@ fn real_tournament_blend_gaussian() {
 #[test]
 fn real_sus_arithmetic_delta() {
     assert_reproducible(|seed| {
-        EvolutionBuilder::new(POPULATION, DIMENSION, GeneCod::Real, (-1.0, 1.0))
+        EvolutionBuilder::new(POPULATION, DIMENSION, (-1.0, 1.0))
             .with_fitness(Sphere)
             .with_selection(StochasticUniversalSamplingSelection)
             .with_crossover(ArithmeticCrossover::default())
@@ -190,7 +190,7 @@ fn real_sus_arithmetic_delta() {
 #[test]
 fn real_roulette_n_points_and_uniform_random_resetting() {
     assert_reproducible(|seed| {
-        EvolutionBuilder::new(POPULATION, DIMENSION, GeneCod::Real, (-1.0, 1.0))
+        EvolutionBuilder::new(POPULATION, DIMENSION, (-1.0, 1.0))
             .with_fitness(Sphere)
             .with_selection(RouletteSelection)
             .with_crossover(NPointsCrossover::default())
@@ -199,7 +199,7 @@ fn real_roulette_n_points_and_uniform_random_resetting() {
             .with_seed(seed)
     });
     assert_reproducible(|seed| {
-        EvolutionBuilder::new(POPULATION, DIMENSION, GeneCod::Real, (-1.0, 1.0))
+        EvolutionBuilder::new(POPULATION, DIMENSION, (-1.0, 1.0))
             .with_fitness(Sphere)
             .with_selection(RankSelection)
             .with_crossover(UniformCrossover::default())
@@ -212,7 +212,7 @@ fn real_roulette_n_points_and_uniform_random_resetting() {
 #[test]
 fn perm_ordered_insertion() {
     assert_reproducible(|seed| {
-        EvolutionBuilder::new(POPULATION, DIMENSION, GeneCod::IntPerm, ())
+        EvolutionBuilder::new(POPULATION, DIMENSION, ())
             .with_fitness(InPlace)
             .with_selection(TournamentSelection::default())
             .with_crossover(OrderedCrossover::default())
@@ -225,7 +225,7 @@ fn perm_ordered_insertion() {
 #[test]
 fn perm_partially_mapped_swap() {
     assert_reproducible(|seed| {
-        EvolutionBuilder::new(POPULATION, DIMENSION, GeneCod::IntPerm, ())
+        EvolutionBuilder::new(POPULATION, DIMENSION, ())
             .with_fitness(InPlace)
             .with_selection(RankSelection)
             .with_crossover(PartiallyMappedCrossover::default())
@@ -238,7 +238,7 @@ fn perm_partially_mapped_swap() {
 #[test]
 fn perm_cycle_scramble() {
     assert_reproducible(|seed| {
-        EvolutionBuilder::new(POPULATION, DIMENSION, GeneCod::IntPerm, ())
+        EvolutionBuilder::new(POPULATION, DIMENSION, ())
             .with_fitness(InPlace)
             .with_selection(TournamentSelection::new(3, 1.0))
             .with_crossover(CycleCrossover::default())
@@ -249,7 +249,7 @@ fn perm_cycle_scramble() {
 }
 
 fn unseeded() -> EvolutionBuilder<Real> {
-    EvolutionBuilder::new(POPULATION, DIMENSION, GeneCod::Real, (-1.0, 1.0))
+    EvolutionBuilder::new(POPULATION, DIMENSION, (-1.0, 1.0))
         .with_fitness(Sphere)
         .with_selection(TournamentSelection::default())
         .with_crossover(BlendCrossover::default())

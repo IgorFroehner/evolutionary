@@ -76,7 +76,7 @@ impl Fitness<Real> for NearOrigin {
 #[test]
 fn a_saved_population_resumes_a_run() {
     let builder = || {
-        EvolutionBuilder::new(30, 8, GeneCod::Real, (-1.0, 1.0))
+        EvolutionBuilder::new(30, 8, (-1.0, 1.0))
             .with_fitness(NearOrigin)
             .with_selection(TournamentSelection::default())
             .with_crossover(BlendCrossover::default())

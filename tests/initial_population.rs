@@ -17,7 +17,7 @@ const SIZE: u32 = 20;
 const DIMENSION: u32 = 12;
 
 fn builder() -> EvolutionBuilder<Bin> {
-    EvolutionBuilder::new(SIZE, DIMENSION, GeneCod::Bin, ())
+    EvolutionBuilder::new(SIZE, DIMENSION, ())
         .with_fitness(CountOnes)
         .with_selection(TournamentSelection::default())
         .with_crossover(NPointsCrossover::default())

@@ -50,7 +50,7 @@ fn main() {
 
     println!("Best possible: {}", best_fitness_possible);
 
-    let mut evolution = EvolutionBuilder::new(30, size as u32, GeneCod::IntPerm, ())
+    let mut evolution = EvolutionBuilder::new(30, size as u32, ())
         .with_selection(TournamentSelection::default())
         .with_fitness(fitness)
         .with_crossover(OrderedCrossover::default())

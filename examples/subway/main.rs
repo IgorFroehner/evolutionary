@@ -143,7 +143,7 @@ fn main() {
         }
     }
 
-    let evolution_builder = EvolutionBuilder::new(30, 30,    GeneCod::Real, (0.0, 1.0))
+    let evolution_builder = EvolutionBuilder::new(30, 30, (0.0, 1.0))
         .with_fitness(MetroFitness {
             start,
             end,

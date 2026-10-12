@@ -49,7 +49,7 @@ and run it:
 
 ```rust
 fn main() {
-    let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
+    let mut evolution = EvolutionBuilder::new(30, 10, ())
         .with_fitness(MaxFitness)
         .with_selection(TournamentSelection::default())
         .with_crossover(NPointsCrossover::default())
@@ -65,9 +65,10 @@ fn main() {
 }
 ```
 
-`EvolutionBuilder::new` takes the population size, the chromosome length, the encoding and its
-range. The range is `()` for `Bin` and `IntPerm`, `(i64, i64)` for `Int` and `(f64, f64)` for
-`Real`. `build` returns a `BuildError` naming any missing or inconsistent parameter.
+`EvolutionBuilder::new` takes the population size, the chromosome length and the range of the
+genes. The individual type (here `Bin`, from the fitness) sets the encoding and the type of the
+range: `()` for `Bin` and `IntPerm`, `(i64, i64)` for `Int` and `(f64, f64)` for `Real`. `build`
+returns a `BuildError` naming any missing or inconsistent parameter.
 
 The stop condition receives a `GenerationReport`, so it can look at the generation, the best and
 average fitness, or the generations without improvement:

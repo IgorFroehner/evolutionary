@@ -105,7 +105,7 @@ fn perm_crossovers() {
 
 #[test]
 fn odd_population_evolves() {
-    let mut evolution = EvolutionBuilder::new(SIZE as u32, 8, GeneCod::Bin, ())
+    let mut evolution = EvolutionBuilder::new(SIZE as u32, 8, ())
         .with_fitness(CountOnes)
         .with_selection(TournamentSelection::default())
         .with_crossover(n_points())

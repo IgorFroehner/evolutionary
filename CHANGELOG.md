@@ -18,6 +18,11 @@
   best. For the best of the final population, replay the run with
   `EvolutionBuilder::with_seed(result.seed)` and read `current_best()` instead of
   `best_found`. Each run's seed and fitness history are unchanged.
+- `EvolutionBuilder::new` no longer takes the encoding, which the individual type already
+  fixes: write `EvolutionBuilder::new(30, 10, ())` instead of
+  `EvolutionBuilder::new(30, 10, GeneCod::Bin, ())`. `EvolutionConfig` loses its `gene_cod`
+  field, which nothing read. `GeneCod` stays, for `RawConfig::gene_cod` with the `config`
+  feature.
 
 ### Added
 

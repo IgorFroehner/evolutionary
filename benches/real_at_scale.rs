@@ -24,7 +24,7 @@ impl Fitness<Real> for NearOrigin {
 }
 
 fn evolution() -> Evolution<Real> {
-    let mut evolution = EvolutionBuilder::new(POPULATION, GENES, GeneCod::Real, (-1.0, 1.0))
+    let mut evolution = EvolutionBuilder::new(POPULATION, GENES, (-1.0, 1.0))
         .with_fitness(NearOrigin)
         .with_selection(TournamentSelection::new(3, 0.9))
         .with_crossover(UniformCrossover::default())

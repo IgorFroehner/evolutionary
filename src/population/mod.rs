@@ -12,6 +12,11 @@ pub use int::*;
 pub use perm::*;
 pub use real::*;
 
+/// The name of a built-in encoding, as a config file gives it (`RawConfig::gene_cod` with the
+/// `config` feature), to pick the individual type to build.
+///
+/// An evolution does not need it: the individual type of the
+/// [`EvolutionBuilder`](crate::EvolutionBuilder) is the encoding.
 #[derive(Debug, Clone)]
 #[cfg_attr(
     feature = "serde",

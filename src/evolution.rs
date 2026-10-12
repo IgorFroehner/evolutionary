@@ -9,7 +9,7 @@ use crate::{
     fitness::{fitness_cmp, Fitness},
     metrics::{Metrics, Steps},
     mutation::Mutation,
-    population::{GeneCod, Individual},
+    population::Individual,
     report::GenerationReport,
     rng::{Rngs, Step},
     selection::Selection,
@@ -31,7 +31,6 @@ pub struct EvolutionConfig<T: Individual> {
     pub dimension: u32,
     pub population_size: u32,
     pub range: T::RangeType,
-    pub gene_cod: GeneCod,
 }
 
 /// This is the struct that does the evolution magic. It has the methods needed to start and iterate
@@ -46,7 +45,7 @@ pub struct EvolutionConfig<T: Individual> {
 /// # impl Fitness<Bin> for YourFitness {
 /// #    fn calculate_fitness(&self, individual: &Bin) -> f64 { 0.0 }
 /// # }
-/// # let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
+/// # let mut evolution = EvolutionBuilder::new(30, 10, ())
 /// #     .with_fitness(YourFitness)
 /// #     .with_selection(TournamentSelection::default())
 /// #     .with_crossover(NPointsCrossover::default())
@@ -532,7 +531,7 @@ mod tests {
     }
 
     fn builder<F: Fitness<Real>>(population_size: u32, fitness: F) -> EvolutionBuilder<Real> {
-        EvolutionBuilder::new(population_size, 3, GeneCod::Real, (-1.0, 1.0))
+        EvolutionBuilder::new(population_size, 3, (-1.0, 1.0))
             .with_fitness(fitness)
             .with_selection(TournamentSelection::default())
             .with_crossover(DoNothingCrossover)

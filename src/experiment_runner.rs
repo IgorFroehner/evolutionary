@@ -26,7 +26,7 @@ use rayon::prelude::*;
 /// #         individual.get_chromosome().iter().filter(|&&gene| gene).count() as f64
 /// #     }
 /// # }
-/// let builder = EvolutionBuilder::new(20, 16, GeneCod::Bin, ())
+/// let builder = EvolutionBuilder::new(20, 16, ())
 ///     .with_fitness(CountOnes)
 ///     .with_selection(TournamentSelection::default())
 ///     .with_crossover(NPointsCrossover::default())

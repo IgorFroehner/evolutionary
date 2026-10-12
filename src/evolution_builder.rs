@@ -3,7 +3,7 @@ use crate::{
     evolution::{Evolution, EvolutionConfig, OnGenerationFn, StopConditionFn},
     fitness::Fitness,
     mutation::Mutation,
-    population::{GeneCod, Individual},
+    population::Individual,
     report::GenerationReport,
     selection::Selection,
 };
@@ -99,7 +99,7 @@ impl Error for BuildError {}
 /// #    }
 /// # }
 /// fn main() {
-///     let mut evolution = EvolutionBuilder::new(30, 10, GeneCod::Bin, ())
+///     let mut evolution = EvolutionBuilder::new(30, 10, ())
 ///         .with_fitness(YourFitness)
 ///         .with_selection(TournamentSelection::default())
 ///         .with_crossover(NPointsCrossover::default())
@@ -124,16 +124,16 @@ pub struct EvolutionBuilder<T: Individual> {
 }
 
 impl<T: Individual> EvolutionBuilder<T> {
-    pub fn new(
-        population_size: u32,
-        dimension: u32,
-        gene_cod: GeneCod,
-        range: T::RangeType,
-    ) -> Self {
+    /// Starts a builder for a population of `population_size` individuals of `dimension` genes
+    /// each, generated within `range`.
+    ///
+    /// The individual type `T` sets the encoding, and with it the type of `range`: `()` for
+    /// [`Bin`](crate::prelude::Bin) and [`IntPerm`](crate::prelude::IntPerm), `(i64, i64)` for
+    /// [`Int`](crate::prelude::Int) and `(f64, f64)` for [`Real`](crate::prelude::Real).
+    pub fn new(population_size: u32, dimension: u32, range: T::RangeType) -> Self {
         let evolution_config = Some(EvolutionConfig {
             range,
             dimension,
-            gene_cod,
             population_size,
         });
 
@@ -352,7 +352,7 @@ mod tests {
     }
 
     fn complete(population_size: u32, dimension: u32) -> EvolutionBuilder<Bin> {
-        EvolutionBuilder::new(population_size, dimension, GeneCod::Bin, ())
+        EvolutionBuilder::new(population_size, dimension, ())
             .with_fitness(ZeroFitness)
             .with_selection(TournamentSelection::default())
             .with_crossover(NPointsCrossover::default())
@@ -389,7 +389,7 @@ mod tests {
 
     #[test]
     fn missing_stop_condition_is_an_error() {
-        let builder = EvolutionBuilder::<Bin>::new(10, 4, GeneCod::Bin, ())
+        let builder = EvolutionBuilder::<Bin>::new(10, 4, ())
             .with_fitness(ZeroFitness)
             .with_selection(TournamentSelection::default())
             .with_crossover(NPointsCrossover::default())
@@ -403,7 +403,7 @@ mod tests {
 
     #[test]
     fn missing_operator_is_named_in_the_error() {
-        let builder = EvolutionBuilder::<Bin>::new(10, 4, GeneCod::Bin, ())
+        let builder = EvolutionBuilder::<Bin>::new(10, 4, ())
             .with_fitness(ZeroFitness)
             .with_crossover(NPointsCrossover::default())
             .with_mutation(BitFlipMutation::default())

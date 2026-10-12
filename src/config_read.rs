@@ -21,7 +21,6 @@ impl From<RawConfig> for EvolutionConfig<Bin> {
             dimension: val.dimension,
             population_size: val.population_size,
             range: (),
-            gene_cod: GeneCod::Bin,
         }
     }
 }
@@ -32,7 +31,6 @@ impl From<RawConfig> for EvolutionConfig<IntPerm> {
             dimension: val.dimension,
             population_size: val.population_size,
             range: (),
-            gene_cod: GeneCod::IntPerm,
         }
     }
 }
@@ -142,7 +140,6 @@ mod tests {
 
         assert_eq!(config.population_size, 15);
         assert_eq!(config.dimension, 10);
-        assert!(matches!(config.gene_cod, GeneCod::Bin));
     }
 
     #[test]
@@ -159,6 +156,5 @@ mod tests {
 
         assert_eq!(config.population_size, 15);
         assert_eq!(config.dimension, 10);
-        assert!(matches!(config.gene_cod, GeneCod::IntPerm));
     }
 }

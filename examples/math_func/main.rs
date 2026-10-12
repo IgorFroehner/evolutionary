@@ -29,7 +29,7 @@ fn main() {
     if let GeneCod::Bin = gene_cod {
         let max_fitness = MathFitnessMax;
 
-        let mut evolution = EvolutionBuilder::new(population_size, dimension, gene_cod, ())
+        let mut evolution = EvolutionBuilder::new(population_size, dimension, ())
             .with_fitness(max_fitness)
             .with_selection(RouletteSelection)
             .with_crossover(NPointsCrossover::default())
