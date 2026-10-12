@@ -32,14 +32,9 @@ fn main() {
         let mut experiment =
             ExperimentRunner::new(format!("{}Queens", dimension), 30, evolution_builder);
 
-        experiment.run();
+        experiment.run().expect("invalid evolution parameters");
 
-        let avg_max_iterations = experiment
-            .experiment_results
-            .iter()
-            .map(|result| result.iterations as f64)
-            .sum::<f64>()
-            / experiment.experiment_results.len() as f64;
+        let avg_generations = experiment.average_generations().unwrap_or_default();
         let avg_score = experiment
             .experiment_results
             .iter()
@@ -53,7 +48,7 @@ fn main() {
             .filter(|result| fitness.count_collisions(&result.best_found) > 0.0)
             .count();
 
-        println!("Average max iterations: {}", avg_max_iterations);
+        println!("Average generations: {}", avg_generations);
         println!("Average score: {}", avg_score);
         println!("Count with collisions: {}", count_with_collisions);
     }

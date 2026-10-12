@@ -66,8 +66,8 @@
 //! - `serde`: `Serialize` and `Deserialize` for the built-in individuals, to save and load
 //!   populations.
 //! - `config`: reads the evolution parameters from a TOML file, with `read_config`.
-//! - `plot`: saves fitness charts with `Evolution::plot_chart` and from the
-//!   [`ExperimentRunner`](prelude::ExperimentRunner), with `plotters`.
+//! - `plot`: saves fitness charts with `Evolution::plot_chart` and
+//!   `ExperimentRunner::save_chart`, with `plotters`.
 
 #[cfg(feature = "config")]
 pub mod config_read;

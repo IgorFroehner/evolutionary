@@ -36,7 +36,7 @@ default = []
 config = ["dep:toml", "serde"]
 # `Serialize` and `Deserialize` for the built-in individuals and `GeneCod`.
 serde = ["dep:serde", "dep:serde_derive"]
-# Fitness charts: `Evolution::plot_chart`, and the chart saved by `ExperimentRunner`.
+# Fitness charts: `Evolution::plot_chart` and `ExperimentRunner::save_chart`.
 plot = ["dep:plotters"]
 
 [package.metadata.docs.rs]

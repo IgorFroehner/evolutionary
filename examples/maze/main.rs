@@ -54,7 +54,7 @@ fn main() {
     let _experiment =
         ExperimentRunner::new("Maze  - Caminho Minimo".to_string(), 30, evolution_builder);
 
-    // experiment.run();
+    // experiment.run().expect("invalid evolution parameters");
 
     // experiment.experiment_digest();
 
