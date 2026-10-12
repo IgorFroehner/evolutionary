@@ -12,32 +12,48 @@ use super::Selection;
 /// Each slot of the mating pool draws an individual with probability proportional to its
 /// fitness. Fitnesses must not be negative; an individual with a `NaN` fitness gets no chance.
 ///
+/// For fitnesses that can be negative, as with [`Minimize`](crate::Minimize), or to set how
+/// strongly the best individuals are favored, scale them first with
+/// [`RouletteSelection::scaled`].
+///
 /// # Panics
 ///
 /// `get_mating_pool` panics if the population is empty, if a fitness is negative, or if no
 /// fitness is positive or their total is not finite.
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct RouletteSelection;
 
 impl<T: Individual> Selection<T> for RouletteSelection {
     fn get_mating_pool(&self, initial_population: &[T], rngs: &Rngs) -> Vec<T> {
-        // Built once for the whole pool: building it per slot would walk the population again
-        // for every draw.
-        let wheel = WeightedIndex::new(
+        spin(
+            initial_population,
             initial_population
                 .iter()
                 .map(|individual| selection_weight(individual.get_fitness())),
-        )
-        .expect(
+            rngs,
             "roulette selection needs individuals, no negative fitness and at least one \
              positive, finite fitness",
-        );
-
-        (0..initial_population.len())
-            .into_par_iter()
-            .map(|slot| initial_population[wheel.sample(&mut rngs.rng(slot))].clone())
-            .collect()
+        )
     }
+}
+
+/// Fills a mating pool as large as `population`, each slot drawing an individual with a
+/// probability proportional to its weight. Panics with `error` if the weights make no wheel:
+/// there are none, one is negative, none is positive or their total is not finite.
+pub(super) fn spin<T: Individual>(
+    population: &[T],
+    weights: impl Iterator<Item = f64>,
+    rngs: &Rngs,
+    error: &str,
+) -> Vec<T> {
+    // Built once for the whole pool: building it per slot would walk the population again for
+    // every draw.
+    let wheel = WeightedIndex::new(weights).expect(error);
+
+    (0..population.len())
+        .into_par_iter()
+        .map(|slot| population[wheel.sample(&mut rngs.rng(slot))].clone())
+        .collect()
 }
 
 #[cfg(test)]

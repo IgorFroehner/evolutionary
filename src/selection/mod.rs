@@ -4,12 +4,14 @@ use crate::population::Individual;
 use crate::rng::Rngs;
 
 mod do_nothing_selection;
+mod fitness_scaling;
 mod rank_selection;
 mod roulette_selection;
 mod stochastic_universal_sampling_selection;
 mod tournament_selection;
 
 pub use do_nothing_selection::DoNothingSelection;
+pub use fitness_scaling::{FitnessScaling, ScaledSelection};
 pub use rank_selection::RankSelection;
 pub use roulette_selection::RouletteSelection;
 pub use stochastic_universal_sampling_selection::StochasticUniversalSamplingSelection;
