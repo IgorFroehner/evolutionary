@@ -196,10 +196,10 @@
 - `examples/subway` panicked at start: it read `examples/subway/subway.in`, which does not exist,
   instead of the `metro.in` network it ships with.
 - `StochasticUniversalSamplingSelection`, and `scaled` with it, panicked on an index underflow
-  when its random start point was exactly `0.0` (about one generation in 2^53): the first
+  when its random start point was exactly `0.0` (about one generation in 2^52): the first
   pointer moved past no individual. A pointer at `0.0` now picks the first individual with a
-  positive weight, and a weight of zero is still never picked. Every start point above `0.0`
-  picks what it did, so seeded runs are unchanged.
+  positive weight, never one with a weight of zero. Every start point above `0.0` picks what
+  it did, so seeded runs are unchanged.
 
 ### Changed
 

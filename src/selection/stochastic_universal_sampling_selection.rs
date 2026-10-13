@@ -57,8 +57,8 @@ pub(super) fn sample<T: Individual>(
 /// where each individual's slice is `weight(index)`, and returns the individual under each.
 ///
 /// A pointer inside the wheel picks the individual whose slice ends at or after it. A pointer at
-/// `0.0` (a start point of exactly `0.0`) picks the first individual with a positive weight, so
-/// an individual with a weight of zero is never picked.
+/// `0.0` (a start point of exactly `0.0`) picks the first individual with a positive weight,
+/// never one with a weight of zero.
 fn walk<T: Clone>(
     population: &[T],
     weight: impl Fn(usize) -> f64,
