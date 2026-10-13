@@ -101,7 +101,7 @@ fn walk<T: Clone>(
         // so step back over the trailing zero weights. At least one weight is positive (`sample`
         // asserts a positive total), so this stops on it and never steps back past index 0.
         // Inside the wheel `picked` already has a positive weight and nothing changes.
-        if individual_idx == population_size {
+        if individual_idx == population_size && cumulative_weight < pointer {
             while weight(picked) <= 0.0 {
                 picked -= 1;
             }
@@ -218,11 +218,12 @@ mod tests {
             "the last pointer should overshoot the total"
         );
 
-        let picked = walked(&fitnesses, start);
+        // Slots 0 to 10 pick what they did: index 2, then index 5 ten times.
+        let mut expected = vec![fitnesses[2]];
+        expected.extend([fitnesses[5]; 10]);
+        expected.push(fitnesses[9]);
 
-        assert_eq!(picked.len(), fitnesses.len());
-        assert_eq!(picked[11].to_bits(), fitnesses[9].to_bits());
-        assert!(picked.iter().all(|&fitness| fitness > 0.0), "{picked:?}");
+        assert_eq!(walked(&fitnesses, start), expected);
     }
 
     #[test]

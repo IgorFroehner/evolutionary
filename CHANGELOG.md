@@ -88,10 +88,11 @@
   weight, and the walk ran off the end of the wheel and picked the last individual whatever
   its weight. It now picks the last individual with a positive weight, the slice the pointer
   belongs to. A seeded run can differ only in a generation where the start point rounded the
-  last pointer past the total, about one generation in 2^52, and then only in the last slot
-  of the mating pool, when the population ends in zero weights. The number and order of random
-  draws are unchanged, and every other run replays exactly as before; the golden runs are
-  unchanged. Nothing to rewrite.
+  last pointer past the total, which only a few of the 2^52 possible start points do, more in
+  larger populations (still under one generation in 10^12 at 10 000 individuals), and then
+  only in the last slot of the mating pool, when the population ends in zero weights. The
+  number and order of random draws are unchanged, and every other run replays exactly as
+  before; the golden runs are unchanged. Nothing to rewrite.
 
 ### Added
 
