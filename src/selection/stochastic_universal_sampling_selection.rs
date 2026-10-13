@@ -50,6 +50,23 @@ pub(super) fn sample<T: Individual>(
 
     let start_point = rngs.rng(0).random_range(0.0..pointer_spacing);
 
+    walk(population, weight, start_point, pointer_spacing)
+}
+
+/// Places `population.len()` pointers `pointer_spacing` apart from `start_point` on a wheel
+/// where each individual's slice is `weight(index)`, and returns the individual under each.
+///
+/// A pointer inside the wheel picks the individual whose slice ends at or after it. A pointer at
+/// `0.0` (a start point of exactly `0.0`) picks the first individual with a positive weight,
+/// never one with a weight of zero.
+fn walk<T: Clone>(
+    population: &[T],
+    weight: impl Fn(usize) -> f64,
+    start_point: f64,
+    pointer_spacing: f64,
+) -> Vec<T> {
+    let population_size = population.len();
+
     // One walk over the wheel places every pointer. The slots could be picked independently,
     // each with a binary search over the cumulative weights, but the work per slot is a clone,
     // and at a few hundred individuals the whole walk takes less than rayon's fork and join: a
@@ -61,7 +78,13 @@ pub(super) fn sample<T: Individual>(
 
     for slot in 0..population_size {
         let pointer = start_point + slot as f64 * pointer_spacing;
-        while cumulative_weight < pointer && individual_idx < population_size {
+        // `cumulative_weight <= 0.0` only matters for a pointer at 0.0: a pointer above it
+        // already satisfies `cumulative_weight < pointer` while nothing positive is summed. It
+        // moves the walk past the leading zero weights to the first positive one, where it
+        // would otherwise not move at all and read `population[0 - 1]`.
+        while (cumulative_weight < pointer || cumulative_weight <= 0.0)
+            && individual_idx < population_size
+        {
             cumulative_weight += weight(individual_idx);
             individual_idx += 1;
         }
@@ -99,6 +122,52 @@ mod tests {
                 );
             }
         }
+    }
+
+    /// The fitnesses of the individuals `walk` picks from `fitnesses` for `start_point`.
+    fn walked(fitnesses: &[f64], start_point: f64) -> Vec<f64> {
+        let population = population(fitnesses);
+        let total: f64 = fitnesses.iter().copied().map(selection_weight).sum();
+        let spacing = total / fitnesses.len() as f64;
+
+        walk(
+            &population,
+            |index| selection_weight(population[index].get_fitness()),
+            start_point,
+            spacing,
+        )
+        .iter()
+        .map(Individual::get_fitness)
+        .collect()
+    }
+
+    #[test]
+    fn start_point_at_zero_picks_the_first_individual_when_its_weight_is_positive() {
+        // Spacing 2.5: pointers at 0.0, 2.5, 5.0 and 7.5.
+        assert_eq!(walked(&[1.0, 2.0, 3.0, 4.0], 0.0), [1.0, 2.0, 3.0, 4.0]);
+    }
+
+    #[test]
+    fn start_point_at_zero_skips_leading_zero_weights() {
+        // Spacing 1.5: pointers at 0.0, 1.5, 3.0 and 4.5.
+        assert_eq!(
+            walked(&[0.0, f64::NAN, 2.0, 4.0], 0.0),
+            [2.0, 2.0, 4.0, 4.0]
+        );
+        // Spacing 0.5: pointers at 0.0 and 0.5.
+        assert_eq!(walked(&[0.0, 1.0], 0.0), [1.0, 1.0]);
+    }
+
+    #[test]
+    fn start_point_above_zero_picks_the_slice_that_ends_at_or_after_each_pointer() {
+        // Spacing 2.5: pointers at 0.5, 3.0, 5.5 and 8.0. The pointer at 3.0 is on the end of
+        // the second slice and picks it; the zero weight is never picked.
+        assert_eq!(walked(&[1.0, 2.0, 0.0, 7.0], 0.5), [1.0, 2.0, 7.0, 7.0]);
+        // The smallest positive start point still skips a leading zero weight.
+        assert_eq!(
+            walked(&[0.0, 2.0, 3.0, 5.0], f64::MIN_POSITIVE),
+            [2.0, 3.0, 3.0, 5.0]
+        );
     }
 
     #[test]
