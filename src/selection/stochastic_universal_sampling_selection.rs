@@ -7,7 +7,7 @@ use rand::Rng;
 /// Picks the whole mating pool with one spin of a wheel of evenly spaced pointers, where each
 /// individual's slice is proportional to its fitness. Each individual is picked its expected
 /// number of times, rounded down or up. Fitnesses must not be negative; an individual with a
-/// `NaN` fitness gets no chance.
+/// fitness of zero or `NaN` gets no chance and is never picked.
 ///
 /// For fitnesses that can be negative, as with [`Minimize`](crate::Minimize), or to set how
 /// strongly the best individuals are favored, scale them first with
@@ -56,9 +56,12 @@ pub(super) fn sample<T: Individual>(
 /// Places `population.len()` pointers `pointer_spacing` apart from `start_point` on a wheel
 /// where each individual's slice is `weight(index)`, and returns the individual under each.
 ///
-/// A pointer inside the wheel picks the individual whose slice ends at or after it. A pointer at
-/// `0.0` (a start point of exactly `0.0`) picks the first individual with a positive weight,
-/// never one with a weight of zero.
+/// A pointer inside the wheel picks the individual whose slice ends at or after it. No pointer
+/// ever picks an individual with a weight of zero: a pointer at `0.0` (a start point of exactly
+/// `0.0`) picks the first individual with a positive weight, and a pointer that rounding puts
+/// past the end of the wheel (a start point just below `pointer_spacing`) picks the last one.
+///
+/// At least one weight must be positive, which `sample` asserts.
 fn walk<T: Clone>(
     population: &[T],
     weight: impl Fn(usize) -> f64,
@@ -88,7 +91,22 @@ fn walk<T: Clone>(
             cumulative_weight += weight(individual_idx);
             individual_idx += 1;
         }
-        selected_individuals.push(population[individual_idx - 1].clone());
+        let mut picked = individual_idx - 1;
+        // The loop above only stops inside the wheel on an individual with a positive weight: a
+        // zero weight leaves `cumulative_weight` as it was, so the loop would have stopped on
+        // the individual before it. The only way to land on a zero weight is to run off the end
+        // with the pointer still past the total, which rounding in `start_point + slot *
+        // pointer_spacing` can do in the last slot when the start point is just below
+        // `pointer_spacing`. Then the pointer belongs to the last slice with a positive weight,
+        // so step back over the trailing zero weights. At least one weight is positive (`sample`
+        // asserts a positive total), so this stops on it and never steps back past index 0.
+        // Inside the wheel `picked` already has a positive weight and nothing changes.
+        if individual_idx == population_size {
+            while weight(picked) <= 0.0 {
+                picked -= 1;
+            }
+        }
+        selected_individuals.push(population[picked].clone());
     }
 
     selected_individuals
@@ -167,6 +185,88 @@ mod tests {
         assert_eq!(
             walked(&[0.0, 2.0, 3.0, 5.0], f64::MIN_POSITIVE),
             [2.0, 3.0, 3.0, 5.0]
+        );
+    }
+
+    /// The weights from issue #19: the last positive one is at index 9.
+    const ISSUE_19_WEIGHTS: [f64; 12] = [
+        0.0,
+        4.742212123340738,
+        84.56193545410987,
+        0.0003862830995540634,
+        0.0005928994696346527,
+        474.8988276210316,
+        0.0,
+        0.0,
+        0.5847506407363268,
+        0.0005634069431715673,
+        0.0,
+        0.0,
+    ];
+
+    #[test]
+    fn last_pointer_past_the_total_picks_the_last_positive_weight() {
+        // With the start point one ulp below the spacing, rounding puts the last pointer past
+        // the total, and the walk used to pick index 11, a weight of zero. It belongs to the
+        // last positive weight, index 9.
+        let fitnesses = ISSUE_19_WEIGHTS;
+        let total: f64 = fitnesses.iter().sum();
+        let spacing = total / fitnesses.len() as f64;
+        let start = (1.0 - f64::EPSILON) * spacing;
+        assert!(
+            start + 11.0 * spacing > total,
+            "the last pointer should overshoot the total"
+        );
+
+        let picked = walked(&fitnesses, start);
+
+        assert_eq!(picked.len(), fitnesses.len());
+        assert_eq!(picked[11].to_bits(), fitnesses[9].to_bits());
+        assert!(picked.iter().all(|&fitness| fitness > 0.0), "{picked:?}");
+    }
+
+    #[test]
+    fn last_pointer_past_the_total_skips_a_trailing_nan_and_zero_tail() {
+        // Spacing 5.7, and rounding puts the last pointer past the total for this start point.
+        // The walk used to pick the zero weight at the end; the `NaN` before it weighs 0 too.
+        let fitnesses = [7.6, 7.3, 8.5, 9.5, 7.0, f64::NAN, 0.0];
+        let total: f64 = fitnesses.iter().copied().map(selection_weight).sum();
+        let spacing = total / fitnesses.len() as f64;
+        let start = (1.0 - f64::EPSILON) * spacing;
+        assert!(
+            start + 6.0 * spacing > total,
+            "the last pointer should overshoot the total"
+        );
+
+        assert_eq!(
+            walked(&fitnesses, start),
+            [7.6, 7.3, 8.5, 8.5, 9.5, 7.0, 7.0]
+        );
+    }
+
+    #[test]
+    fn start_point_in_the_middle_picks_what_it_did_before_issue_19() {
+        // The start point halfway along the first spacing, far from either boundary.
+        let fitnesses = ISSUE_19_WEIGHTS;
+        let total: f64 = fitnesses.iter().sum();
+        let spacing = total / fitnesses.len() as f64;
+
+        assert_eq!(
+            walked(&fitnesses, 0.5 * spacing),
+            [
+                84.56193545410987,
+                84.56193545410987,
+                474.8988276210316,
+                474.8988276210316,
+                474.8988276210316,
+                474.8988276210316,
+                474.8988276210316,
+                474.8988276210316,
+                474.8988276210316,
+                474.8988276210316,
+                474.8988276210316,
+                474.8988276210316,
+            ]
         );
     }
 
