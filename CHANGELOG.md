@@ -82,6 +82,17 @@
   `GaussianMutation::new(0.05, 0.1)` takes any `impl Into<Sigma>` and compiles unchanged. To
   read the value, write `mutation.sigma.at(generation)` instead of `mutation.sigma`. A
   constant `sigma` draws exactly the same numbers as before, so seeded runs are unchanged.
+- `StochasticUniversalSamplingSelection`, and `scaled` with it, no longer picks an individual
+  with a weight of zero (a fitness of zero or `NaN`) in the last slot. When its random start
+  point was just below the pointer spacing, rounding could put the last pointer past the total
+  weight, and the walk ran off the end of the wheel and picked the last individual whatever
+  its weight. It now picks the last individual with a positive weight, the slice the pointer
+  belongs to. A seeded run can differ only in a generation where the start point rounded the
+  last pointer past the total, which only a few of the 2^52 possible start points do, more in
+  larger populations (still under one generation in 10^12 at 10 000 individuals), and then
+  only in the last slot of the mating pool, when the population ends in zero weights. The
+  number and order of random draws are unchanged, and every other run replays exactly as
+  before; the golden runs are unchanged. Nothing to rewrite.
 
 ### Added
 
