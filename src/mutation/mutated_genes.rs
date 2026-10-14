@@ -41,7 +41,7 @@ const STEPS: usize = usize::BITS as usize;
 // One per `mutate` call, on the stack, shared by every individual: boxing the ladder would only
 // add an allocation and an indirection.
 #[allow(clippy::large_enum_variant)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub(crate) enum MutatedGenes {
     /// No gene, without a draw: a zero rate.
     Nothing,
@@ -107,8 +107,11 @@ impl MutatedGenes {
     }
 }
 
-/// Draws the gap to the next mutated gene, with exact operations only: one uniform
-/// draw, multiplications and comparisons, each rounded the same way on every platform. No
+/// Draws the gap to the next mutated gene, with exact operations only: one uniform draw,
+/// multiplications and comparisons, each rounded the same way on every platform with IEEE
+/// binary64 arithmetic and gradual underflow, which covers every tier-1 Rust target (not x87-only
+/// `i586`, whose excess precision changes every float result anyway). Subnormals only appear
+/// after `u = 0`, on a long chromosome, where a flush-to-zero mode would change the gap. No
 /// `powi`, `ln` or `exp`, whose last bit can differ from one platform to another, and nothing
 /// from another crate's sampler, which could change in a patch release.
 ///
@@ -123,7 +126,7 @@ impl MutatedGenes {
 /// as `u < 1`, a gap of zero or more is certain, and `u = 0`, one chance in `2^53`, gives the
 /// longest gap whose product is still above zero. A gap of all the genes left means none of them
 /// mutates.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct GapLadder {
     steps: [f64; STEPS],
 }
@@ -264,13 +267,10 @@ mod tests {
             [215956, 391249, 733940, 2345697]
         );
         assert_eq!(
-            first_mutated(MIN_GAP_RATE, 4_000_000_000),
+            first_mutated(1e-9, 4_000_000_000),
             [215956303, 391248829, 733939067, 2345696793]
         );
-        assert_eq!(
-            first_mutated(MAX_GAP_RATE, 30),
-            [0, 1, 2, 7, 14, 19, 20, 24]
-        );
+        assert_eq!(first_mutated(0.3, 30), [0, 1, 2, 7, 14, 19, 20, 24]);
         assert_eq!(first_mutated(0.5, 20), [3, 4, 5, 7, 8, 10, 12, 14]);
     }
 
