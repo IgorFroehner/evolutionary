@@ -8,10 +8,13 @@ mod integer;
 mod real;
 
 mod do_nothing_mutation;
+mod mutated_genes;
 mod permuted;
 mod random_resetting_mutation;
 mod scramble_mutation;
 mod swap_mutation;
+
+use mutated_genes::MutatedGenes;
 
 pub use binary::*;
 pub use permuted::*;

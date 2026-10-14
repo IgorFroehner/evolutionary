@@ -1,6 +1,6 @@
+use crate::mutation::MutatedGenes;
 use crate::prelude::Real;
 use crate::{Mutation, Rngs};
-use rand::distr::{Bernoulli, Distribution};
 use rand::Rng;
 use rand_distr::Normal;
 use rayon::iter::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
@@ -120,8 +120,7 @@ impl Mutation<Real> for GaussianMutation {
         let gaussian_distribution = Normal::new(0.0, sigma).unwrap_or_else(|_| {
             panic!("GaussianMutation needs a finite sigma, got {sigma} at generation {generation}")
         });
-        // Built once: `Rng::random_bool` builds the same distribution again at every call.
-        let mutates = Bernoulli::new(self.mutation_rate).unwrap();
+        let mutated_genes = MutatedGenes::new("GaussianMutation", self.mutation_rate);
 
         population
             .par_iter_mut()
@@ -129,15 +128,14 @@ impl Mutation<Real> for GaussianMutation {
             .for_each(|(index, individual)| {
                 let mut rng = rngs.rng(index);
                 let (low, high) = individual.range;
-                for gene in individual.chromosome.iter_mut() {
-                    if mutates.sample(&mut rng) {
-                        let mut mutated = *gene + rng.sample(gaussian_distribution);
-                        if self.clamp_to_range {
-                            mutated = mutated.clamp(low, high);
-                        }
-                        *gene = mutated;
+                let chromosome = &mut individual.chromosome;
+                mutated_genes.for_each(chromosome.len(), &mut rng, |gene, rng| {
+                    let mut mutated = chromosome[gene] + rng.sample(gaussian_distribution);
+                    if self.clamp_to_range {
+                        mutated = mutated.clamp(low, high);
                     }
-                }
+                    chromosome[gene] = mutated;
+                });
             });
     }
 }

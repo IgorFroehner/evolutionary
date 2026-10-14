@@ -81,21 +81,25 @@ one documented exception below). This drives most design decisions:
   rayon's scheduling cannot change the result.
 - Changing the order or number of draws an operator makes, the key derivation in `Rngs::rng`, or
   the floating-point summation order of the average fitness changes every seeded run. That is a
-  breaking change: record it in `CHANGELOG.md` and bump accordingly. Optimizations that would
-  change the draw pattern (for example geometric skip-sampling in per-gene mutations) have been
-  deliberately rejected for this reason.
+  breaking change: record it in `CHANGELOG.md` and bump accordingly. An optimization that
+  changes the draw pattern is a deliberate breaking change of its own, never part of another
+  one: geometric skip-sampling in the per-gene mutations (`src/mutation/mutated_genes.rs`) was
+  deferred until it could go in alone, and recorded as breaking. Its thresholds
+  (`MIN_GAP_RATE` and `MAX_GAP_RATE`, both included) and its gap sampler (a ladder of squares,
+  with exact floating-point operations only, no `powi`, `ln`, `exp` or other crate's sampler)
+  are part of the stream too, pinned by `gaps_are_stable_across_versions` there.
 - `src/rng.rs` pins the derivation with `numbers_are_stable_across_versions`;
   `tests/reproducibility.rs` checks that 1 thread and 8 threads agree for every built-in operator;
   `tests/golden.rs` checks that one seeded run per encoding gives exactly the recorded final
-  population and fitness history, and between them its runs use every built-in selection, a
-  scaled one (`FitnessScaling::Rank`) and a scheduled `sigma` too. Its other scalings
-  (`Window`, `Sigma`) are only covered by the thread test. A
-  failing golden test is a breaking change: fix it, or record it in `CHANGELOG.md` and regenerate
-  the constants in the same change (the file's header says how). An operator no golden run uses
-  is only covered by the thread test, so before optimizing one, add it to a golden run first.
-  Record that run's constants on code where the operator is unchanged since the last release
-  (ideally check out the release tag), and commit them before the optimization. Constants
-  recorded after the change pin the optimized behavior and catch nothing.
+  population and fitness history, and between them its runs use every built-in selection, every
+  per-gene mutation, a scaled selection (`FitnessScaling::Rank`) and a scheduled `sigma` too.
+  Its other scalings (`Window`, `Sigma`) are only covered by the thread test. A failing golden
+  test is a breaking change: fix it, or record it in `CHANGELOG.md` and regenerate the constants
+  in the same change (the file's header says how). An operator no golden run uses is only
+  covered by the thread test, so before optimizing one, add it to a golden run first. Record
+  that run's constants on code where the operator is unchanged since the last release (ideally
+  check out the release tag), and commit them before the optimization. Constants recorded after
+  the change pin the optimized behavior and catch nothing.
 - Across platforms, only `+`, `-`, `*`, `/`, `sqrt` (and comparisons, `abs`, `min`/`max`,
   `floor`/`round`, casts) give the same bits everywhere: IEEE 754 specifies them exactly, and
   Rust never fuses `a * b + c` on its own. `powf`, `exp`, `ln`, `log*`, `cbrt`, `hypot`, the
