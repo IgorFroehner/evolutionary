@@ -20,7 +20,7 @@ A fully extensible Rust framework for solving problems with parallelized genetic
 
 ```toml
 [dependencies]
-evolutionary = "0.4"
+evolutionary = "0.5"
 ```
 
 It needs Rust 1.82 or newer. With the `config` feature on Rust older than 1.85, also run
@@ -247,7 +247,7 @@ No feature is on by default, so embedding the library compiles only the genetic 
 | `plot` | `Evolution::plot_chart`, `Metrics::plot_chart` and `ExperimentRunner::save_chart`, with [plotters](https://github.com/plotters-rs/plotters). |
 
 ```toml
-evolutionary = { version = "0.4", features = ["serde", "plot"] }
+evolutionary = { version = "0.5", features = ["serde", "plot"] }
 ```
 
 ## Examples
