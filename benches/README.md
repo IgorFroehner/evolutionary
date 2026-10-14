@@ -71,3 +71,5 @@ RAYON_NUM_THREADS=4 cargo bench --all-features -- --baseline main
 The second run prints the change of every benchmark against main. For a PR that touches
 performance, paste the comparison of the benchmarks it affects into the PR. Close other
 programs while it runs: the numbers move by a few percent from one run to the next anyway.
+
+The report for a PR follows `.claude/skills/bench-report/SKILL.md`.

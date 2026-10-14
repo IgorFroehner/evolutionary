@@ -31,6 +31,13 @@ that read `Config.toml` need `--features config`; those that save charts need `-
 Cargo refuses to build an example without its `required-features`, so check `Cargo.toml` first.
 `maze`, `subway` and `xor` are auto-discovered and need no feature.
 
+## Benchmarks
+
+A PR that can change performance (`src/evolution.rs`, an operator, fitness evaluation, the RNG)
+includes a before-and-after report in its description, produced by following
+`.claude/skills/bench-report/SKILL.md`. The script that renders the table from criterion's
+output, `compare.py`, lives next to it.
+
 ## Architecture
 
 The whole algorithm lives in `src/evolution.rs`. One generation (`Evolution::next`) is:

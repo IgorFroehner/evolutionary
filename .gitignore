@@ -1,3 +1,6 @@
 .idea
 target
 rustc-*.txt
+.claude/worktrees/
+.claude/skills/rust-skills/
+.claude/settings.local.json
