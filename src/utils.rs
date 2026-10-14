@@ -49,7 +49,10 @@ pub fn convert_bin(bits: &[bool]) -> f64 {
 /// assert!((within_range((0.0, 16.0), 5.0, 30.0) - 15.48).abs() < 0.01);
 /// ```
 pub fn within_range(range: (f64, f64), l: f64, d: f64) -> f64 {
-    let steps = 2f64.powf(l) - 1.;
+    // `libm::pow` is the same code on every platform, where `powf` calls the platform's math
+    // library, so a fitness that decodes with this replays a seeded run everywhere. For a
+    // whole number of bits both give exactly `2^l`.
+    let steps = libm::pow(2.0, l) - 1.;
     let x = interpolate(range, d / steps);
 
     // A last guard, so that no rounding in between can leave the range (the tests find no

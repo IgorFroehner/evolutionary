@@ -34,8 +34,8 @@ Cargo refuses to build an example without its `required-features`, so check `Car
 ## Benchmarks
 
 A PR that can change performance (`src/evolution.rs`, an operator, a representation, fitness
-evaluation, the RNG, a bump of `rand`, `rand_distr` or `rayon`) includes a before-and-after
-report in its description, produced by following
+evaluation, the RNG, a bump of `rand`, `rand_distr`, `rayon` or `libm`) includes a
+before-and-after report in its description, produced by following
 `.claude/skills/bench-report/SKILL.md`. The script that renders the table from criterion's
 output, `compare.py`, lives next to it.
 
@@ -71,8 +71,8 @@ split by encoding where they are not generic. Everything public is re-exported t
 
 ## Randomness and reproducibility (the hard constraint)
 
-A seeded run must replay identically across versions, thread counts and platforms. This drives
-most design decisions:
+A seeded run must replay identically across versions, thread counts and platforms (with the
+one documented exception below). This drives most design decisions:
 
 - No operator may use `rand::random()`, `thread_rng()` or any shared generator. Every operator
   receives an `Rngs` (`src/rng.rs`) and asks for one ChaCha8 generator per unit of work with
@@ -96,6 +96,33 @@ most design decisions:
   Record that run's constants on code where the operator is unchanged since the last release
   (ideally check out the release tag), and commit them before the optimization. Constants
   recorded after the change pin the optimized behavior and catch nothing.
+- Across platforms, only `+`, `-`, `*`, `/`, `sqrt` (and comparisons, `abs`, `min`/`max`,
+  `floor`/`round`, casts) give the same bits everywhere: IEEE 754 specifies them exactly, and
+  Rust never fuses `a * b + c` on its own. `powf`, `exp`, `ln`, `log*`, `cbrt`, `hypot`, the
+  trigonometric functions and the like go to the platform's math library, which may round them
+  differently in the last bit (Apple's `pow` and glibc's disagree on some SBX draws, for
+  example). `powi` can differ between debug and release builds (LLVM expands a constant
+  exponent inline into multiplications, otherwise it calls compiler-builtins' `__powidf2`), and
+  `mul_add` falls back to the platform's software `fma` on a target without a hardware FMA,
+  which isn't always conforming. Any such function whose result feeds a seeded stream, a gene
+  or a selection decision must come from the `libm` crate (`libm::pow`, `libm::exp`,
+  `libm::fma` for a fused multiply-add, ...), which is the same Rust code everywhere, or be
+  built from exact operations (`Sigma::exponential_decay`'s repeated squaring). Never write
+  `powi` for a square: write `x * x`. Code that only feeds metrics, charts or tests may use
+  `std`. `libm`'s default `arch` feature sends only exactly-specified functions (`sqrt`, `fma`,
+  `rint`, ...) to hardware instructions, never `pow`.
+- The `libm` requirement is a caret (`0.2.16`) on purpose, like `rand`'s and `rand_distr`'s: a
+  user's `cargo update` can pick up a later 0.2.x, so a `libm` release that rewrites `pow`
+  (0.2.12 did that to `cbrt`) changes their SBX streams without a release of this crate. The
+  golden tests and `simulated_binary_crossover.rs`'s `pow_is_pinned_bit_for_bit` only see it
+  when our lockfile moves, which is Dependabot's monthly cargo PR. If such a bump fails them,
+  either cap the requirement (`">=0.2.16, <0.2.N"`), or re-record the constants, list it under
+  Breaking and raise the floor to `0.2.N`, so that every user of the release resolves the
+  `pow` its golden run was recorded with.
+- Known exception: `GaussianMutation` draws from `rand_distr::Normal`, whose ziggurat calls
+  the platform's `ln` (the tail values) and `exp` (accepting a draw in a wedge), so it can
+  diverge across platforms on rare draws. README "Reproducible runs" lists it; add any other
+  exception there.
 - The average fitness is summed sequentially on purpose; do not parallelize it.
 - The fitness gets no `Rngs`: it must be deterministic for a seeded run to replay, and a noisy
   one derives its noise from a fixed hash of the chromosome (see the `Fitness` docs). Fitness

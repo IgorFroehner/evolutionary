@@ -1,6 +1,6 @@
 ---
 name: bench-report
-description: Produce a before-and-after criterion benchmark report for a PR of this crate and paste it into the PR. Use for any change under src/ that touches evolution.rs, a selection, crossover or mutation operator, a representation, fitness evaluation or the RNG (rng.rs), for a bump of rand, rand_distr or rayon, and whenever asked to benchmark, compare performance, or do a before-and-after.
+description: Produce a before-and-after criterion benchmark report for a PR of this crate and paste it into the PR. Use for any change under src/ that touches evolution.rs, a selection, crossover or mutation operator, a representation, fitness evaluation or the RNG (rng.rs), for a bump of rand, rand_distr, rayon or libm, and whenever asked to benchmark, compare performance, or do a before-and-after.
 ---
 
 # Bench report
@@ -26,6 +26,7 @@ Run only the groups the change touches. Criterion's filter, after `--`, is a reg
 | `src/checkpoint.rs` | `--all-features --bench checkpoint` |
 | `src/utils.rs` | nothing measures it: say so, no report |
 | `src/evolution.rs`, `src/rng.rs`, a bump of `rand`, `rand_distr` or `rayon` in `Cargo.toml` or `Cargo.lock`, a release | everything |
+| a bump of `libm` in `Cargo.toml` or `Cargo.lock` (its `pow` is the hot path of SBX) | `--bench crossover`, `crossover/simulated_binary/` |
 
 A shared operator file maps to the case of every representation it runs on:
 `src/crossover/uniform_crossover.rs` is `real_uniform`, `bin_uniform` and `int_uniform`;

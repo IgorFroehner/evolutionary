@@ -154,8 +154,18 @@ passed in the same `calculate_population` call.
 ## Reproducible runs
 
 Seed a run with `.with_seed(42)`: two runs with the same seed give the same populations and the
-same fitness history, whatever the number of threads or the platform. Without a seed every run
-differs, and `evolution.seed()` tells you the seed a run drew so you can replay it.
+same fitness history, whatever the number of threads. Without a seed every run differs, and
+`evolution.seed()` tells you the seed a run drew so you can replay it.
+
+A seeded run is also the same on every platform, with one exception among the built-in
+operators: `GaussianMutation`. It draws from `rand_distr`'s `Normal`, which calls the
+platform's `ln` and `exp`. IEEE 754 does not require those to be correctly rounded, so on rare
+draws two platforms' math libraries can differ in the last bit, and the run then diverges. The
+other operators use only `+`, `-`, `*`, `/` and `sqrt`, which IEEE 754 specifies exactly, or
+the `libm` crate's pure-Rust `pow` (`SimulatedBinaryCrossover`), which is the same code
+everywhere. Your own fitness, operators and `Sigma` schedules replay across platforms under the
+same condition. "Every platform" means every target whose `f64` arithmetic follows IEEE 754,
+which leaves out 32-bit x86 without SSE2 (the `i586` targets).
 
 The fitness must be deterministic for a run to replay: it gets no random generator, so a noisy
 fitness should derive its noise from a hash of the chromosome. The `Fitness` documentation shows

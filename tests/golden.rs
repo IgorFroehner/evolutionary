@@ -256,6 +256,8 @@ fn perm_sus_partially_mapped_insertion() {
     );
 }
 
+/// Recorded again after 0.5.0, when `SimulatedBinaryCrossover` moved from `f64::powf` to
+/// `libm::pow` so that its draws are the same on every platform.
 #[test]
 fn real_roulette_simulated_binary_gaussian() {
     assert_golden(
@@ -267,9 +269,9 @@ fn real_roulette_simulated_binary_gaussian() {
             .with_elitism(3),
         Golden {
             generations: 21,
-            population: 0x9c5e7b42705e7bbc,
-            best_fitnesses: 0x9600a73129554763,
-            avg_fitnesses: 0x962d0e3645ae0154,
+            population: 0x481a827efdc257f2,
+            best_fitnesses: 0xd1cd9f30eb3db2ca,
+            avg_fitnesses: 0x18c198feb2216427,
         },
     );
 }

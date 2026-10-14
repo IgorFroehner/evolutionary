@@ -25,6 +25,9 @@ use crate::{Crossover, Rngs};
 ///
 /// The children are symmetric around the parents' mean: `c1 + c2 = p1 + p2`.
 ///
+/// The power is computed by the [`libm`](https://docs.rs/libm) crate rather than the
+/// platform's math library, so a seeded run gives the same children on every platform.
+///
 /// Reference: [Simulated Binary Crossover for Continuous Search Space
 /// (Deb & Agrawal, 1995)](https://content.wolfram.com/sites/13/2018/02/09-2-2.pdf)
 ///
@@ -58,12 +61,16 @@ impl SimulatedBinaryCrossover {
         }
     }
 
+    /// `libm::pow` rather than `f64::powf`, which calls the platform's math library: IEEE 754
+    /// does not require `pow` to be correctly rounded, so `powf` can differ in the last bit from
+    /// one platform to another, and a seeded run would not replay. `libm` is the same Rust code
+    /// everywhere.
     fn beta(&self, u: f64) -> f64 {
         let exponent = 1.0 / (self.eta + 1.0);
         if u < 0.5 {
-            (2.0 * u).powf(exponent)
+            libm::pow(2.0 * u, exponent)
         } else {
-            (1.0 / (2.0 * (1.0 - u))).powf(exponent)
+            libm::pow(1.0 / (2.0 * (1.0 - u)), exponent)
         }
     }
 }
@@ -148,6 +155,32 @@ mod tests {
         assert_eq!(a[1].get_chromosome(), b[1].get_chromosome());
         // And the children actually moved away from the parents.
         assert_ne!(*a[0].get_chromosome(), vec![0.25; 16]);
+    }
+
+    /// `beta`'s `pow`, bit for bit, at the default `eta = 2`, on the four inputs of the golden
+    /// SBX run where Apple's libm and glibc disagreed (all within 0.0024 ulp of a midpoint).
+    /// `libm` rounds the first, second and fourth correctly, and the third as Apple does. CI
+    /// checks on Linux what was recorded on macOS. A `libm` release that changes `pow` fails
+    /// here first: see AGENTS.md on the caret requirement before re-recording.
+    #[test]
+    fn pow_is_pinned_bit_for_bit() {
+        let exponent = 1.0 / (SimulatedBinaryCrossover::default().eta + 1.0);
+        let pinned: [(f64, u64); 4] = [
+            (0.03296105177667297, 0x3fd48527ebbf1d42),
+            (0.4214807817903923, 0x3fe7fe15ee136534),
+            (2.3230980725854833, 0x3ff530c8be54b40a),
+            (3.960170221084545, 0x3ff9505772c228a8),
+        ];
+
+        for (x, bits) in pinned {
+            let power = libm::pow(x, exponent);
+            assert_eq!(
+                power.to_bits(),
+                bits,
+                "pow({x:?}, 1/3) is {power:?} = {:#018x}",
+                power.to_bits()
+            );
+        }
     }
 
     #[test]
