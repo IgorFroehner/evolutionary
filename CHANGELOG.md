@@ -21,8 +21,12 @@
 - `CycleCrossover`, `OrderedCrossover` (with `apply_ox`) and `PartiallyMappedCrossover` panic
   with "the chromosome must be a permutation of 1..=n" when a parent is not one, which the
   public `IntPerm::chromosome` field allows. Before, PMX could loop forever, OX could give a
-  child a repeated gene without a word, and CX panicked on an `unwrap` or looped. Permutations
-  cross exactly as before.
+  child a repeated gene without a word, and CX panicked on an `unwrap` or looped. Parents of
+  different lengths panic with "the parents must have the same length" instead of an index
+  panic or a silently truncated cross. `CycleCrossover` on empty chromosomes does nothing
+  instead of panicking on an index. Every pair of non-empty permutations of the same length
+  crosses exactly as before. `IntPerm::new` checks its chromosome in one pass instead of
+  sorting a copy, with the same result and message.
 
 ### Performance
 

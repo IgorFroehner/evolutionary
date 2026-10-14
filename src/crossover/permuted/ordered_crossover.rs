@@ -34,11 +34,13 @@ impl Default for OrderedCrossover {
 }
 
 impl OrderedCrossover {
-    /// Crosses the parents in place, each keeping its genes within `start..=end`.
+    /// Crosses the parents in place, each keeping its genes within the section `start..=end`,
+    /// with `start <= end + 1` and `start <= n`. An `end` at or past `n - 1` keeps every gene
+    /// from `start` on.
     ///
     /// # Panics
     ///
-    /// If the parents are not permutations of `1..=n`.
+    /// If the parents are not permutations of `1..=n`, or if `start > end + 1` or `start > n`.
     pub fn apply_ox(parent1: &mut [i64], parent2: &mut [i64], start: usize, end: usize) {
         assert_permutations(parent1, parent2);
 
