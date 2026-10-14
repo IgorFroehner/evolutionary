@@ -25,11 +25,7 @@ impl IntPerm {
     /// If `chromosome` is not a permutation of `1..=chromosome.len()`, which every permutation
     /// operator relies on.
     pub fn new(chromosome: Vec<i64>) -> Self {
-        assert!(
-            is_permutation(&chromosome),
-            "the chromosome must be a permutation of 1..={}, got {chromosome:?}",
-            chromosome.len()
-        );
+        assert_permutation(&chromosome);
 
         Self {
             chromosome,
@@ -38,11 +34,47 @@ impl IntPerm {
     }
 }
 
-/// Whether `chromosome` is a permutation of `1..=chromosome.len()`.
+/// Whether `chromosome` is a permutation of `1..=chromosome.len()`, in one pass.
 pub(crate) fn is_permutation(chromosome: &[i64]) -> bool {
-    let mut sorted = chromosome.to_vec();
-    sorted.sort_unstable();
-    sorted.iter().copied().eq(1..=chromosome.len() as i64)
+    let len = chromosome.len();
+
+    // seen[gene - 1]: each gene of 1..=len must come exactly once.
+    let mut seen = vec![false; len];
+
+    chromosome.iter().all(|&gene| {
+        let index = usize::try_from(gene)
+            .ok()
+            .and_then(|gene| gene.checked_sub(1))
+            .filter(|&index| index < len);
+
+        match index {
+            Some(index) if !seen[index] => {
+                seen[index] = true;
+                true
+            }
+            _ => false,
+        }
+    })
+}
+
+/// Checks the chromosome of [`IntPerm::new`] and the parents of the permutation crossovers, with
+/// one message for all of them.
+///
+/// # Panics
+///
+/// If `chromosome` is not a permutation of `1..=chromosome.len()`.
+pub(crate) fn assert_permutation(chromosome: &[i64]) {
+    if !is_permutation(chromosome) {
+        not_a_permutation(chromosome);
+    }
+}
+
+#[cold]
+fn not_a_permutation(chromosome: &[i64]) -> ! {
+    panic!(
+        "the chromosome must be a permutation of 1..={}, got {chromosome:?}",
+        chromosome.len()
+    );
 }
 
 impl Individual for IntPerm {
@@ -81,5 +113,23 @@ impl Individual for IntPerm {
 
     fn get_fitness(&self) -> f64 {
         self.fitness
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_permutation;
+
+    #[test]
+    fn is_permutation_of_one_to_the_length() {
+        assert!(is_permutation(&[]));
+        assert!(is_permutation(&[1]));
+        assert!(is_permutation(&[3, 1, 2]));
+
+        assert!(!is_permutation(&[1, 1, 3]));
+        assert!(!is_permutation(&[0, 1, 2]));
+        assert!(!is_permutation(&[1, 2, 4]));
+        assert!(!is_permutation(&[-1, 1, 2]));
+        assert!(!is_permutation(&[i64::MIN, 1, 2]));
     }
 }

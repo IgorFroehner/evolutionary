@@ -18,6 +18,26 @@
   `benches/real_at_scale.rs` and its names are gone. `cargo bench` no longer runs the lib's
   empty libtest harness, which rejected criterion's flags such as `--save-baseline`. Nothing
   in the library changes.
+- `CycleCrossover`, `OrderedCrossover` (with `apply_ox`) and `PartiallyMappedCrossover` panic
+  with "the chromosome must be a permutation of 1..=n" when a parent is not one, which the
+  public `IntPerm::chromosome` field allows. Before, PMX could loop forever, OX could give a
+  child a repeated gene without a word, and CX panicked on an `unwrap` or looped. Parents of
+  different lengths panic with "the parents must have the same length" instead of an index
+  panic or a silently truncated cross. `CycleCrossover` on empty chromosomes does nothing
+  instead of panicking on an index. Every pair of non-empty permutations of the same length
+  crosses exactly as before. `IntPerm::new` checks its chromosome in one pass instead of
+  sorting a copy, with the same result and message.
+
+### Performance
+
+Seeded runs are unchanged: the permutation crossovers give bit-identical children.
+
+- `CycleCrossover`, `OrderedCrossover` and `PartiallyMappedCrossover` look genes up in tables
+  indexed by `gene - 1` instead of hash maps, sets and queues, and cross each pair in place
+  instead of cloning both parents. CX also marks its cycle in a table instead of searching it
+  for every position, which made it quadratic in the length. At 2000 individuals of 500 genes
+  CX goes from about 10 ms to 0.58 ms, OX from 8.3 ms to 0.79 ms and PMX from 4.9 ms to
+  0.59 ms, and a generation of `IntPerm` with PMX from 6.8 ms to 2.6 ms.
 
 ## 0.5.0 (2026-10-13)
 

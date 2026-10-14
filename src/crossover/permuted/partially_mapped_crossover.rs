@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use rand::Rng;
 use rayon::{
     prelude::{IndexedParallelIterator, ParallelIterator},
@@ -8,7 +6,7 @@ use rayon::{
 
 use crate::{population::IntPerm, Individual};
 
-use super::Crossover;
+use super::{assert_permutations, Crossover};
 use crate::Rngs;
 
 /// # Partially Mapped Crossover (PMX)
@@ -19,7 +17,8 @@ use crate::Rngs;
 ///
 /// # Panics
 ///
-/// `crossover` panics if `crossover_rate` is not within `[0, 1]`.
+/// `crossover` panics if `crossover_rate` is not within `[0, 1]`, or if two parents it crosses
+/// are not permutations of `1..=n`.
 #[derive(Clone)]
 pub struct PartiallyMappedCrossover {
     pub crossover_rate: f64,
@@ -35,33 +34,30 @@ impl Default for PartiallyMappedCrossover {
 
 impl PartiallyMappedCrossover {
     fn pmx_matching(parent1: &mut [i64], parent2: &mut [i64], start: usize, end: usize) {
-        let mut matching_section_1 = HashMap::new();
-        let mut matching_section_2 = HashMap::new();
+        assert_permutations(parent1, parent2);
+
+        // The mapping the swapped section defines, as mapping[gene - 1], 0 where a gene has none:
+        // mapping_1 takes the genes parent1 gave away to those it got in their place, and
+        // mapping_2 the other way.
+        let mut mapping_1 = vec![0; parent1.len()];
+        let mut mapping_2 = vec![0; parent1.len()];
 
         for i in start..end {
             std::mem::swap(&mut parent1[i], &mut parent2[i]);
 
-            matching_section_1.insert(parent2[i], parent1[i]);
-            matching_section_2.insert(parent1[i], parent2[i]);
+            mapping_1[(parent2[i] - 1) as usize] = parent1[i];
+            mapping_2[(parent1[i] - 1) as usize] = parent2[i];
         }
 
-        for i in 0..start {
-            while matching_section_2.contains_key(&parent1[i]) {
-                parent1[i] = *matching_section_2.get(&parent1[i]).unwrap();
+        // A gene outside of the section that the section now holds too follows the mapping until
+        // it reaches one the section does not hold. The genes are permutations, so it gets there.
+        for i in (0..start).chain(end..parent1.len()) {
+            while mapping_2[(parent1[i] - 1) as usize] != 0 {
+                parent1[i] = mapping_2[(parent1[i] - 1) as usize];
             }
 
-            while matching_section_1.contains_key(&parent2[i]) {
-                parent2[i] = *matching_section_1.get(&parent2[i]).unwrap();
-            }
-        }
-
-        for i in end..parent1.len() {
-            while matching_section_2.contains_key(&parent1[i]) {
-                parent1[i] = *matching_section_2.get(&parent1[i]).unwrap();
-            }
-
-            while matching_section_1.contains_key(&parent2[i]) {
-                parent2[i] = *matching_section_1.get(&parent2[i]).unwrap();
+            while mapping_1[(parent2[i] - 1) as usize] != 0 {
+                parent2[i] = mapping_1[(parent2[i] - 1) as usize];
             }
         }
     }
@@ -75,23 +71,19 @@ impl Crossover<IntPerm> for PartiallyMappedCrossover {
             .for_each(|(pair, chunk)| {
                 let mut rng = rngs.rng(pair);
                 if rng.random_bool(self.crossover_rate) {
-                    let mut parent1 = chunk[0].clone();
-                    let mut parent2 = chunk[1].clone();
+                    let (first, second) = chunk.split_at_mut(1);
 
-                    let len = parent1.get_chromosome().len();
+                    let len = first[0].get_chromosome().len();
 
                     let start = rng.random_range(0..len);
                     let end = rng.random_range(start..len);
 
                     PartiallyMappedCrossover::pmx_matching(
-                        &mut parent1.chromosome,
-                        &mut parent2.chromosome,
+                        &mut first[0].chromosome,
+                        &mut second[0].chromosome,
                         start,
                         end,
                     );
-
-                    chunk[0] = parent1;
-                    chunk[1] = parent2;
                 }
             });
     }
@@ -130,5 +122,13 @@ mod tests {
 
         assert_eq!(parent1, vec![2, 3, 1, 4, 5]);
         assert_eq!(parent2, vec![4, 2, 3, 1, 5]);
+    }
+
+    #[test]
+    #[should_panic(expected = "the chromosome must be a permutation of 1..=3, got [1, 2, 1]")]
+    fn pmx_rejects_a_repeated_gene() {
+        // The mapping of this section, 1 to 2 and 2 to 1, used to send the last gene round it
+        // forever.
+        super::PartiallyMappedCrossover::pmx_matching(&mut [1, 2, 1], &mut [2, 1, 3], 0, 2);
     }
 }

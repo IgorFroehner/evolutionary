@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use rand::Rng;
 use rayon::{
     prelude::{IndexedParallelIterator, ParallelIterator},
@@ -8,7 +6,7 @@ use rayon::{
 
 use crate::population::IntPerm;
 
-use super::Crossover;
+use super::{assert_permutations, Crossover};
 use crate::Rngs;
 
 /// # Cycle Crossover (CX)
@@ -36,25 +34,31 @@ impl Default for CycleCrossover {
 
 impl CycleCrossover {
     fn cx_crossover(parent1: &mut [i64], parent2: &mut [i64]) {
-        let mut aux_hash1 = HashMap::new();
-        let mut aux_hash2 = HashMap::new();
+        assert_permutations(parent1, parent2);
 
-        for i in 0..parent1.len() {
-            aux_hash1.insert(parent1[i] - 1, i);
-            aux_hash2.insert(parent2[i] - 1, i);
+        let len = parent1.len();
+        // Nothing to cross, and no first position to start the cycle at.
+        if len == 0 {
+            return;
         }
 
-        let mut cycle = vec![0];
-
-        let mut pos = *aux_hash1.get(&(parent2[0] - 1)).unwrap();
-        while pos != 0 {
-            cycle.push(pos);
-
-            pos = *aux_hash1.get(&(parent2[pos] - 1)).unwrap();
+        // The position of each gene in parent1: positions[gene - 1].
+        let mut positions = vec![0; len];
+        for (i, &gene) in parent1.iter().enumerate() {
+            positions[(gene - 1) as usize] = i;
         }
 
-        for i in 0..parent1.len() {
-            if !cycle.contains(&i) {
+        // Follows the cycle from the first position until it comes back to it.
+        let mut in_cycle = vec![false; len];
+        let mut pos = 0;
+        while !in_cycle[pos] {
+            in_cycle[pos] = true;
+
+            pos = positions[(parent2[pos] - 1) as usize];
+        }
+
+        for i in 0..len {
+            if !in_cycle[i] {
                 std::mem::swap(&mut parent1[i], &mut parent2[i]);
             }
         }
@@ -69,13 +73,12 @@ impl Crossover<IntPerm> for CycleCrossover {
             .for_each(|(pair, chunk)| {
                 let mut rng = rngs.rng(pair);
                 if rng.random_bool(self.crossover_rate) {
-                    let mut parent1 = chunk[0].clone();
-                    let mut parent2 = chunk[1].clone();
+                    let (first, second) = chunk.split_at_mut(1);
 
-                    CycleCrossover::cx_crossover(&mut parent1.chromosome, &mut parent2.chromosome);
-
-                    chunk[0] = parent1;
-                    chunk[1] = parent2;
+                    CycleCrossover::cx_crossover(
+                        &mut first[0].chromosome,
+                        &mut second[0].chromosome,
+                    );
                 }
             });
     }
@@ -114,5 +117,12 @@ mod tests {
 
         assert_eq!(parent1, vec![1, 2, 3, 4, 5]);
         assert_eq!(parent2, vec![3, 5, 2, 1, 4]);
+    }
+
+    #[test]
+    #[should_panic(expected = "the chromosome must be a permutation of 1..=3, got [2, 2, 2]")]
+    fn cx_rejects_a_repeated_gene() {
+        // The cycle from the first position used to never come back to it.
+        super::CycleCrossover::cx_crossover(&mut [1, 2, 3], &mut [2, 2, 2]);
     }
 }

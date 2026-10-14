@@ -1,5 +1,3 @@
-use std::collections::{HashSet, VecDeque};
-
 use rand::Rng;
 use rayon::{
     prelude::{IndexedParallelIterator, ParallelIterator},
@@ -8,7 +6,7 @@ use rayon::{
 
 use crate::{population::IntPerm, Individual};
 
-use super::Crossover;
+use super::{assert_permutations, Crossover};
 use crate::Rngs;
 
 /// # Ordered Crossover (OX)
@@ -21,7 +19,7 @@ use crate::Rngs;
 /// # Panics
 ///
 /// `crossover` panics if `crossover_rate` is not within `[0, 1]`, or if two parents it crosses
-/// are not permutations of the same genes.
+/// are not permutations of `1..=n`.
 #[derive(Clone)]
 pub struct OrderedCrossover {
     pub crossover_rate: f64,
@@ -36,40 +34,59 @@ impl Default for OrderedCrossover {
 }
 
 impl OrderedCrossover {
+    /// Crosses the parents in place, each keeping its genes within the section `start..=end`,
+    /// with `start <= end + 1` and `start <= n`. An `end` at or past `n - 1` keeps every gene
+    /// from `start` on.
+    ///
+    /// # Panics
+    ///
+    /// If the parents are not permutations of `1..=n`, or if `start > end + 1` or `start > n`.
     pub fn apply_ox(parent1: &mut [i64], parent2: &mut [i64], start: usize, end: usize) {
+        assert_permutations(parent1, parent2);
+
         let len = parent1.len();
 
-        let mut missing1 = HashSet::new();
-        let mut missing2 = HashSet::new();
+        // The genes each parent has outside of the section, which it takes back from the other
+        // parent in the order they appear there: missing[gene - 1].
+        let mut missing1 = vec![false; len];
+        let mut missing2 = vec![false; len];
 
-        let mut queue1 = VecDeque::new();
-        let mut queue2 = VecDeque::new();
-
-        for i in 0..start {
-            missing1.insert(parent1[i]);
-            missing2.insert(parent2[i]);
-        }
-        for i in end + 1..len {
-            missing1.insert(parent1[i]);
-            missing2.insert(parent2[i]);
+        for i in (0..start).chain(end + 1..len) {
+            missing1[(parent1[i] - 1) as usize] = true;
+            missing2[(parent2[i] - 1) as usize] = true;
         }
 
-        for i in 0..len {
-            if missing1.contains(&parent2[i]) {
-                queue1.push_back(parent2[i]);
-            }
-            if missing2.contains(&parent1[i]) {
-                queue2.push_back(parent1[i]);
-            }
-        }
+        // Parent2 is refilled first, from parent1 while it is still unchanged, so the genes
+        // parent1 takes from parent2 are read before that.
+        let from_parent2: Vec<i64> = parent2
+            .iter()
+            .copied()
+            .filter(|&gene| missing1[(gene - 1) as usize])
+            .collect();
 
-        for i in 0..start {
-            parent1[i] = queue1.pop_front().unwrap();
-            parent2[i] = queue2.pop_front().unwrap();
-        }
-        for i in end + 1..len {
-            parent1[i] = queue1.pop_front().unwrap();
-            parent2[i] = queue2.pop_front().unwrap();
+        OrderedCrossover::fill_outside(
+            parent2,
+            start,
+            end,
+            parent1
+                .iter()
+                .copied()
+                .filter(|&gene| missing2[(gene - 1) as usize]),
+        );
+        OrderedCrossover::fill_outside(parent1, start, end, from_parent2.into_iter());
+    }
+
+    /// Writes `genes`, in order, to the positions of `child` outside of `start..=end`.
+    fn fill_outside(
+        child: &mut [i64],
+        start: usize,
+        end: usize,
+        mut genes: impl Iterator<Item = i64>,
+    ) {
+        let len = child.len();
+
+        for i in (0..start).chain(end + 1..len) {
+            child[i] = genes.next().unwrap();
         }
     }
 }
@@ -82,23 +99,19 @@ impl Crossover<IntPerm> for OrderedCrossover {
             .for_each(|(pair, chunk)| {
                 let mut rng = rngs.rng(pair);
                 if rng.random_bool(self.crossover_rate) {
-                    let mut parent1 = chunk[0].clone();
-                    let mut parent2 = chunk[1].clone();
+                    let (first, second) = chunk.split_at_mut(1);
 
-                    let len = parent1.get_chromosome().len();
+                    let len = first[0].get_chromosome().len();
 
                     let start = rng.random_range(0..len);
                     let end = rng.random_range(start..len);
 
                     OrderedCrossover::apply_ox(
-                        &mut parent1.chromosome,
-                        &mut parent2.chromosome,
+                        &mut first[0].chromosome,
+                        &mut second[0].chromosome,
                         start,
                         end,
                     );
-
-                    chunk[0] = parent1;
-                    chunk[1] = parent2;
                 }
             });
     }
@@ -118,5 +131,12 @@ mod tests {
 
         assert_eq!(parent1, vec![7, 9, 3, 4, 5, 6, 1, 2, 8]);
         assert_eq!(parent2, vec![2, 5, 4, 9, 1, 3, 6, 7, 8]);
+    }
+
+    #[test]
+    #[should_panic(expected = "the chromosome must be a permutation of 1..=3, got [1, 1, 3]")]
+    fn ox_rejects_a_repeated_gene() {
+        // It used to give the second child a repeated gene too: [1, 2, 1].
+        OrderedCrossover::apply_ox(&mut [1, 1, 3], &mut [1, 2, 3], 1, 1);
     }
 }
