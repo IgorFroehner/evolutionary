@@ -25,6 +25,9 @@ use crate::{Crossover, Rngs};
 ///
 /// The children are symmetric around the parents' mean: `c1 + c2 = p1 + p2`.
 ///
+/// The power is computed by the [`libm`](https://docs.rs/libm) crate rather than the
+/// platform's math library, so a seeded run gives the same children on every platform.
+///
 /// Reference: [Simulated Binary Crossover for Continuous Search Space
 /// (Deb & Agrawal, 1995)](https://content.wolfram.com/sites/13/2018/02/09-2-2.pdf)
 ///
@@ -58,12 +61,16 @@ impl SimulatedBinaryCrossover {
         }
     }
 
+    /// `libm::pow` rather than `f64::powf`, which calls the platform's math library: IEEE 754
+    /// does not require `pow` to be correctly rounded, so `powf` can differ in the last bit from
+    /// one platform to another, and a seeded run would not replay. `libm` is the same Rust code
+    /// everywhere.
     fn beta(&self, u: f64) -> f64 {
         let exponent = 1.0 / (self.eta + 1.0);
         if u < 0.5 {
-            (2.0 * u).powf(exponent)
+            libm::pow(2.0 * u, exponent)
         } else {
-            (1.0 / (2.0 * (1.0 - u))).powf(exponent)
+            libm::pow(1.0 / (2.0 * (1.0 - u)), exponent)
         }
     }
 }

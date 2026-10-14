@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+### Breaking
+
+- `SimulatedBinaryCrossover` computes its spread factor `beta` with the `libm` crate's `pow`
+  instead of `f64::powf`, which calls the platform's math library. IEEE 754 does not require
+  `pow` to be correctly rounded, and platforms disagree in the last bit on some draws (Apple's
+  libm rounds a few of them differently from glibc), so a seeded run with SBX could replay on
+  one platform and not on another. `libm` is the same Rust code on every target, so SBX now
+  gives the same children everywhere. Its `pow` is accurate to under one unit in the last
+  place but not always correctly rounded, so it differs from the platform's result on a few
+  percent of draws, by one unit in the last place: seeded runs that use SBX replay differently
+  from 0.5.0, in general on every platform. Nothing to rewrite, and the distribution of the
+  children is unchanged. `libm` (pure Rust, no dependencies) becomes a direct dependency; it
+  was already built, through `rand_distr`. The golden run with SBX
+  (`real_roulette_simulated_binary_gaussian`) is recorded again; every other golden run is
+  unchanged.
+
+### Fixed
+
+- The README said a seeded run replays on every platform. It now says which built-in operator
+  can't promise that: `GaussianMutation`, whose `rand_distr::Normal` calls the platform's `ln`
+  and `exp`, can diverge across platforms on rare draws. Every other built-in operator gives
+  the same result everywhere.
+- `within_range` computes `2^l` with `libm::pow` instead of `f64::powf`, so it is the same on
+  every platform for any `l`. For a whole number of bits both give exactly `2^l`, so its
+  results are unchanged.
+
 ### Added
 
 - `.claude/skills/bench-report/` says how to produce a PR's before-and-after benchmark report,

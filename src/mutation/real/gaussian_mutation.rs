@@ -74,6 +74,14 @@ use std::sync::Arc;
 /// assert!(population[0].get_chromosome().iter().all(|gene| (-1.0..=1.0).contains(gene)));
 /// ```
 ///
+/// ## Across platforms
+///
+/// A seeded run replays exactly on the same platform, whatever the number of threads. Across
+/// platforms it can diverge on rare draws: the Gaussian steps come from `rand_distr`'s
+/// [`Normal`], whose sampler calls the platform's `ln` and `exp`, and math libraries may round
+/// those differently in the last bit. The other built-in operators give the same result on
+/// every platform.
+///
 /// # Panics
 ///
 /// `mutate` panics if `mutation_rate` is not within `[0, 1]`, or if `sigma` (for a schedule, its
@@ -160,7 +168,8 @@ impl Mutation<Real> for GaussianMutation {
 /// must be `Send + Sync`, and it should depend on nothing but the generation: a seeded run
 /// replays only if the schedule gives the same values every time. To replay on every platform
 /// too, keep to `+`, `-`, `*`, `/` and comparisons, which round the same way everywhere;
-/// `powi`, `powf`, `exp` and the like can differ in the last bit from one platform to another.
+/// `powi`, `powf`, `exp` and the like can differ in the last bit from one platform to another
+/// (the [`libm`](https://docs.rs/libm) crate's versions are the same code everywhere).
 /// [`Sigma::exponential_decay`] uses multiplications only.
 #[derive(Clone)]
 #[non_exhaustive]

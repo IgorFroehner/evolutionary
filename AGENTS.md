@@ -71,8 +71,8 @@ split by encoding where they are not generic. Everything public is re-exported t
 
 ## Randomness and reproducibility (the hard constraint)
 
-A seeded run must replay identically across versions, thread counts and platforms. This drives
-most design decisions:
+A seeded run must replay identically across versions, thread counts and platforms (with the
+one documented exception below). This drives most design decisions:
 
 - No operator may use `rand::random()`, `thread_rng()` or any shared generator. Every operator
   receives an `Rngs` (`src/rng.rs`) and asks for one ChaCha8 generator per unit of work with
@@ -96,6 +96,23 @@ most design decisions:
   Record that run's constants on code where the operator is unchanged since the last release
   (ideally check out the release tag), and commit them before the optimization. Constants
   recorded after the change pin the optimized behavior and catch nothing.
+- Across platforms, only `+`, `-`, `*`, `/`, `sqrt` (and comparisons, `abs`, `min`/`max`,
+  `floor`/`round`, casts) give the same bits everywhere: IEEE 754 specifies them exactly, and
+  Rust never fuses `a * b + c` on its own. `powf`, `powi`, `exp`, `ln`, `log*`, `cbrt`,
+  `hypot`, the trigonometric functions and the like go to the platform's math library, which
+  may round them differently in the last bit (Apple's `pow` and glibc's disagree on some SBX
+  draws, for example); so does `mul_add` on a target without a hardware FMA. Any such function
+  whose result feeds a seeded stream, a gene or a selection decision must come from the `libm`
+  crate (`libm::pow`, `libm::exp`, ...), which is the same Rust code everywhere, or be built
+  from exact operations (`Sigma::exponential_decay`'s repeated squaring). Never write `powi`
+  for a square: write `x * x`. Code that only feeds metrics, charts or tests may use `std`.
+  `libm`'s default `arch` feature sends only exactly-specified functions (`sqrt`, `fma`,
+  `rint`, ...) to hardware instructions, never `pow`. A `libm` bump that changes one of its
+  functions is a stream change like any other: the golden tests catch it.
+- Known exception: `GaussianMutation` draws from `rand_distr::Normal`, whose ziggurat calls
+  the platform's `ln` (the tail values) and `exp` (accepting a draw in a wedge), so it can
+  diverge across platforms on rare draws. README "Reproducible runs" lists it; add any other
+  exception there.
 - The average fitness is summed sequentially on purpose; do not parallelize it.
 - The fitness gets no `Rngs`: it must be deterministic for a seeded run to replay, and a noisy
   one derives its noise from a fixed hash of the chromosome (see the `Fitness` docs). Fitness
