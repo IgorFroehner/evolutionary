@@ -52,8 +52,10 @@ def log_verdicts(path, ids):
         for line in file:
             line = re.sub(r"\x1b\[[0-9;]*m", "", line).rstrip()
             words = line.split()
-            if words and not line[0].isspace() and words[0] in ids:
-                current = words[0]
+            if words and not line[0].isspace():
+                # Every column-0 line ends the previous benchmark's block, so the verdict of a
+                # benchmark that is not a row cannot land on the row before it.
+                current = words[0] if words[0] in ids else None
             elif current and line.strip() in LOG_VERDICTS:
                 verdicts[current] = LOG_VERDICTS[line.strip()]
     return verdicts

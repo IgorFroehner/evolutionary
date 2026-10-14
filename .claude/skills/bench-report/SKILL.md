@@ -19,38 +19,40 @@ Run only the groups the change touches. Criterion's filter, after `--`, is a reg
 |---|---|
 | one file of `src/crossover/`, `src/mutation/` or `src/selection/` | that group, narrowed to the cases of that operator: `--bench crossover`, `crossover/pmx/` |
 | the `mod.rs` or the trait of one of those directories | the whole group |
-| `src/fitness.rs`, fitness evaluation | `--bench generation` |
-| `src/population/<repr>.rs` | `generation/<repr>/` and that representation's cases in `crossover` and `mutation`; for `real.rs` also `selection` and `checkpoint` |
+| `src/fitness.rs`, fitness evaluation, `src/metrics.rs` | `--bench generation` |
+| `src/population/<repr>.rs` | `generation/<repr>` (no trailing slash, so `real` also runs the `real_*` variants) and that representation's cases in `crossover` and `mutation`; for `real.rs` also `selection` and `checkpoint` |
 | `src/population/mod.rs` (`Individual`) | everything |
 | `src/evolution_builder.rs` | `--bench generation` and `checkpoint/resume/` |
-| `src/checkpoint.rs` | `--bench checkpoint` |
+| `src/checkpoint.rs` | `--all-features --bench checkpoint` |
 | `src/utils.rs` | nothing measures it: say so, no report |
 | `src/evolution.rs`, `src/rng.rs`, a bump of `rand`, `rand_distr` or `rayon` in `Cargo.toml` or `Cargo.lock`, a release | everything |
 
 A shared operator file maps to the case of every representation it runs on:
 `src/crossover/uniform_crossover.rs` is `real_uniform`, `bin_uniform` and `int_uniform`;
 `swap_mutation.rs` is `real_swap`, `bin_swap`, `int_swap` and `perm_swap`. Check the bench file
-for the cases that use the operator.
+for the cases that use the operator. Any run that includes `checkpoint` needs `--all-features`.
 
-Every run also includes one control case that no change to an operator, a representation's
-genes or the RNG can affect: `checkpoint/from_json/300x300`, which only parses JSON. It needs
-`--all-features` and `--bench checkpoint`. When the change touches `src/checkpoint.rs`,
-`src/population/real.rs` or serde, use `mutation/bin_swap/300x300` and `--bench mutation`
-instead. A run of several groups or cases is one quoted regex, so a crossover change runs:
+Every run also includes one control case that the change cannot affect:
+`mutation/bin_swap/300x300`, with `--bench mutation`. It runs on the rayon pool, so it slows
+down when something else takes the performance cores. When the change touches
+`src/mutation/swap_mutation.rs`, `src/mutation/mod.rs` or `src/population/bin.rs`, use
+`checkpoint/from_json/300x300` instead, which only parses JSON and needs `--all-features` and
+`--bench checkpoint`; it is also the control of a full run. A run of several groups or cases
+is one quoted regex, so a crossover change runs:
 
 ```bash
-cargo bench --all-features --bench crossover --bench checkpoint -- 'crossover/(pmx|real_uniform)/|checkpoint/from_json/300x300'
+cargo bench --bench crossover --bench mutation -- 'crossover/(pmx|real_uniform)/|mutation/bin_swap/300x300'
 ```
 
-A full run, `cargo bench --all-features` with no filter, includes the control already and
-takes about 7 minutes, so a full report about 15. One group takes one to two minutes per run.
-Write down what you skip: the report says so.
+A full run, `cargo bench --all-features` with no filter, includes `checkpoint/from_json/300x300`
+already and takes about 7 minutes, so a full report about 15. One group takes one to two
+minutes per run. Write down what you skip: the report says so.
 
 ## 2. Preconditions
 
 - `git status --porcelain` prints nothing. Commit or set aside your changes first.
-- `cargo test --test golden` passes on the branch. If it fails, the PR changes an RNG stream
-  (the number or order of draws) and the same seed now does different work: see step 6.
+- Run `cargo test --test golden` on the branch. If it fails, the seeded results changed (for
+  example an RNG stream, or the elitism order): see step 6.
 - The machine is awake and on mains power. On macOS `pmset -g batt | head -1` says
   `AC Power`, and each `cargo bench` runs under `caffeinate -i`. On Linux,
   `/sys/class/power_supply/*/online` is 1, and it runs under `systemd-inhibit`.
@@ -64,7 +66,9 @@ Write down what you skip: the report says so.
   ```
 
   With a timeout of 2 minutes: if it does not get there, something else ran, so redo the run.
-  You cannot close other sessions: if it is not quiet before a run, wait and check again.
+  You cannot close other sessions: if it is not quiet before a run, wait for it the same way,
+  for at most 2 minutes. If it is still not quiet, stop and write "could not get a quiet
+  machine" in the PR instead of a table.
 - Both runs on the same machine, in the same session, one after the other.
 - The same environment for both runs: `RAYON_NUM_THREADS=4 CARGO_INCREMENTAL=0` on each
   `cargo bench`, as below. Keep 4, at most the performance cores
@@ -126,7 +130,7 @@ Check that the machine is quiet (step 2), then run the chosen groups there, savi
 baseline under `<base>`. Check it again after the run; if it was not quiet, run it again.
 
 ```bash
-cd <tmp>/base && CARGO_TARGET_DIR=<tmp>/base/target CRITERION_HOME=<target>/criterion RAYON_NUM_THREADS=4 CARGO_INCREMENTAL=0 caffeinate -i cargo bench --all-features --bench crossover --bench checkpoint -- 'crossover/(pmx|real_uniform)/|checkpoint/from_json/300x300' --save-baseline <base>
+cd <tmp>/base && CARGO_TARGET_DIR=<tmp>/base/target CRITERION_HOME=<target>/criterion RAYON_NUM_THREADS=4 CARGO_INCREMENTAL=0 caffeinate -i cargo bench --bench crossover --bench mutation -- 'crossover/(pmx|real_uniform)/|mutation/bin_swap/300x300' --save-baseline <base>
 ```
 
 The first build there compiles every dependency, about 15 seconds. Give the command a timeout
@@ -141,9 +145,12 @@ environment against the baseline, keeping the log, and check the machine again.
 
 ```bash
 cd <branch checkout> && cargo clean --release -p evolutionary
-cd <branch checkout> && (set -o pipefail; RAYON_NUM_THREADS=4 CARGO_INCREMENTAL=0 caffeinate -i cargo bench --all-features --bench crossover --bench checkpoint -- 'crossover/(pmx|real_uniform)/|checkpoint/from_json/300x300' --baseline <base> 2>&1 | tee <target>/criterion/<head>.log); echo "exit $?"
+cd <branch checkout> && (set -o pipefail; RAYON_NUM_THREADS=4 CARGO_INCREMENTAL=0 caffeinate -i cargo bench --bench crossover --bench mutation -- 'crossover/(pmx|real_uniform)/|mutation/bin_swap/300x300' --baseline <base> 2>&1 | tee <target>/criterion/<head>.log); echo "exit $?"
 grep -n 'Compiling evolutionary\|panicked\|^error' <target>/criterion/<head>.log
 ```
+
+Some sandboxes refuse the inline `(set -o pipefail; …)`. Putting that command in a script file
+under `<tmp>` and running it with `bash` is fine.
 
 Go on to the report only if it printed `exit 0` and the grep shows `Compiling evolutionary
 v… (<branch checkout>)` and nothing else. A failed run, a panic such as `Baseline '…' must
@@ -177,8 +184,8 @@ Paste into the PR description:
 
 Base `<base>`, head `<head>`. <CPU model>, `<uname -m>`, `RAYON_NUM_THREADS=4`, criterion
 settings of `benches/common/mod.rs` <or the flags passed>. <The lockfile differed, if it did.>
-Ran `cargo bench --all-features --bench crossover --bench checkpoint -- '<filter>'`, with
-`checkpoint/from_json/300x300` as the control. Skipped: <the other groups and cases, and why>.
+Ran `cargo bench --bench crossover --bench mutation -- '<filter>'`, with
+`mutation/bin_swap/300x300` as the control. Skipped: <the other groups and cases, and why>.
 
 <the table, with the line under it>
 ```
@@ -193,9 +200,10 @@ The CPU model: `sysctl -n machdep.cpu.brand_string` on macOS, `grep -m1 'model n
 - Never compare against a baseline from another machine or another day. Redo both runs.
 - If the machine was on battery, asleep or not quiet before or after either run, redo it
   rather than report it.
-- If `tests/golden.rs` fails on the branch, the "after" is a different workload: other genes
-  are mutated and a seeded generation follows another trajectory. Say so above the table, and
-  call no row an improvement or a regression.
+- A failing golden test means the seeded results changed. For the `generation` and
+  `checkpoint` benches the "after" is then a different workload, a seeded run following
+  another trajectory: say so above the table and give no verdicts for them. The operator
+  benches work on a fixed input population and keep their verdicts.
 - Say what was skipped, and why.
 - A regression stays in the report. Explain it or fix it, do not drop the row.
 
