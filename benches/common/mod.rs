@@ -38,6 +38,10 @@ pub const SIZES: [Size; 2] = [MEDIUM, LARGE];
 /// The seed of every population and evolution, so each run measures the same work.
 pub const SEED: u64 = 1;
 
+/// The seed of the `Rngs` an operator bench passes to its operator. It differs from [`SEED`]
+/// so the operator's random streams are independent of the ones that generated the population.
+pub const OPERATOR_SEED: u64 = SEED + 1;
+
 impl Size {
     /// The per-gene mutation rate: one gene per individual on average.
     pub fn rate(self) -> f64 {

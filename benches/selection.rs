@@ -50,7 +50,8 @@ fn selections() -> Vec<(&'static str, Box<dyn Selection<Real>>)> {
 }
 
 fn selection(c: &mut Criterion) {
-    let rngs = Rngs::new(SEED);
+    // Not SEED, which would replay the random numbers that generated the population.
+    let rngs = Rngs::new(OPERATOR_SEED);
     let populations = SIZES.map(|size| (size, with_fitnesses(real(size))));
 
     let mut group = c.benchmark_group("selection");

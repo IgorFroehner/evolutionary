@@ -21,7 +21,8 @@ fn bench<T: Individual, M: Mutation<T>>(
     mutation: impl Fn(Size) -> M,
     populations: &[(Size, Vec<T>)],
 ) {
-    let rngs = Rngs::new(SEED);
+    // Not SEED, which would replay the random numbers that generated the population.
+    let rngs = Rngs::new(OPERATOR_SEED);
     for (size, population) in populations {
         let mutation = mutation(*size);
         configure(group, *size);

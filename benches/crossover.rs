@@ -16,7 +16,8 @@ fn bench<T: Individual, C: Crossover<T>>(
     crossover: C,
     populations: &[(Size, Vec<T>)],
 ) {
-    let rngs = Rngs::new(SEED);
+    // Not SEED, which would replay the random numbers that generated the population.
+    let rngs = Rngs::new(OPERATOR_SEED);
     for (size, population) in populations {
         configure(group, *size);
         group.bench_function(size.id(case), |b| {
