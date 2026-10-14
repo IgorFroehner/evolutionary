@@ -17,6 +17,17 @@
   was already built, through `rand_distr`. The golden run with SBX
   (`real_roulette_simulated_binary_gaussian`) is recorded again; every other golden run is
   unchanged.
+- `BitFlipMutation`, `SwapMutation`, `RandomResettingMutation` (on `Int` and `Real`),
+  `GaussianMutation` and `DeltaMutation` draw the gap to the next mutated gene, from a geometric
+  distribution, instead of one Bernoulli per gene, when `mutation_rate` is at most 0.1. Each
+  gene still mutates independently with probability `mutation_rate`, and a mutated gene changes
+  as before, but the random numbers are drawn in another number and order: a seeded run that
+  uses one of them at such a rate replays differently from 0.5.0, with the same seed. Above
+  0.1, where one draw per gene stays faster, they draw as before, and so do
+  `ScrambleMutation` and `InsertionMutation`, which draw once per individual. On 2000
+  individuals of 500 genes, drawing the gaps is about ten times faster at one mutated gene per
+  individual (a rate of `1.0 / genes`), 2.5 times at 0.05 and 1.3 times at 0.1. A run recorded
+  with 0.5.0 replays with 0.5.0.
 
 ### Fixed
 
@@ -44,6 +55,10 @@
   `benches/real_at_scale.rs` and its names are gone. `cargo bench` no longer runs the lib's
   empty libtest harness, which rejected criterion's flags such as `--save-baseline`. Nothing
   in the library changes.
+- A per-gene mutation given a `mutation_rate` outside `[0, 1]`, or `NaN`, still panics, now
+  with a message that names it and the rate, such as
+  `SwapMutation needs a mutation_rate within [0, 1], got 1.5`, instead of unwrapping an
+  `InvalidProbability` error.
 
 ## 0.5.0 (2026-10-13)
 

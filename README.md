@@ -155,7 +155,10 @@ passed in the same `calculate_population` call.
 
 Seed a run with `.with_seed(42)`: two runs with the same seed give the same populations and the
 same fitness history, whatever the number of threads. Without a seed every run differs, and
-`evolution.seed()` tells you the seed a run drew so you can replay it.
+`evolution.seed()` tells you the seed a run drew so you can replay it. A version that
+changes how an operator draws its random numbers says so under "Breaking" in the
+[changelog](./CHANGELOG.md): a run recorded with an earlier version replays with that
+version.
 
 A seeded run is also the same on every platform, with one exception among the built-in
 operators: `GaussianMutation`. It draws from `rand_distr`'s `Normal`, which calls the

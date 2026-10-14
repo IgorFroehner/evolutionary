@@ -16,6 +16,10 @@
 //! delta, and random resetting on `Real`. Their constants were first recorded from 0.5.0 code,
 //! unchanged since the release.
 //!
+//! A per-gene mutation draws the gap to the next mutated gene up to a rate of 0.1 and once per
+//! gene above it (`src/mutation/mutated_genes.rs`). The runs at 0.2, Gaussian and delta, pin the
+//! second way; the bit flip, both random resettings and swap the first.
+//!
 //! **A failing test here is a breaking change.** It means a seeded run no longer replays as it
 //! did: an operator draws its random numbers in another order or number, `Rngs::rng` derives
 //! its keys differently, or the floating-point evaluation order changed. If that is a bug, fix
@@ -220,9 +224,9 @@ fn bin_tournament_n_points_bit_flip() {
             .with_elitism(2),
         Golden {
             generations: 21,
-            population: 0x9cd77a31c999625f,
-            best_fitnesses: 0x8ea40bdeaa2fa034,
-            avg_fitnesses: 0x223583f5bb6b3871,
+            population: 0x62426fd854ebe830,
+            best_fitnesses: 0x4e9470994b45dbaa,
+            avg_fitnesses: 0x29b6809d82bfb9e3,
         },
     );
 }
@@ -237,9 +241,9 @@ fn int_rank_uniform_random_resetting() {
             .with_mutation(RandomResettingMutation::default()),
         Golden {
             generations: 21,
-            population: 0x9e8bdd081c7f45d1,
-            best_fitnesses: 0x88e17461a4762bf3,
-            avg_fitnesses: 0xe6bf9abf92cb71a6,
+            population: 0x3790b1dfa579f072,
+            best_fitnesses: 0x642635e521a5554a,
+            avg_fitnesses: 0xe47e1089a89eabee,
         },
     );
 }
@@ -328,9 +332,9 @@ fn perm_tournament_ordered_swap() {
             .with_mutation(SwapMutation::new(0.1)),
         Golden {
             generations: 21,
-            population: 0x2e4bea10c4e01e55,
-            best_fitnesses: 0x34c1dadec6c08d84,
-            avg_fitnesses: 0xf7950f71529e5b07,
+            population: 0x0901187b0c73aff5,
+            best_fitnesses: 0xc94d2dbc42b06ef4,
+            avg_fitnesses: 0xc44b56ecbe77fdcd,
         },
     );
 }
@@ -366,9 +370,9 @@ fn real_rank_linear_random_resetting() {
             .with_mutation(RandomResettingMutation { mutation_rate: 0.1 }),
         Golden {
             generations: 21,
-            population: 0xa9bfa4d298420b38,
-            best_fitnesses: 0x2bfb33ba4ee57502,
-            avg_fitnesses: 0x07fc7f97141c5c7b,
+            population: 0xd604db10498c8039,
+            best_fitnesses: 0xbf58666de83e48a2,
+            avg_fitnesses: 0xc5e369fbecc40296,
         },
     );
 }

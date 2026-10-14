@@ -81,9 +81,10 @@ one documented exception below). This drives most design decisions:
   rayon's scheduling cannot change the result.
 - Changing the order or number of draws an operator makes, the key derivation in `Rngs::rng`, or
   the floating-point summation order of the average fitness changes every seeded run. That is a
-  breaking change: record it in `CHANGELOG.md` and bump accordingly. Optimizations that would
-  change the draw pattern (for example geometric skip-sampling in per-gene mutations) have been
-  deliberately rejected for this reason.
+  breaking change: record it in `CHANGELOG.md` and bump accordingly. An optimization that
+  changes the draw pattern is a deliberate breaking change of its own, never part of another
+  one: geometric skip-sampling in the per-gene mutations (`src/mutation/mutated_genes.rs`) was
+  deferred until it could go in alone, and recorded as breaking.
 - `src/rng.rs` pins the derivation with `numbers_are_stable_across_versions`;
   `tests/reproducibility.rs` checks that 1 thread and 8 threads agree for every built-in operator;
   `tests/golden.rs` checks that one seeded run per encoding gives exactly the recorded final

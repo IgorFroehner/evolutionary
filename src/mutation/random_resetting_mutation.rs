@@ -67,6 +67,24 @@ mod tests {
     }
 
     #[test]
+    fn resets_the_expected_share_of_real_genes() {
+        let mut population = vec![Real::new(vec![100.0; 300], (-1.0, 1.0)); 300];
+        RandomResettingMutation {
+            mutation_rate: 0.05,
+        }
+        .mutate(&mut population, &Rngs::new(2));
+
+        let reset = population
+            .iter()
+            .flat_map(|individual| individual.get_chromosome())
+            .filter(|&&gene| gene != 100.0)
+            .count() as f64;
+
+        // 90 000 genes at 5%: 4 500 expected, with a standard deviation of about 65.
+        assert!((reset - 4500.0).abs() < 4.0 * 65.0, "{reset}");
+    }
+
+    #[test]
     fn resets_real_genes_within_the_range() {
         let mut population = vec![Real::new(vec![100.0; 300], (-1.0, 1.0)); 300];
         RandomResettingMutation { mutation_rate: 1.0 }.mutate(&mut population, &Rngs::new(2));

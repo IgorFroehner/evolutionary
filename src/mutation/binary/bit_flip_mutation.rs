@@ -1,5 +1,5 @@
+use crate::mutation::MutatedGenes;
 use crate::{Individual, Mutation, Rngs};
-use rand::distr::{Bernoulli, Distribution};
 use rayon::prelude::{IndexedParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::population::Bin;
@@ -40,19 +40,17 @@ impl Default for BitFlipMutation {
 
 impl Mutation<Bin> for BitFlipMutation {
     fn mutate(&self, population: &mut [Bin], rngs: &Rngs) {
-        // Built once: `Rng::random_bool` builds the same distribution again at every call.
-        let mutates = Bernoulli::new(self.mutation_rate).unwrap();
+        let mutated = MutatedGenes::new("BitFlipMutation", self.mutation_rate);
 
         population
             .par_iter_mut()
             .enumerate()
             .for_each(|(index, member)| {
                 let mut rng = rngs.rng(index);
-                for gene in member.get_mut_chromosome().iter_mut() {
-                    if mutates.sample(&mut rng) {
-                        *gene = !*gene;
-                    }
-                }
+                let chromosome = member.get_mut_chromosome();
+                mutated.for_each(chromosome.len(), &mut rng, |gene, _| {
+                    chromosome[gene] = !chromosome[gene];
+                });
             });
     }
 }
