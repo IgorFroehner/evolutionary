@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `.claude/skills/bench-report/` says how to produce a PR's before-and-after benchmark report,
+  and its `compare.py` renders the table from criterion's output.
+
+### Changed
+
+- The benchmark suite is split by concern, `generation`, `selection`, `crossover`, `mutation`
+  and `checkpoint` (the last needs the `serde` feature). It covers a generation of every
+  representation at 50x50, 300x300 and 2000x500, and at 300x300 and 2000x500 every built-in
+  crossover and mutation on each representation it works for, every selection on `Real`, and
+  the checkpoint round trip. Each benchmark is named `<group>/<case>/<population>x<genes>`,
+  for comparing a branch with a saved baseline of main; `benches/README.md` says how.
+  `benches/real_at_scale.rs` and its names are gone. `cargo bench` no longer runs the lib's
+  empty libtest harness, which rejected criterion's flags such as `--save-baseline`. Nothing
+  in the library changes.
+
 ## 0.5.0 (2026-10-13)
 
 ### Breaking

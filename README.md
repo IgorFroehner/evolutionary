@@ -278,8 +278,13 @@ cargo test --all-features                           # also the serde, config and
 cargo clippy --all-targets --all-features -- -D warnings
 cargo fmt --all -- --check
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
-cargo bench                                         # a generation of Real at 300 individuals x 300 genes
+cargo bench --all-features                          # generations, operators and checkpoints (serde)
 ```
+
+The benchmarks cover a generation of every representation, every operator and checkpoints at
+up to 2000 individuals of 500 genes, in about 7 minutes; the checkpoint ones need the `serde`
+feature. [benches/README.md](./benches/README.md) has the names and how to compare a branch
+with main.
 
 Charts need `fontconfig` on Linux (`libfontconfig1-dev` on Debian and Ubuntu).
 

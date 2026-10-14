@@ -22,7 +22,7 @@ cargo test --doc                                        # doc tests only
 cargo clippy --all-targets --all-features -- -D warnings  # CI fails on any warning
 cargo fmt --all -- --check                              # CI checks formatting
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features  # CI fails on rustdoc warnings
-cargo bench                                             # criterion: a generation of Real at 300x300
+cargo bench --all-features                              # criterion suite, see benches/README.md
 cargo run --example xor --release                       # examples: see required-features in Cargo.toml
 ```
 
@@ -30,6 +30,14 @@ cargo run --example xor --release                       # examples: see required
 that read `Config.toml` need `--features config`; those that save charts need `--features plot`.
 Cargo refuses to build an example without its `required-features`, so check `Cargo.toml` first.
 `maze`, `subway` and `xor` are auto-discovered and need no feature.
+
+## Benchmarks
+
+A PR that can change performance (`src/evolution.rs`, an operator, a representation, fitness
+evaluation, the RNG, a bump of `rand`, `rand_distr` or `rayon`) includes a before-and-after
+report in its description, produced by following
+`.claude/skills/bench-report/SKILL.md`. The script that renders the table from criterion's
+output, `compare.py`, lives next to it.
 
 ## Architecture
 
