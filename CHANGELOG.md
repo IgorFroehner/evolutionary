@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Added
+
+- `.claude/skills/bench-report/` says how to produce a PR's before-and-after benchmark report,
+  and its `compare.py` renders the table from criterion's output.
+
 ### Changed
 
 - The benchmark suite is split by concern, `generation`, `selection`, `crossover`, `mutation`
@@ -13,8 +18,6 @@
   `benches/real_at_scale.rs` and its names are gone. `cargo bench` no longer runs the lib's
   empty libtest harness, which rejected criterion's flags such as `--save-baseline`. Nothing
   in the library changes.
-- `.claude/skills/bench-report/` says how to produce a PR's before-and-after benchmark report,
-  and its `compare.py` renders the table from criterion's output.
 
 ## 0.5.0 (2026-10-13)
 

@@ -1,6 +1,6 @@
 ---
 name: bench-report
-description: Produce a before-and-after criterion benchmark report for a PR of this crate and paste it into the PR. Use for any change under src/ that touches evolution.rs, a selection, crossover or mutation operator, fitness evaluation or the RNG (rng.rs), and whenever asked to benchmark, compare performance, or do a before-and-after.
+description: Produce a before-and-after criterion benchmark report for a PR of this crate and paste it into the PR. Use for any change under src/ that touches evolution.rs, a selection, crossover or mutation operator, a representation, fitness evaluation or the RNG (rng.rs), for a bump of rand, rand_distr or rayon, and whenever asked to benchmark, compare performance, or do a before-and-after.
 ---
 
 # Bench report
@@ -17,29 +17,58 @@ Run only the groups the change touches. Criterion's filter, after `--`, is a reg
 
 | The change touches | Run |
 |---|---|
-| `src/crossover/` | `--bench crossover`, narrowed to the cases changed: `-- crossover/pmx/` |
-| `src/mutation/` | `--bench mutation`, narrowed the same way |
-| `src/selection/` | `--bench selection`, narrowed the same way |
-| `src/fitness.rs`, fitness evaluation, `src/rng.rs` | `--bench generation` |
-| `src/checkpoint.rs` | `--features serde --bench checkpoint` |
-| `src/evolution.rs`, or a release | everything: `--all-features` |
+| one file of `src/crossover/`, `src/mutation/` or `src/selection/` | that group, narrowed to the cases of that operator: `--bench crossover`, `crossover/pmx/` |
+| the `mod.rs` or the trait of one of those directories | the whole group |
+| `src/fitness.rs`, fitness evaluation | `--bench generation` |
+| `src/population/<repr>.rs` | `generation/<repr>/` and that representation's cases in `crossover` and `mutation`; for `real.rs` also `selection` and `checkpoint` |
+| `src/population/mod.rs` (`Individual`) | everything |
+| `src/evolution_builder.rs` | `--bench generation` and `checkpoint/resume/` |
+| `src/checkpoint.rs` | `--bench checkpoint` |
+| `src/utils.rs` | nothing measures it: say so, no report |
+| `src/evolution.rs`, `src/rng.rs`, a bump of `rand`, `rand_distr` or `rayon` in `Cargo.toml` or `Cargo.lock`, a release | everything |
 
-For several cases, quote a regex: `-- 'crossover/(pmx|cycle)/'`. A full run takes about 7
-minutes, so a full report about 15. One group takes one to two minutes per run. Write down the
-groups you skip: the report says which.
+A shared operator file maps to the case of every representation it runs on:
+`src/crossover/uniform_crossover.rs` is `real_uniform`, `bin_uniform` and `int_uniform`;
+`swap_mutation.rs` is `real_swap`, `bin_swap`, `int_swap` and `perm_swap`. Check the bench file
+for the cases that use the operator.
+
+Every run also includes one control case that no change to an operator, a representation's
+genes or the RNG can affect: `checkpoint/from_json/300x300`, which only parses JSON. It needs
+`--all-features` and `--bench checkpoint`. When the change touches `src/checkpoint.rs`,
+`src/population/real.rs` or serde, use `mutation/bin_swap/300x300` and `--bench mutation`
+instead. A run of several groups or cases is one quoted regex, so a crossover change runs:
+
+```bash
+cargo bench --all-features --bench crossover --bench checkpoint -- 'crossover/(pmx|real_uniform)/|checkpoint/from_json/300x300'
+```
+
+A full run, `cargo bench --all-features` with no filter, includes the control already and
+takes about 7 minutes, so a full report about 15. One group takes one to two minutes per run.
+Write down what you skip: the report says so.
 
 ## 2. Preconditions
 
 - `git status --porcelain` prints nothing. Commit or set aside your changes first.
-- Close other heavy processes: builds, test runs, other agents' cargo, video. Right before
-  each run, `uptime` shows a 1-minute load average well below the number of cores. During a
-  run the bench itself adds about `RAYON_NUM_THREADS`.
-- The machine is awake and on mains power. On macOS, `pmset -g batt | head -1` says
-  `AC Power`, and each `cargo bench` runs under `caffeinate -i`. On Linux, check
-  `/sys/class/power_supply/*/online` and run under `systemd-inhibit`.
+- `cargo test --test golden` passes on the branch. If it fails, the PR changes an RNG stream
+  (the number or order of draws) and the same seed now does different work: see step 6.
+- The machine is awake and on mains power. On macOS `pmset -g batt | head -1` says
+  `AC Power`, and each `cargo bench` runs under `caffeinate -i`. On Linux,
+  `/sys/class/power_supply/*/online` is 1, and it runs under `systemd-inhibit`.
+- The machine is quiet, checked right before and right after each run (step 3 and 4):
+  `ps -Ao pcpu,comm -r | head -5` shows no process above 50% CPU other than cargo and the bench
+  itself, and the 1-minute load in `uptime` is below `RAYON_NUM_THREADS`. The run itself
+  raises the load, so after it, wait for the load to fall back:
+
+  ```bash
+  until uptime | awk '{ exit !($(NF-2) + 0 < 4) }'; do sleep 5; done; uptime
+  ```
+
+  With a timeout of 2 minutes: if it does not get there, something else ran, so redo the run.
+  You cannot close other sessions: if it is not quiet before a run, wait and check again.
 - Both runs on the same machine, in the same session, one after the other.
 - The same environment for both runs: `RAYON_NUM_THREADS=4 CARGO_INCREMENTAL=0` on each
-  `cargo bench`, as below. Keep 4 unless the PR says why.
+  `cargo bench`, as below. Keep 4, at most the performance cores
+  (`sysctl -n hw.perflevel0.physicalcpu` on macOS), unless the PR says why.
 - The criterion settings of `benches/common/mod.rs`. If you pass `--warm-up-time`,
   `--measurement-time` or `--noise-threshold`, pass the same to both runs and report them.
 
@@ -53,10 +82,13 @@ git merge-base HEAD origin/main         # the base commit
 git rev-parse --short <the base commit> # <base>
 git rev-parse --short HEAD              # <head>
 git rev-parse --show-toplevel           # <branch checkout>
+git diff --stat <base> HEAD -- Cargo.toml Cargo.lock
 ```
 
 For a PR stacked on another branch, use `origin/<that branch>` instead of `origin/main`.
-`<target>` is `<branch checkout>/target`, or `$CARGO_TARGET_DIR` if that is set.
+`<target>` is `<branch checkout>/target`, or `$CARGO_TARGET_DIR` if that is set. If the last
+command prints anything, the dependencies differ: the comparison is still valid, that is what
+it measures, but the report says that the lockfile differed.
 
 Empty criterion's results, so nothing from another run or day can end up in the report:
 
@@ -66,10 +98,10 @@ rm -rf <target>/criterion
 
 ## 3. Baseline
 
-The baseline runs in a throwaway worktree of the base, with its own build, and with
-`CRITERION_HOME` set so criterion saves it in the branch's `<target>/criterion`, where the
-branch run reads it. Do not share `CARGO_TARGET_DIR` between the two checkouts instead: cargo
-then finds the base's binaries up to date in the branch, does not rebuild, and the comparison
+The baseline runs in a throwaway worktree of the base, built in its own target dir, with
+`CRITERION_HOME` set so criterion saves the results in the branch's `<target>/criterion`,
+where the branch run reads them. Never build both checkouts in one target dir: cargo then
+finds the base's binaries up to date in the branch, does not rebuild, and the comparison
 measures the base twice.
 
 ```bash
@@ -77,31 +109,46 @@ mktemp -d                                       # <tmp>
 git worktree add --detach <tmp>/base <base>
 ```
 
-The base must contain the suite: `<tmp>/base/benches/common/mod.rs` exists. If it does not,
-the base is older than the suite. Replace its `benches/` with the branch's
-(`rm -rf <tmp>/base/benches && cp -R <branch checkout>/benches <tmp>/base/`), and in
-`<tmp>/base/Cargo.toml` replace the `[lib]` and `[[bench]]` sections and the `criterion`
-dev-dependency with the branch's, keeping the rest. `cargo bench --all-features --no-run`
-there checks that it builds; 0.5.0 does. A bench that does not compile against the base's
-API cannot be compared: drop it and list it as skipped.
-
-Run the chosen groups there, saving the baseline under `<base>`:
+The bench code must be the same in both runs, so the base always gets the head's `benches/`
+and the `[lib]` and `[[bench]]` sections of its `Cargo.toml`. That also covers a base older
+than the suite, and a PR that changes the benches:
 
 ```bash
-cd <tmp>/base && CRITERION_HOME=<target>/criterion RAYON_NUM_THREADS=4 CARGO_INCREMENTAL=0 caffeinate -i cargo bench --bench crossover -- 'crossover/(pmx|real_uniform)/' --save-baseline <base>
+cd <tmp>/base && rm -rf benches && cp -R <branch checkout>/benches .
+cd <tmp>/base && awk '/^\[/ { skip = ($0 == "[lib]" || $0 == "[[bench]]") } !skip' Cargo.toml > Cargo.toml.new && awk '/^\[/ { keep = ($0 == "[lib]" || $0 == "[[bench]]") } keep' <branch checkout>/Cargo.toml >> Cargo.toml.new && mv Cargo.toml.new Cargo.toml
+```
+
+If the bench then does not compile against the base, because the base lacks an API it uses
+or has another `criterion`, copy the head's `criterion` dev-dependency too. A case that still
+does not compile cannot be compared: drop it from the filter and list it as skipped.
+
+Check that the machine is quiet (step 2), then run the chosen groups there, saving the
+baseline under `<base>`. Check it again after the run; if it was not quiet, run it again.
+
+```bash
+cd <tmp>/base && CARGO_TARGET_DIR=<tmp>/base/target CRITERION_HOME=<target>/criterion RAYON_NUM_THREADS=4 CARGO_INCREMENTAL=0 caffeinate -i cargo bench --all-features --bench crossover --bench checkpoint -- 'crossover/(pmx|real_uniform)/|checkpoint/from_json/300x300' --save-baseline <base>
 ```
 
 The first build there compiles every dependency, about 15 seconds. Give the command a timeout
 above the run time (10 minutes for one group), or run it in the background and wait for it.
+It must exit 0.
 
 ## 4. Comparison
 
-In the branch checkout, the same groups and the same environment, against the baseline,
-keeping the log:
+In the branch checkout: remove the crate's own build first, so the run below has to compile
+it from this checkout. Then check that the machine is quiet, run the same groups in the same
+environment against the baseline, keeping the log, and check the machine again.
 
 ```bash
-cd <branch checkout> && RAYON_NUM_THREADS=4 CARGO_INCREMENTAL=0 caffeinate -i cargo bench --bench crossover -- 'crossover/(pmx|real_uniform)/' --baseline <base> 2>&1 | tee <target>/criterion/<head>.log
+cd <branch checkout> && cargo clean --release -p evolutionary
+cd <branch checkout> && (set -o pipefail; RAYON_NUM_THREADS=4 CARGO_INCREMENTAL=0 caffeinate -i cargo bench --all-features --bench crossover --bench checkpoint -- 'crossover/(pmx|real_uniform)/|checkpoint/from_json/300x300' --baseline <base> 2>&1 | tee <target>/criterion/<head>.log); echo "exit $?"
+grep -n 'Compiling evolutionary\|panicked\|^error' <target>/criterion/<head>.log
 ```
+
+Go on to the report only if it printed `exit 0` and the grep shows `Compiling evolutionary
+v… (<branch checkout>)` and nothing else. A failed run, a panic such as `Baseline '…' must
+exist`, or a run that did not compile the branch produces no table: fix the cause and redo
+both runs.
 
 `--baseline` stops at a benchmark the base does not have. If the PR adds one, use
 `--baseline-lenient` instead and say in the report that the new case has no before.
@@ -109,17 +156,19 @@ cd <branch checkout> && RAYON_NUM_THREADS=4 CARGO_INCREMENTAL=0 caffeinate -i ca
 ## 5. Report
 
 ```bash
-cd <branch checkout> && python3 -I .claude/skills/bench-report/compare.py <base>
+cd <branch checkout> && python3 -I .claude/skills/bench-report/compare.py <base> --target-dir <target> --log <target>/criterion/<head>.log
 ```
 
-It prints a table of every benchmark compared against `<base>`, sorted by id, and leaves out
-(counting them on stderr) any whose comparison is older than its numbers. `--json` prints the
-same rows as JSON, `--filter <prefix>` keeps some, `--target-dir` reads another target dir,
-and `--noise-threshold` must match the one criterion used.
+It prints a table of every benchmark compared against `<base>`, sorted by id, with
+criterion's verdict for each from the log, which includes its p-value test. The line under
+the table says where the verdicts came from; it must say "criterion's, from its log". It
+leaves out, and counts on stderr, any benchmark with no `<base>` baseline or whose change is
+not the change between its numbers. `--json` prints the same rows as JSON, `--filter
+<prefix>` keeps some, and `--noise-threshold` must match the one criterion used.
 
-The script cannot see criterion's p-value. Check the log: if criterion said `No change in
-performance detected.` for a benchmark the table calls improved or regressed, change that
-verdict to `no change`.
+If the control case says improved or regressed, the machine was disturbed: redo both runs
+(step 3 and 4). If it still does after two redos, stop: write in the PR "could not get a quiet
+machine" and the control's rows, instead of a table.
 
 Paste into the PR description:
 
@@ -127,9 +176,9 @@ Paste into the PR description:
 ## Benchmarks
 
 Base `<base>`, head `<head>`. <CPU model>, `<uname -m>`, `RAYON_NUM_THREADS=4`, criterion
-settings of `benches/common/mod.rs` <or the flags passed>.
-Ran `cargo bench --bench crossover -- 'crossover/(pmx|real_uniform)/'`. Skipped: <the other
-groups and cases, and why>.
+settings of `benches/common/mod.rs` <or the flags passed>. <The lockfile differed, if it did.>
+Ran `cargo bench --all-features --bench crossover --bench checkpoint -- '<filter>'`, with
+`checkpoint/from_json/300x300` as the control. Skipped: <the other groups and cases, and why>.
 
 <the table, with the line under it>
 ```
@@ -142,11 +191,11 @@ The CPU model: `sysctl -n machdep.cpu.brand_string` on macOS, `grep -m1 'model n
 - A change inside the noise threshold, or without a significant verdict, is "no change", never
   an improvement, whatever its sign.
 - Never compare against a baseline from another machine or another day. Redo both runs.
-- If the machine was loaded, asleep or on battery during either run, redo both rather than
-  report them.
-- A case the change cannot affect that comes out improved or regressed, or a time far from
-  the other run's for no reason, means a disturbed run: redo both. If it persists, report it
-  as noise next to the table.
+- If the machine was on battery, asleep or not quiet before or after either run, redo it
+  rather than report it.
+- If `tests/golden.rs` fails on the branch, the "after" is a different workload: other genes
+  are mutated and a seeded generation follows another trajectory. Say so above the table, and
+  call no row an improvement or a regression.
 - Say what was skipped, and why.
 - A regression stays in the report. Explain it or fix it, do not drop the row.
 
@@ -157,5 +206,5 @@ cd <branch checkout> && git worktree remove --force <tmp>/base
 rm -rf <tmp>
 ```
 
-`--force` because of its `target/` and of a copied `benches/`. `git worktree list` no longer
+`--force` because of its `target/` and the copied bench code. `git worktree list` no longer
 shows it.

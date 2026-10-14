@@ -33,8 +33,9 @@ Cargo refuses to build an example without its `required-features`, so check `Car
 
 ## Benchmarks
 
-A PR that can change performance (`src/evolution.rs`, an operator, fitness evaluation, the RNG)
-includes a before-and-after report in its description, produced by following
+A PR that can change performance (`src/evolution.rs`, an operator, a representation, fitness
+evaluation, the RNG, a bump of `rand`, `rand_distr` or `rayon`) includes a before-and-after
+report in its description, produced by following
 `.claude/skills/bench-report/SKILL.md`. The script that renders the table from criterion's
 output, `compare.py`, lives next to it.
 
