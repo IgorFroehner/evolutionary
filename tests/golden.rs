@@ -11,6 +11,11 @@
 //! (`Sigma::exponential_decay`). There is no older release to pin them to, so its constants
 //! were recorded from the code that introduced them, before 0.5.0 was released.
 //!
+//! Three more runs, `perm_tournament_ordered_swap`, `real_tournament_arithmetic_delta` and
+//! `real_rank_linear_random_resetting`, pin the per-gene mutations the others don't use: swap,
+//! delta, and random resetting on `Real`. Their constants were first recorded from 0.5.0 code,
+//! unchanged since the release.
+//!
 //! **A failing test here is a breaking change.** It means a seeded run no longer replays as it
 //! did: an operator draws its random numbers in another order or number, `Rngs::rng` derives
 //! its keys differently, or the floating-point evaluation order changed. If that is a bug, fix
@@ -307,6 +312,63 @@ fn real_minimize_rank_scaled_sus_decaying_sigma() {
             population: 0x050a5f41ddf0e2d0,
             best_fitnesses: 0x96dc59e3d9d1a19c,
             avg_fitnesses: 0x64b57572c528c03b,
+        },
+    );
+}
+
+/// Swap, delta and random resetting on `Real` are per-gene mutations no run above uses: see the
+/// top of this file.
+#[test]
+fn perm_tournament_ordered_swap() {
+    assert_golden(
+        EvolutionBuilder::new(POPULATION, DIMENSION, ())
+            .with_fitness(InPlace)
+            .with_selection(TournamentSelection::default())
+            .with_crossover(OrderedCrossover::default())
+            .with_mutation(SwapMutation::new(0.1)),
+        Golden {
+            generations: 21,
+            population: 0x2e4bea10c4e01e55,
+            best_fitnesses: 0x34c1dadec6c08d84,
+            avg_fitnesses: 0xf7950f71529e5b07,
+        },
+    );
+}
+
+#[test]
+fn real_tournament_arithmetic_delta() {
+    assert_golden(
+        EvolutionBuilder::new(POPULATION, DIMENSION, (-1.0, 1.0))
+            .with_fitness(Sphere)
+            .with_selection(TournamentSelection::new(3, 0.8))
+            .with_crossover(ArithmeticCrossover::default())
+            .with_mutation(DeltaMutation {
+                mutation_rate: 0.2,
+                frac: 10.0,
+            })
+            .with_elitism(1),
+        Golden {
+            generations: 21,
+            population: 0x56219e644f087364,
+            best_fitnesses: 0x4e157e608fce73ab,
+            avg_fitnesses: 0xff3ef2e88ae2dea2,
+        },
+    );
+}
+
+#[test]
+fn real_rank_linear_random_resetting() {
+    assert_golden(
+        EvolutionBuilder::new(POPULATION, DIMENSION, (-1.0, 1.0))
+            .with_fitness(Sphere)
+            .with_selection(RankSelection)
+            .with_crossover(LinearCrossover::default())
+            .with_mutation(RandomResettingMutation { mutation_rate: 0.1 }),
+        Golden {
+            generations: 21,
+            population: 0xa9bfa4d298420b38,
+            best_fitnesses: 0x2bfb33ba4ee57502,
+            avg_fitnesses: 0x07fc7f97141c5c7b,
         },
     );
 }
