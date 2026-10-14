@@ -19,15 +19,16 @@
   unchanged.
 - `BitFlipMutation`, `SwapMutation`, `RandomResettingMutation` (on `Int` and `Real`),
   `GaussianMutation` and `DeltaMutation` draw the gap to the next mutated gene, from a geometric
-  distribution, instead of one Bernoulli per gene, when `mutation_rate` is at most 0.1. Each
-  gene still mutates independently with probability `mutation_rate`, and a mutated gene changes
-  as before, but the random numbers are drawn in another number and order: a seeded run that
-  uses one of them at such a rate replays differently from 0.5.0, with the same seed. Above
-  0.1, where one draw per gene stays faster, they draw as before, and so do
-  `ScrambleMutation` and `InsertionMutation`, which draw once per individual. On 2000
-  individuals of 500 genes, drawing the gaps is about ten times faster at one mutated gene per
-  individual (a rate of `1.0 / genes`), 2.5 times at 0.05 and 1.3 times at 0.1. A run recorded
-  with 0.5.0 replays with 0.5.0.
+  distribution, instead of one Bernoulli per gene, when `mutation_rate` is between 1e-9 and 0.3,
+  both included. Each gene still mutates independently with probability `mutation_rate`, and a
+  mutated gene changes as before, but the random numbers are drawn in another number and order:
+  a seeded run that uses one of them at such a rate replays differently from 0.5.0, with the
+  same seed. Below 1e-9 and above 0.3 they draw as before, and so do `ScrambleMutation` and
+  `InsertionMutation`, which draw once per individual. A zero rate now draws nothing, and still
+  mutates nothing, so it replays as before too. The gaps are drawn with exact floating-point
+  operations only, so they are the same on every platform (the steps of `GaussianMutation`
+  remain the exception that "Reproducible runs" in the README describes). Nothing to rewrite; a
+  run recorded with 0.5.0 replays with 0.5.0.
 
 ### Fixed
 
@@ -59,6 +60,14 @@
   with a message that names it and the rate, such as
   `SwapMutation needs a mutation_rate within [0, 1], got 1.5`, instead of unwrapping an
   `InvalidProbability` error.
+
+### Performance
+
+- The per-gene mutations draw the gap to the next mutated gene instead of one number per gene
+  (see "Breaking"). On 2000 individuals of 500 genes on 4 threads, a mutation takes about a
+  tenth of the time at one mutated gene per individual (a rate of `1.0 / genes`), the
+  benchmarks' rate: about 0.1 ms instead of 1.2 ms. It is about 3.5 times faster at a rate of
+  0.05, 2.3 times at 0.1, 1.5 times at 0.2 and 1.3 times at 0.3.
 
 ## 0.5.0 (2026-10-13)
 

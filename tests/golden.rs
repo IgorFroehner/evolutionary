@@ -3,8 +3,8 @@
 //! Each test runs one short seeded evolution per encoding and compares a fingerprint of the
 //! final population and of the best and average fitness history with recorded constants. They
 //! were first recorded from 0.4.0; the history of this file shows when each was last
-//! regenerated. Between them the four runs use every built-in selection and a different crossover and
-//! mutation each.
+//! regenerated. Between them the four runs use every built-in selection and a different
+//! crossover and mutation each.
 //!
 //! A fifth run, `real_minimize_rank_scaled_sus_decaying_sigma`, pins operators that are new in
 //! 0.5.0: a scaled selection (`FitnessScaling::Rank`) and a scheduled `sigma`
@@ -16,9 +16,12 @@
 //! delta, and random resetting on `Real`. Their constants were first recorded from 0.5.0 code,
 //! unchanged since the release.
 //!
-//! A per-gene mutation draws the gap to the next mutated gene up to a rate of 0.1 and once per
-//! gene above it (`src/mutation/mutated_genes.rs`). The runs at 0.2, Gaussian and delta, pin the
-//! second way; the bit flip, both random resettings and swap the first.
+//! A per-gene mutation draws the gap to the next mutated gene at a rate from 1e-9 to 0.3, both
+//! included, and once per gene outside it (`src/mutation/mutated_genes.rs`). Every per-gene run
+//! here, at 0.05, 0.1 or 0.2, draws the gaps, with chromosomes too short to reach the ladder's
+//! deep steps. `gaps_are_stable_across_versions` in that file pins those, both thresholds and
+//! the draws once per gene above 0.3, which are the draws of 0.5.0; beyond that, the draws once
+//! per gene are covered by the thread test (`tests/reproducibility.rs`) only.
 //!
 //! **A failing test here is a breaking change.** It means a seeded run no longer replays as it
 //! did: an operator draws its random numbers in another order or number, `Rngs::rng` derives
@@ -224,9 +227,9 @@ fn bin_tournament_n_points_bit_flip() {
             .with_elitism(2),
         Golden {
             generations: 21,
-            population: 0x62426fd854ebe830,
-            best_fitnesses: 0x4e9470994b45dbaa,
-            avg_fitnesses: 0x29b6809d82bfb9e3,
+            population: 0xd8aef7adae0be312,
+            best_fitnesses: 0x8ea40bdeaa2fa034,
+            avg_fitnesses: 0xbd6753a709e0ed88,
         },
     );
 }
@@ -241,9 +244,9 @@ fn int_rank_uniform_random_resetting() {
             .with_mutation(RandomResettingMutation::default()),
         Golden {
             generations: 21,
-            population: 0x3790b1dfa579f072,
-            best_fitnesses: 0x642635e521a5554a,
-            avg_fitnesses: 0xe47e1089a89eabee,
+            population: 0x9300fcf8eb844842,
+            best_fitnesses: 0xbcbe255b5ea44d66,
+            avg_fitnesses: 0x9c3926968c981361,
         },
     );
 }
@@ -266,7 +269,8 @@ fn perm_sus_partially_mapped_insertion() {
 }
 
 /// Recorded again after 0.5.0, when `SimulatedBinaryCrossover` moved from `f64::powf` to
-/// `libm::pow` so that its draws are the same on every platform.
+/// `libm::pow` so that its draws are the same on every platform, and again when its Gaussian
+/// mutation, at 0.2, started drawing the gaps between mutated genes.
 #[test]
 fn real_roulette_simulated_binary_gaussian() {
     assert_golden(
@@ -278,9 +282,9 @@ fn real_roulette_simulated_binary_gaussian() {
             .with_elitism(3),
         Golden {
             generations: 21,
-            population: 0x481a827efdc257f2,
-            best_fitnesses: 0xd1cd9f30eb3db2ca,
-            avg_fitnesses: 0x18c198feb2216427,
+            population: 0x39d9400fe9d6158d,
+            best_fitnesses: 0x5582c1d7e8881ed0,
+            avg_fitnesses: 0xaad0370b06124a24,
         },
     );
 }
@@ -313,9 +317,9 @@ fn real_minimize_rank_scaled_sus_decaying_sigma() {
             .with_elitism(2),
         Golden {
             generations: 21,
-            population: 0x050a5f41ddf0e2d0,
-            best_fitnesses: 0x96dc59e3d9d1a19c,
-            avg_fitnesses: 0x64b57572c528c03b,
+            population: 0x6d198be6af694e21,
+            best_fitnesses: 0x3b5a3aa2c4de664b,
+            avg_fitnesses: 0xae4bdcdc589a2425,
         },
     );
 }
@@ -332,9 +336,9 @@ fn perm_tournament_ordered_swap() {
             .with_mutation(SwapMutation::new(0.1)),
         Golden {
             generations: 21,
-            population: 0x0901187b0c73aff5,
-            best_fitnesses: 0xc94d2dbc42b06ef4,
-            avg_fitnesses: 0xc44b56ecbe77fdcd,
+            population: 0xc8368e887e8d6fb5,
+            best_fitnesses: 0xc6b4630c2b516adc,
+            avg_fitnesses: 0xdaac75de4fa408ed,
         },
     );
 }
@@ -353,9 +357,9 @@ fn real_tournament_arithmetic_delta() {
             .with_elitism(1),
         Golden {
             generations: 21,
-            population: 0x56219e644f087364,
-            best_fitnesses: 0x4e157e608fce73ab,
-            avg_fitnesses: 0xff3ef2e88ae2dea2,
+            population: 0x8803f551586b8332,
+            best_fitnesses: 0xfb4dce12d50a7855,
+            avg_fitnesses: 0x9ab95218e48bccf7,
         },
     );
 }
@@ -370,9 +374,9 @@ fn real_rank_linear_random_resetting() {
             .with_mutation(RandomResettingMutation { mutation_rate: 0.1 }),
         Golden {
             generations: 21,
-            population: 0xd604db10498c8039,
-            best_fitnesses: 0xbf58666de83e48a2,
-            avg_fitnesses: 0xc5e369fbecc40296,
+            population: 0x3b662dcb595f321d,
+            best_fitnesses: 0xc86a2dfd5b083853,
+            avg_fitnesses: 0x43536bdcdfecaf17,
         },
     );
 }

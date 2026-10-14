@@ -69,7 +69,7 @@ mod tests {
 
     #[test]
     fn keeps_every_individual_a_permutation() {
-        for rate in [0.05, 0.2] {
+        for rate in [0.05, 0.5] {
             let population = mutated(rate);
 
             assert!(population
@@ -86,7 +86,7 @@ mod tests {
         // Each of the two genes mutates with probability `rate` and then swaps with the other
         // one half the time, so an individual ends up swapped (one effective swap, not zero or
         // two) with probability `rate * (1 - rate / 2)`.
-        for rate in [0.05, 0.3] {
+        for rate in [0.05, 0.5] {
             let mut population = vec![IntPerm::new(vec![1, 2]); 20_000];
             SwapMutation::new(rate).mutate(&mut population, &Rngs::new(5));
 
