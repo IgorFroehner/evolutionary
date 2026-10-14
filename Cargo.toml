@@ -26,7 +26,8 @@ dyn-clone = "1.0.13"
 plotters = { version = "0.3.7", optional = true }
 rand_distr = "0.5"
 # Pure-Rust math functions, the same code on every platform, for the ones IEEE 754 does not
-# specify exactly (`pow`), where a seeded stream depends on them: see AGENTS.md.
+# specify exactly (`pow`), where a seeded stream depends on them: see AGENTS.md. A caret on
+# purpose, which AGENTS.md explains, with what to do when a bump changes `pow`.
 libm = "0.2.16"
 
 [dev-dependencies]
