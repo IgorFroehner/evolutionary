@@ -15,8 +15,8 @@
   from 0.5.0, in general on every platform. Nothing to rewrite, and the distribution of the
   children is unchanged. `libm` (pure Rust, no dependencies) becomes a direct dependency; it
   was already built, through `rand_distr`. The golden run with SBX
-  (`real_roulette_simulated_binary_gaussian`) is recorded again; every other golden run is
-  unchanged.
+  (`real_roulette_simulated_binary_gaussian`) is recorded again; this change alone leaves every
+  other golden run unchanged.
 - `BitFlipMutation`, `SwapMutation`, `RandomResettingMutation` (on `Int` and `Real`),
   `GaussianMutation` and `DeltaMutation` draw the gap to the next mutated gene, from a geometric
   distribution, instead of one Bernoulli per gene, when `mutation_rate` is between 1e-9 and 0.3,
