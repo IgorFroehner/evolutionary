@@ -50,12 +50,14 @@ impl Size {
     }
 }
 
-/// A short warm-up and measurement, so the whole suite runs in a few minutes.
-/// `--warm-up-time` and `--measurement-time` on the command line override them.
+/// A short warm-up and measurement, so the whole suite runs in a few minutes, and a 3% noise
+/// threshold, as runs of the same code move by a few percent. `--warm-up-time`,
+/// `--measurement-time` and `--noise-threshold` on the command line override them.
 pub fn criterion() -> Criterion {
     Criterion::default()
         .warm_up_time(Duration::from_secs(1))
         .measurement_time(Duration::from_secs(2))
+        .noise_threshold(0.03)
 }
 
 /// Sets the throughput to the population, so criterion also reports the time per individual,

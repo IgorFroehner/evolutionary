@@ -5,11 +5,13 @@
 ### Changed
 
 - The benchmark suite is split by concern, `generation`, `selection`, `crossover`, `mutation`
-  and `checkpoint` (the last needs the `serde` feature), and covers a generation of every
-  representation and every built-in operator at 300x300 and 2000x500. Each benchmark is named
-  `<group>/<case>/<population>x<genes>`, for comparing a branch with a saved baseline of main;
-  `benches/README.md` says how. `benches/real_at_scale.rs` and its names are gone. Nothing in
-  the library changes.
+  and `checkpoint` (the last needs the `serde` feature). It covers a generation of every
+  representation at 50x50, 300x300 and 2000x500, and every built-in operator, on each
+  representation it works for, and the checkpoint round trip at 300x300 and 2000x500. Each
+  benchmark is named `<group>/<case>/<population>x<genes>`, for comparing a branch with a saved
+  baseline of main; `benches/README.md` says how. `benches/real_at_scale.rs` and its names are
+  gone. `cargo bench` no longer runs the lib's empty libtest harness, which rejected
+  criterion's flags such as `--save-baseline`. Nothing in the library changes.
 
 ## 0.5.0 (2026-10-13)
 

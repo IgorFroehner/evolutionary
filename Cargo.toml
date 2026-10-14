@@ -43,6 +43,11 @@ serde = ["dep:serde", "dep:serde_derive"]
 # Fitness charts: `Evolution::plot_chart` and `ExperimentRunner::save_chart`.
 plot = ["dep:plotters"]
 
+# The lib has no #[bench] functions. Without this, `cargo bench` also runs its libtest harness,
+# which rejects criterion's flags (`-- --save-baseline main`).
+[lib]
+bench = false
+
 [package.metadata.docs.rs]
 all-features = true
 

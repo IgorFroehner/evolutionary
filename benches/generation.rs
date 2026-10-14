@@ -1,15 +1,19 @@
 //! One generation, `Evolution::next`, of each representation, with a cheap fitness so that the
 //! time is the algorithm's own, and the `Real` evolution with the options that change its cost.
 //!
+//! Every iteration measures generation 1 of the same seeded run: the cost of a generation
+//! changes as the population evolves, so going on with one run would measure a different part
+//! of it depending on how fast the code is.
+//!
 //! Run with `cargo bench --bench generation`.
 
 mod common;
 
 use common::*;
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use evolutionary::prelude::*;
 
-/// Starts `builder`, then benches one generation after another of it.
+/// Builds and starts `builder` outside of the measured time, then measures its first `next`.
 fn bench<T: Individual>(
     c: &mut Criterion,
     case: &str,
@@ -18,11 +22,18 @@ fn bench<T: Individual>(
 ) {
     let mut group = c.benchmark_group("generation");
     for &size in sizes {
-        let mut evolution = builder(size).build().unwrap();
-        evolution.start();
-
         configure(&mut group, size);
-        group.bench_function(size.id(case), |b| b.iter(|| evolution.next()));
+        group.bench_function(size.id(case), |b| {
+            b.iter_batched_ref(
+                || {
+                    let mut evolution = builder(size).build().unwrap();
+                    evolution.start();
+                    evolution
+                },
+                |evolution| evolution.next(),
+                BatchSize::PerIteration,
+            )
+        });
     }
     group.finish();
 }
@@ -76,9 +87,7 @@ fn options(c: &mut Criterion) {
         real_evolution(size).with_elitism(0)
     });
     bench(c, "real_reevaluate_elitists", &GENERATION_SIZES, |size| {
-        real_evolution(size)
-            .with_elitism(5)
-            .with_reevaluate_elitists(true)
+        real_evolution(size).with_reevaluate_elitists(true)
     });
 }
 

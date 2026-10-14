@@ -282,7 +282,7 @@ cargo bench --all-features                          # generations, operators and
 ```
 
 The benchmarks cover a generation of every representation, every operator and checkpoints at
-up to 2000 individuals of 500 genes, in about 6 minutes; the checkpoint ones need the `serde`
+up to 2000 individuals of 500 genes, in about 7 minutes; the checkpoint ones need the `serde`
 feature. [benches/README.md](./benches/README.md) has the names and how to compare a branch
 with main.
 

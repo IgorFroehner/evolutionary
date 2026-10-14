@@ -1,4 +1,5 @@
-//! Every mutation operator, on a fresh copy of a seeded population of its representation.
+//! Every mutation operator, on a fresh copy of a seeded population of each representation it
+//! works for.
 //!
 //! The per-gene operators mutate one gene per individual on average (`1.0 / genes`).
 //! Scramble and insertion take a rate per individual, and keep their default.
@@ -20,7 +21,7 @@ fn bench<T: Individual, M: Mutation<T>>(
     mutation: impl Fn(Size) -> M,
     populations: &[(Size, Vec<T>)],
 ) {
-    let rngs = Rngs::new(2);
+    let rngs = Rngs::new(SEED);
     for (size, population) in populations {
         let mutation = mutation(*size);
         configure(group, *size);
@@ -28,10 +29,31 @@ fn bench<T: Individual, M: Mutation<T>>(
             b.iter_batched_ref(
                 || population.clone(),
                 |population| mutation.mutate(population, &rngs),
-                BatchSize::SmallInput,
+                BatchSize::PerIteration,
             )
         });
     }
+}
+
+/// Swap and scramble, which work for every representation: `<representation>_swap` and
+/// `<representation>_scramble`.
+fn generic<T: Individual>(
+    group: &mut BenchmarkGroup<'_, WallTime>,
+    representation: &str,
+    populations: &[(Size, Vec<T>)],
+) {
+    bench(
+        group,
+        &format!("{representation}_swap"),
+        |size| SwapMutation::new(size.rate()),
+        populations,
+    );
+    bench(
+        group,
+        &format!("{representation}_scramble"),
+        |_| ScrambleMutation::default(),
+        populations,
+    );
 }
 
 fn mutation(c: &mut Criterion) {
@@ -64,6 +86,7 @@ fn mutation(c: &mut Criterion) {
         },
         &real,
     );
+    generic(&mut group, "real", &real);
 
     let bin = SIZES.map(|size| (size, bin(size)));
     bench(
@@ -74,6 +97,7 @@ fn mutation(c: &mut Criterion) {
         },
         &bin,
     );
+    generic(&mut group, "bin", &bin);
 
     let int = SIZES.map(|size| (size, int(size)));
     bench(
@@ -84,20 +108,10 @@ fn mutation(c: &mut Criterion) {
         },
         &int,
     );
+    generic(&mut group, "int", &int);
 
     let perm = SIZES.map(|size| (size, perm(size)));
-    bench(
-        &mut group,
-        "swap",
-        |size| SwapMutation::new(size.rate()),
-        &perm,
-    );
-    bench(
-        &mut group,
-        "scramble",
-        |_| ScrambleMutation::default(),
-        &perm,
-    );
+    generic(&mut group, "perm", &perm);
     bench(
         &mut group,
         "insertion",

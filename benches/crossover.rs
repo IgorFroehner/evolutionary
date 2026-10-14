@@ -16,14 +16,14 @@ fn bench<T: Individual, C: Crossover<T>>(
     crossover: C,
     populations: &[(Size, Vec<T>)],
 ) {
-    let rngs = Rngs::new(2);
+    let rngs = Rngs::new(SEED);
     for (size, population) in populations {
         configure(group, *size);
         group.bench_function(size.id(case), |b| {
             b.iter_batched_ref(
                 || population.clone(),
                 |population| crossover.crossover(population, &rngs),
-                BatchSize::SmallInput,
+                BatchSize::PerIteration,
             )
         });
     }

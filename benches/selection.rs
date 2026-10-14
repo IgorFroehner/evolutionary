@@ -50,7 +50,7 @@ fn selections() -> Vec<(&'static str, Box<dyn Selection<Real>>)> {
 }
 
 fn selection(c: &mut Criterion) {
-    let rngs = Rngs::new(2);
+    let rngs = Rngs::new(SEED);
     let populations = SIZES.map(|size| (size, with_fitnesses(real(size))));
 
     let mut group = c.benchmark_group("selection");

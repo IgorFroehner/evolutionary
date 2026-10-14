@@ -52,7 +52,7 @@ fn checkpoint(c: &mut Criterion) {
                     resumed.start();
                     resumed
                 },
-                BatchSize::SmallInput,
+                BatchSize::PerIteration,
             )
         });
     }
