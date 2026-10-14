@@ -22,7 +22,7 @@ cargo test --doc                                        # doc tests only
 cargo clippy --all-targets --all-features -- -D warnings  # CI fails on any warning
 cargo fmt --all -- --check                              # CI checks formatting
 RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features  # CI fails on rustdoc warnings
-cargo bench                                             # criterion: a generation of Real at 300x300
+cargo bench --all-features                              # criterion suite, see benches/README.md
 cargo run --example xor --release                       # examples: see required-features in Cargo.toml
 ```
 

@@ -76,8 +76,8 @@ change. Breaking changes are recorded in `CHANGELOG.md` as they land.
 
 - [x] Tests and a benchmark for a few hundred individuals with a few hundred genes:
   `GaussianMutation`, elitism > 1 and tournament selection with `k > 2`.
-  `tests/real_at_scale.rs` and `benches/real_at_scale.rs` (about 0.4 ms a generation at
-  300 × 300 on an M-series laptop).
+  `tests/real_at_scale.rs` and `generation/real/300x300` in `benches/generation.rs` (about
+  0.4 ms a generation at 300 × 300 on an M-series laptop).
 - [x] Document `GaussianMutation`'s defaults (`mutation_rate = 0.05`, `sigma = 1.0`)
   and when to lower `sigma`.
 - [x] Optional clamping of mutated genes to `range`. Keep unbounded as the default:

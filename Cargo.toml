@@ -76,6 +76,25 @@ name = "tsp"
 path = "examples/tsp/main.rs"
 required-features = ["plot"]
 
+# See benches/README.md. Shared helpers live in benches/common/mod.rs, which cargo does not
+# take for a benchmark.
 [[bench]]
-name = "real_at_scale"
+name = "generation"
 harness = false
+
+[[bench]]
+name = "selection"
+harness = false
+
+[[bench]]
+name = "crossover"
+harness = false
+
+[[bench]]
+name = "mutation"
+harness = false
+
+[[bench]]
+name = "checkpoint"
+harness = false
+required-features = ["serde"]

@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- The benchmark suite is split by concern, `generation`, `selection`, `crossover`, `mutation`
+  and `checkpoint` (the last needs the `serde` feature), and covers a generation of every
+  representation and every built-in operator at 300x300 and 2000x500. Each benchmark is named
+  `<group>/<case>/<population>x<genes>`, for comparing a branch with a saved baseline of main;
+  `benches/README.md` says how. `benches/real_at_scale.rs` and its names are gone. Nothing in
+  the library changes.
+
 ## 0.5.0 (2026-10-13)
 
 ### Breaking
