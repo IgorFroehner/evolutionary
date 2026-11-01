@@ -28,7 +28,7 @@ rand_distr = "0.5"
 
 [dev-dependencies]
 # Only for the xor example: library users never pull it in.
-only-brain = "0.3"
+only-brain = "0.4"
 criterion = { version = "0.8", default-features = false, features = ["cargo_bench_support"] }
 # `float_roundtrip` reads every f64 back bit for bit, which resuming a checkpoint saved to
 # JSON exactly needs (tests/checkpoint.rs).

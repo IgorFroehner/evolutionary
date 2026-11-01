@@ -915,9 +915,9 @@ checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
 name = "only-brain"
-version = "0.3.1"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae2b935ad3fcb531a7404a66a49f8d6077e1f3f05c76b2f44b1d6b6d7ced299a"
+checksum = "f770e61717a2f28c314e03d7d0604fedbae3705359f0889fcdbff2ac8115e503"
 dependencies = [
  "nalgebra",
  "rand",
